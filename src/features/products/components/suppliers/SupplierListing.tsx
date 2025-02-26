@@ -6,8 +6,10 @@ import { useDebounce } from '@/hooks/use-debounce';
 // import { columns } from './category-tables/columns';
 import { SupplierDataTable } from '@/components/ui/table/SupplierDataTable';
 import { useSupplierQuery } from '../../hooks/useSupplierQuery';
-import { columns } from './suppliers-tables/columns';
+import { columns, skeletonColumns } from './suppliers-tables/columns';
 import { Input } from '@/components/ui/input';
+import { ColumnDef } from '@tanstack/react-table';
+import { supplierSkeletonData } from '../../constants/skeletonData.supplier';
 
 type SupplierFiltersType = {
   searchTerm?: string;
@@ -22,8 +24,10 @@ export default function SupplierListingPage() {
   // Debounce search term to prevent excessive queries
   const debouncedSearchTerm = useDebounce(filters.searchTerm, 300);
 
-  const { suppliers, totalPages, isLoading, isFetching, totalItems } =
-    useSupplierQuery({ page, pageSize }, { searchTerm: debouncedSearchTerm });
+  const { suppliers, totalPages, totalItems, isFetching } = useSupplierQuery(
+    { page, pageSize },
+    { searchTerm: debouncedSearchTerm }
+  );
 
   // Reset pagination when filters change
   useEffect(() => {
@@ -35,11 +39,9 @@ export default function SupplierListingPage() {
       <SupplierFilters filters={filters} onFilterChange={setFilters} />
 
       <SupplierDataTable
-        columns={columns}
-        data={suppliers}
+        columns={isFetching ? (skeletonColumns as ColumnDef<any>[]) : columns}
+        data={isFetching ? supplierSkeletonData : suppliers}
         totalItems={totalItems}
-        isLoading={isLoading}
-        isFetching={isFetching}
         pagination={{
           page,
           pageSize,

@@ -1,15 +1,15 @@
 import Providers from '@/components/layout/providers';
 import { Toaster } from '@/components/ui/sonner';
 import type { Metadata } from 'next';
-import { NuqsAdapter } from 'nuqs/adapters/next/app';
 import { Lato } from 'next/font/google';
 import NextTopLoader from 'nextjs-toploader';
 import './globals.css';
 import { ConvexClientProvider } from '@/features/auth/providers/ConvexProvider';
 
 export const metadata: Metadata = {
-  title: 'Next Shadcn',
-  description: 'Basic dashboard with Next.js and Shadcn'
+  title: 'Stock Management System',
+  description:
+    'Effortlessly manage your business inventory with our intuitive and powerful tools.'
 };
 
 const lato = Lato({
@@ -23,18 +23,15 @@ export default function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
-
   return (
     <html lang='en' className={lato.className} suppressHydrationWarning>
       <body className='overflow-hidden'>
         <ConvexClientProvider>
           <NextTopLoader showSpinner={false} />
-          <NuqsAdapter>
-            <Providers>
-              <Toaster />
-              {children}
-            </Providers>
-          </NuqsAdapter>
+          <Providers>
+            <Toaster />
+            {children}
+          </Providers>
         </ConvexClientProvider>
       </body>
     </html>

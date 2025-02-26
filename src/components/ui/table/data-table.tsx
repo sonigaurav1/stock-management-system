@@ -17,8 +17,7 @@ import {
   TableHeader,
   TableRow
 } from '@/components/ui/table';
-import { skeletonColumns } from '@/features/products/components/product/product-tables/columns';
-import { productSkeletonData } from '@/features/products/constants/skeletonData.product';
+
 import {
   DoubleArrowLeftIcon,
   DoubleArrowRightIcon
@@ -38,8 +37,6 @@ interface DataTableProps<TData, TValue> {
   data: TData[];
   totalItems: number;
   pageSizeOptions?: number[];
-  isLoading: boolean;
-  isFetching: boolean;
   pagination: {
     page: number;
     pageSize: number;
@@ -53,8 +50,6 @@ export function DataTable<TData, TValue>({
   data,
   totalItems,
   pageSizeOptions = [10, 20, 30, 40, 50],
-  isLoading,
-  isFetching,
   pagination
 }: DataTableProps<TData, TValue>) {
   const { page, pageSize, totalPages, onPageChange } = pagination;
@@ -77,14 +72,9 @@ export function DataTable<TData, TValue>({
     onPageChange(pagination.pageIndex + 1);
   };
 
-  const productTableColumns = isFetching
-    ? (skeletonColumns as ColumnDef<any>[])
-    : columns;
-  const productData = isFetching ? productSkeletonData : data;
-
   const table = useReactTable({
-    data: productData as TData[],
-    columns: productTableColumns,
+    data,
+    columns,
     pageCount: totalPages,
     state: {
       pagination: paginationState

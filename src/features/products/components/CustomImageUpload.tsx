@@ -186,7 +186,7 @@ const CustomImageUpload = ({
               src={preview}
               alt='Preview'
               className={cn(
-                'h-full w-full rounded-lg object-cover',
+                'h-full w-full rounded-lg object-contain',
                 disabled && 'opacity-50'
               )}
             />

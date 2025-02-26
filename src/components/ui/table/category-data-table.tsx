@@ -17,8 +17,6 @@ import {
   TableHeader,
   TableRow
 } from '@/components/ui/table';
-import { skeletonColumns } from '@/features/products/components/category/category-tables/columns';
-import { categorySkeletonData } from '@/features/products/constants/skeletonData.category';
 import {
   DoubleArrowLeftIcon,
   DoubleArrowRightIcon
@@ -38,8 +36,6 @@ interface DataTableProps<TData, TValue> {
   data: TData[];
   totalItems: number;
   pageSizeOptions?: number[];
-  isLoading: boolean;
-  isFetching: boolean;
   pagination: {
     page: number;
     pageSize: number;
@@ -53,8 +49,6 @@ export function CategoryDataTable<TData, TValue>({
   data,
   totalItems,
   pageSizeOptions = [10, 20, 30, 40, 50],
-  isLoading,
-  isFetching,
   pagination
 }: DataTableProps<TData, TValue>) {
   const { page, pageSize, totalPages, onPageChange } = pagination;
@@ -77,14 +71,9 @@ export function CategoryDataTable<TData, TValue>({
     onPageChange(pagination.pageIndex + 1);
   };
 
-  const categoryTableColumns = isFetching
-    ? (skeletonColumns as ColumnDef<any>[])
-    : columns;
-  const categoryData = isFetching ? categorySkeletonData : data;
-
   const table = useReactTable({
-    data: categoryData as TData[],
-    columns: categoryTableColumns,
+    data,
+    columns,
     pageCount: totalPages,
     state: {
       pagination: paginationState

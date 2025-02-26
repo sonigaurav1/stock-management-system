@@ -19,7 +19,6 @@ export const useSupplierQuery = (
     totalPages: result?.totalPages ?? 0,
     currentPage: result?.currentPage ?? 1,
     totalItems: result?.totalItems ?? 0,
-    isLoading: result === undefined,
     isFetching: result === undefined
   };
 };

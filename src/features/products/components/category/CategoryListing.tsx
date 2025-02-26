@@ -5,8 +5,10 @@ import { useEffect, useState } from 'react';
 import { useDebounce } from '@/hooks/use-debounce';
 import { useCategoryQuery } from '../../hooks/useCategoryQuery';
 import { CategoryDataTable } from '@/components/ui/table/category-data-table';
-import { columns } from './category-tables/columns';
+import { columns, skeletonColumns } from './category-tables/columns';
 import { Input } from '@/components/ui/input';
+import { categorySkeletonData } from '../../constants/skeletonData.category';
+import { ColumnDef } from '@tanstack/react-table';
 
 type CategoryFiltersType = {
   searchTerm?: string;
@@ -21,8 +23,10 @@ export default function CategoryListingPage() {
   // Debounce search term to prevent excessive queries
   const debouncedSearchTerm = useDebounce(filters.searchTerm, 300);
 
-  const { category, totalPages, isLoading, isFetching, totalItems } =
-    useCategoryQuery({ page, pageSize }, { searchTerm: debouncedSearchTerm });
+  const { category, totalPages, totalItems, isFetching } = useCategoryQuery(
+    { page, pageSize },
+    { searchTerm: debouncedSearchTerm }
+  );
 
   // Reset pagination when filters change
   useEffect(() => {
@@ -34,11 +38,9 @@ export default function CategoryListingPage() {
       <CategoryFilters filters={filters} onFilterChange={setFilters} />
 
       <CategoryDataTable
-        columns={columns}
-        data={category}
+        columns={isFetching ? (skeletonColumns as ColumnDef<any>[]) : columns}
+        data={isFetching ? categorySkeletonData : category}
         totalItems={totalItems}
-        isLoading={isLoading}
-        isFetching={isFetching}
         pagination={{
           page,
           pageSize,
