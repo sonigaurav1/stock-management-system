@@ -24,3 +24,23 @@ export function formatBytes(
       : (sizes[i] ?? 'Bytes')
   }`;
 }
+
+/**
+ * Generate a SKU from the category, brand, and name.
+ * @param category The category of the product.
+ * @param brand The brand of the product.
+ * @param name The name of the product.
+ * @returns The generated SKU.
+ */
+export const generateSKU = (category: string, brand: string, name: string) => {
+  return `${category}-${brand}-${name}`.replace(/\s+/g, '').toUpperCase();
+};
+
+/**
+ * Generate a slug from a string.
+ * @param str The string to generate a slug from.
+ * @returns The generated slug.
+ */
+export const generateSlug = (str: string) => {
+  return str.toLowerCase().replace(/\s+/g, '-');
+};

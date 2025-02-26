@@ -16,13 +16,17 @@ export default function OverViewLayout({
   area_stats: React.ReactNode;
 }) {
   const { user } = useUser();
-  
+
+  const username = user?.username
+    ? user.username.charAt(0).toUpperCase() + user.username.slice(1)
+    : '';
+
   return (
     <PageContainer>
       <div className='flex flex-1 flex-col space-y-2'>
         <div className='flex items-center justify-between space-y-2'>
           <h2 className='text-2xl font-bold tracking-tight'>
-            Hi {user?.username}, Welcome back 👋
+            Hi {username}, Welcome back 👋
           </h2>
         </div>
         <div className='grid gap-4 md:grid-cols-2 lg:grid-cols-4'>

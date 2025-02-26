@@ -46,7 +46,7 @@ import { Icons } from '../icons';
 import { SignOutButton, useUser } from '@clerk/clerk-react';
 
 export const company = {
-  name: 'Acme Inc',
+  name: 'NextTech',
   logo: GalleryVerticalEnd,
   plan: 'Enterprise'
 };

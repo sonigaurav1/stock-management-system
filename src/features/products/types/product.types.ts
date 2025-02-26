@@ -1,11 +1,47 @@
 export interface Product {
-    _id: string;
-    _creationTime: string | number;
-    imageUrl?: string | undefined;
-    inStock?: boolean | undefined;
-    name: string;
-    category: string;
-    price: number;
-    quantity?: number;
-    description: string;
-};
+  _id: string;
+  _creationTime: string | number;
+  name: string;
+  slug: string;
+  sku: string; // Unique product identifier
+  barcode?: string; // Barcode for scanning
+  category: string;
+  subcategory?: string;
+  description?: string;
+  brand?: string;
+  purchasePrice: number; // Cost price
+  sellingPrice: number; // Selling price
+  discountPrice?: number; // Discounted price
+  stockLevel: number; // Current stock quantity
+  inStock: boolean; // In stock status
+  reorderLevel?: number; // Minimum stock before reorder alert
+  stockStatus: string; // "in_stock", "low_stock", "out_of_stock"
+  supplierId?: string; // Supplier reference
+  lastRestockedAt?: number; // Timestamp of last restock
+  imageUrl?: string; // Image URL
+  isDeleted: boolean; // Soft delete flag (false = active, true = deleted)
+}
+
+export interface SkeletonProduct {
+  _id?: string;
+  _creationTime?: string | number;
+  name?: string;
+  slug?: string;
+  sku?: string; // Unique product identifier
+  barcode?: string; // Barcode for scanning
+  category?: string;
+  subcategory?: string;
+  description?: string;
+  brand?: string;
+  purchasePrice?: number; // Cost price
+  sellingPrice?: number; // Selling price
+  discountPrice?: number; // Discounted price
+  stockLevel?: number; // Current stock quantity
+  inStock?: boolean; // In stock status
+  reorderLevel?: number; // Minimum stock before reorder alert
+  stockStatus?: string; // "in_stock", "low_stock", "out_of_stock"
+  supplierId?: string; // Supplier reference
+  lastRestockedAt?: number; // Timestamp of last restock
+  imageUrl?: string; // Image URL
+  isDeleted?: boolean; // Soft delete flag (false = active, true = deleted)
+}

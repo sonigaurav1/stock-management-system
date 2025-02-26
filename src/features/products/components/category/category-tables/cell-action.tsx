@@ -3,16 +3,16 @@ import { AlertModal } from '@/components/modal/alert-modal';
 import { Edit, Trash } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 
-import { Product } from '../../types/product.types';
 import { useMutation } from 'convex/react';
-import { api } from 'convex/_generated/api';
+import { api } from '@/../convex/_generated/api';
 import { Id } from 'convex/_generated/dataModel';
 import { toast } from 'sonner';
 import { useEdgeStore } from '@/lib/edgestore';
 import { useState } from 'react';
+import { Category } from '../../../types/category.types';
 
 interface CellActionProps {
-  data: Product;
+  data: Category;
 }
 
 export const CellAction: React.FC<CellActionProps> = ({ data }) => {
@@ -22,25 +22,27 @@ export const CellAction: React.FC<CellActionProps> = ({ data }) => {
 
   const { edgestore } = useEdgeStore();
 
-  const deleteProduct = useMutation(api.documents.deleteProduct);
+  const deleteCategory = useMutation(api.documents.deleteCategory);
 
   const onConfirm = async () => {
-    const promise = deleteProduct({
-      id: data._id as Id<'products'>
+    const promise = deleteCategory({
+      id: data._id as Id<'category'>
     });
 
-    const imageUrl = data.imageUrl!;
+    const imageUrl = data?.imageUrl!;
 
     toast.promise(promise, {
-      loading: 'Deleting product...',
-      success: 'Product deleted!',
-      error: 'Failed to delete product.'
+      loading: 'Deleting category...',
+      success: 'Category deleted!',
+      error: 'Failed to delete category.'
     });
 
     // Deleting image from edgeStore
-    await edgestore.publicFiles.delete({
-      url: imageUrl
-    });
+    if (imageUrl) {
+      await edgestore.publicFiles.delete({
+        url: imageUrl
+      });
+    }
 
     setOpen(false);
   };
@@ -55,7 +57,7 @@ export const CellAction: React.FC<CellActionProps> = ({ data }) => {
       />
       <div className='flex gap-3'>
         <Edit
-          onClick={() => router.push(`/dashboard/product/${data._id}`)}
+          onClick={() => router.push(`/dashboard/product/category/${data._id}`)}
           className='mr-2 h-4 w-4 cursor-pointer hover:text-primary-foreground dark:hover:text-primary'
         />
         <Trash

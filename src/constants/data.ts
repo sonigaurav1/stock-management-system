@@ -19,26 +19,42 @@ export const navItems: NavItem[] = [
     items: [] // No child items
   },
   {
-    title: 'Account',
-    url: '#', // Placeholder as there is no direct link for the parent
-    icon: 'billing',
-    isActive: true,
-
-    items: [
-      {
-        title: 'Profile',
-        url: '/dashboard/profile',
-        icon: 'userPen',
-        shortcut: ['m', 'm']
-      },
-      {
-        title: 'Login',
-        shortcut: ['l', 'l'],
-        url: '/',
-        icon: 'login'
-      }
-    ]
+    title: 'Category',
+    url: '/dashboard/product/category',
+    icon: 'category',
+    shortcut: ['c', 'c'],
+    isActive: false,
+    items: [] // No child items
   },
+  {
+    title: 'Supplier',
+    url: '/dashboard/product/supplier',
+    icon: 'supplier',
+    shortcut: ['s', 's'],
+    isActive: false,
+    items: [] // No child items
+  },
+  // {
+  //   title: 'Account',
+  //   url: '#', // Placeholder as there is no direct link for the parent
+  //   icon: 'billing',
+  //   isActive: true,
+
+  //   items: [
+  //     {
+  //       title: 'Profile',
+  //       url: '/dashboard/profile',
+  //       icon: 'userPen',
+  //       shortcut: ['m', 'm']
+  //     },
+  //     {
+  //       title: 'Login',
+  //       shortcut: ['l', 'l'],
+  //       url: '/',
+  //       icon: 'login'
+  //     }
+  //   ]
+  // },
   {
     title: 'Kanban',
     url: '/dashboard/kanban',
@@ -61,40 +77,40 @@ export interface SaleUser {
 export const recentSalesData: SaleUser[] = [
   {
     id: 1,
-    name: 'Olivia Martin',
-    email: 'olivia.martin@email.com',
+    name: 'Ramm lala',
+    email: 'ram.lal@email.com',
     amount: '+$1,999.00',
     image: 'https://api.slingacademy.com/public/sample-users/1.png',
     initials: 'OM'
   },
   {
     id: 2,
-    name: 'Jackson Lee',
-    email: 'jackson.lee@email.com',
+    name: 'Shyam lal',
+    email: 'shyam.lal@email.com',
     amount: '+$39.00',
     image: 'https://api.slingacademy.com/public/sample-users/2.png',
     initials: 'JL'
   },
   {
     id: 3,
-    name: 'Isabella Nguyen',
-    email: 'isabella.nguyen@email.com',
+    name: 'Hari lal',
+    email: 'hari.lal@email.com',
     amount: '+$299.00',
     image: 'https://api.slingacademy.com/public/sample-users/3.png',
     initials: 'IN'
   },
   {
     id: 4,
-    name: 'William Kim',
-    email: 'will@email.com',
+    name: 'Shyam Bahadur',
+    email: 'shyam.bahadur@email.com',
     amount: '+$99.00',
     image: 'https://api.slingacademy.com/public/sample-users/4.png',
     initials: 'WK'
   },
   {
     id: 5,
-    name: 'Sofia Davis',
-    email: 'sofia.davis@email.com',
+    name: 'Popat lal',
+    email: 'popat.lal@email.com',
     amount: '+$39.00',
     image: 'https://api.slingacademy.com/public/sample-users/5.png',
     initials: 'SD'
