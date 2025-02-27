@@ -10,6 +10,7 @@ import { toast } from 'sonner';
 import { useEdgeStore } from '@/lib/edgestore';
 import { useState } from 'react';
 import { Category } from '../../../types/category.types';
+import { CustomError } from '@/lib/utils';
 
 interface CellActionProps {
   data: Category;
@@ -26,36 +27,42 @@ export const CellAction: React.FC<CellActionProps> = ({ data }) => {
 
   const onConfirm = async () => {
     setLoading(true); // Set loading state to true
-    try {
-      const promise = deleteCategory({
-        id: data._id as Id<'category'>
+    const promise = deleteCategory({
+      id: data._id as Id<'category'>
+    });
+
+    const imageUrl = data?.imageUrl!;
+
+    toast.promise(promise, {
+      loading: 'Deleting category...',
+      success: 'Category deleted!'
+    });
+
+    await promise
+      .then(async () => {
+        // Deleting image from edgeStore
+        if (imageUrl) {
+          await edgestore.publicFiles.delete({
+            url: imageUrl
+          });
+        }
+        setOpen(false);
+      })
+      .catch((error) => {
+        // eslint-disable-next-line no-console
+        console.error('Error: ', error);
+        if (
+          error.message.includes(
+            'Cannot delete category associated with products'
+          )
+        ) {
+          toast.warning('Cannot delete category associated with products');
+        } else {
+          toast.warning('An error occurred while deleting category');
+        }
+        setOpen(false);
+        setLoading(false);
       });
-
-      const imageUrl = data?.imageUrl;
-
-      toast.promise(promise, {
-        loading: 'Deleting category...',
-        success: 'Category deleted!',
-        error: 'Failed to delete category.'
-      });
-
-      await promise;
-
-      // Deleting image from edgeStore
-      if (imageUrl) {
-        await edgestore.publicFiles.delete({
-          url: imageUrl
-        });
-      }
-
-      setOpen(false);
-    } catch (error) {
-      // eslint-disable-next-line no-console
-      console.error('Error deleting category:', error);
-      toast.error('An unexpected error occurred.');
-    } finally {
-      setLoading(false); // Set loading state to false
-    }
   };
 
   return (

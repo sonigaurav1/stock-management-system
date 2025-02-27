@@ -5,7 +5,7 @@ export interface Product {
   slug: string;
   sku: string; // Unique product identifier
   barcode?: string; // Barcode for scanning
-  category: string;
+  categoryId: string;
   subcategory?: string;
   description?: string;
   brand?: string;

@@ -44,3 +44,11 @@ export const generateSKU = (category: string, brand: string, name: string) => {
 export const generateSlug = (str: string) => {
   return str.toLowerCase().replace(/\s+/g, '-');
 };
+
+export class CustomError extends Error {
+  status: number;
+  constructor(message: string, status: number) {
+    super(message);
+    this.status = status;
+  }
+}

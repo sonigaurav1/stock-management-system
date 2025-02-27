@@ -33,7 +33,7 @@ export default function ProductTableAction({
   return (
     <div className='flex flex-wrap items-center gap-4'>
       <DataTableSearch
-        searchKey='name'
+        searchKey='product name'
         searchQuery={searchQuery}
         setSearchQuery={(value) => {
           setSearchQuery(value);
@@ -45,7 +45,7 @@ export default function ProductTableAction({
         filterKey='categories'
         title='Categories'
         options={(fetchedCategories ?? []).map((category) => ({
-          value: category.slug,
+          value: category._id,
           label: category.name
         }))}
         setFilterValue={(value) => {

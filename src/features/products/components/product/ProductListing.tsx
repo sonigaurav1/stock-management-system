@@ -11,8 +11,6 @@ import ProductTableAction from './product-tables/product-table-action';
 import { ColumnDef } from '@tanstack/react-table';
 import { productSkeletonData } from '../../constants/skeletonData.product';
 
-type ProductListingPage = {};
-
 // ProductListingPage.tsx
 export default function ProductListingPage() {
   const [filters, setFilters] = useState<ProductFiltersType>({});

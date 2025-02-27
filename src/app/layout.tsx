@@ -29,7 +29,7 @@ export default function RootLayout({
         <ConvexClientProvider>
           <NextTopLoader showSpinner={false} />
           <Providers>
-            <Toaster />
+            <Toaster richColors />
             {children}
           </Providers>
         </ConvexClientProvider>

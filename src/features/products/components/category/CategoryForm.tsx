@@ -15,7 +15,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { api } from '@/../convex/_generated/api';
-import { useMutation } from 'convex/react';
+import { useMutation, useQuery } from 'convex/react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import * as z from 'zod';
@@ -27,6 +27,12 @@ import { useState } from 'react';
 import { Category } from '../../types/category.types';
 import { formSchema } from '../../schema/CategorySchema';
 import { generateSlug } from '@/lib/utils';
+import { useUser } from '@clerk/clerk-react';
+import {
+  restrictedUser,
+  restrictedUserLimit
+} from '../../constants/restrictedUserData';
+import { Progress } from '@/components/ui/progress';
 
 export default function CategoryForm({
   initialData,
@@ -35,9 +41,18 @@ export default function CategoryForm({
   initialData: Category | null;
   pageTitle: string;
 }) {
+  const { user } = useUser();
+
   const createCategory = useMutation(api.documents.createCategory);
   const updateCategory = useMutation(api.documents.updateCategory);
 
+  // fetch all categories to check if the user has reached the limit
+  const allCategories = useQuery(
+    api.documents.getAllCategories,
+    user?.id === restrictedUser ? undefined : 'skip'
+  );
+
+  const [isLoading, setIsLoading] = useState<boolean>(false);
   const [progress, setProgress] = useState<number>(0);
 
   const { edgestore } = useEdgeStore();
@@ -54,78 +69,73 @@ export default function CategoryForm({
     defaultValues
   });
 
+  async function uploadFile(file: File | null) {
+    if (!file) return null;
+
+    return await edgestore.publicFiles.upload({
+      file,
+      onProgressChange: (progress: number) => {
+        setProgress(progress);
+      }
+    });
+  }
+
   async function onSubmit(values: z.infer<typeof formSchema>) {
-    if (initialData === null) {
-      const file = values?.image;
-
-      let res = null;
-
-      if (file) {
-        res = await edgestore.publicFiles.upload({
-          file,
-          onProgressChange: (progress) => {
-            setProgress(progress);
-          }
-        });
-      }
-
-      try {
-        const promise = createCategory({
-          name: values.name,
-          slug: generateSlug(values.name),
-          description: values.description,
-          imageUrl: res?.url ?? undefined
-        });
-
-        toast.promise(promise, {
-          loading: 'Uploading details...',
-          success: 'Details uploaded!',
-          error: 'Failed to upload details.'
-        });
-
-        await promise; // Ensure the promise is awaited before redirecting
-
-        redirect('/dashboard/product/category');
-      } catch (error) {
-        toast.warning('You have reached the maximum category creation limit.');
-
-        if (res?.url) {
-          await edgestore.publicFiles.delete({
-            url: res.url
-          });
-        }
-      }
-    } else {
-      let imageUrl = initialData?.imageUrl;
-
-      if (values.image) {
-        const res = await edgestore.publicFiles.upload({
-          file: values.image,
-          onProgressChange: (progress) => {
-            console.log(progress);
-          }
-        });
-        imageUrl = res.url;
-      }
-
-      const promise = updateCategory({
-        id: initialData?._id as Id<'category'>,
-        updates: {
-          name: values.name,
-          slug: generateSlug(values.name),
-          description: values.description,
-          imageUrl
-        }
+    setIsLoading(true);
+    if (allCategories?.length === restrictedUserLimit) {
+      toast.warning('Failed to upload details.', {
+        description: `You have reached the limit of ${restrictedUserLimit} active categories.`,
+        duration: 5000
       });
-
-      toast.promise(promise, {
-        loading: 'Updating product details...',
-        success: 'Updated product details!',
-        error: 'Failed to update product details.'
-      });
-
-      redirect('/dashboard/product/category');
+      return;
     }
+
+    let imageUrl = initialData?.imageUrl;
+
+    if (values.image) {
+      const res = await uploadFile(values.image);
+      imageUrl = res?.url ?? imageUrl;
+    }
+
+    const categoryData = {
+      name: values.name,
+      slug: generateSlug(values.name),
+      description: values.description,
+      imageUrl
+    };
+
+    const promise =
+      initialData === null
+        ? createCategory(categoryData)
+        : updateCategory({
+            id: initialData._id as Id<'category'>,
+            updates: categoryData
+          });
+
+    const action =
+      initialData === null
+        ? 'Uploading details...'
+        : 'Updating category details...';
+    const successMessage =
+      initialData === null
+        ? 'Category created successfully!'
+        : 'Updated category details!';
+    const errorMessage =
+      initialData === null
+        ? 'Failed to upload details.'
+        : 'Failed to update category details.';
+
+    toast.promise(promise, {
+      loading: action,
+      success: successMessage,
+      error: errorMessage
+    });
+
+    await promise.then(() => {
+      redirect('/dashboard/product/category');
+    });
+    setProgress(0);
+    setIsLoading(false);
   }
 
   return (
@@ -191,11 +201,23 @@ export default function CategoryForm({
                 )}
               />
             </div>
-            {progress > 0 && <p>Uploading: {progress}%</p>}
+
+            {progress > 0 && (
+              <div className='flex items-center gap-4'>
+                <Progress value={progress} />
+                <span className='text-xs font-semibold text-muted-foreground'>
+                  {progress}%
+                </span>
+              </div>
+            )}
             {initialData === null ? (
-              <Button type='submit'>Add Category</Button>
+              <Button disabled={isLoading} type='submit'>
+                Add Category
+              </Button>
             ) : (
-              <Button type='submit'>Edit Category</Button>
+              <Button disabled={isLoading} type='submit'>
+                Edit Category
+              </Button>
             )}
           </form>
         </Form>

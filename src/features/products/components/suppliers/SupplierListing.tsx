@@ -62,7 +62,7 @@ function SupplierFilters({
   onFilterChange: (filters: SupplierFiltersType) => void;
 }) {
   return (
-    <div className='flex gap-4 rounded-lg bg-white p-4 shadow'>
+    <div className='flex gap-4 rounded-lg shadow'>
       <Input
         type='text'
         placeholder='Search supplier...'

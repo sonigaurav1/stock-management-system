@@ -13,7 +13,7 @@ export const formSchema = z.object({
   // slug: z.string().nonempty({ message: 'Slug is required' }),
   // sku: z.string().nonempty({ message: 'SKU is required' }),
   barcode: z.string().optional(),
-  category: z.string().nonempty({ message: 'Category is required' }),
+  categoryId: z.string().nonempty({ message: 'Category is required' }),
   subcategory: z.string().optional(),
   description: z.string().optional(),
   brand: z.string(),

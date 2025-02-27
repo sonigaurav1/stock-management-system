@@ -8,7 +8,7 @@ import CategoryListingPage from '@/features/products/components/category/Categor
 import Link from 'next/link';
 
 export const metadata = {
-  title: 'Dashboard: Category'
+  title: 'Products: Categories'
 };
 
 export default async function Page() {

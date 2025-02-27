@@ -8,7 +8,7 @@ import SupplierListingPage from '@/features/products/components/suppliers/Suppli
 import Link from 'next/link';
 
 export const metadata = {
-  title: 'Dashboard: Suppliers'
+  title: 'Products: Suppliers'
 };
 
 export default async function Page() {

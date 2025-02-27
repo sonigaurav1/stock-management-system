@@ -7,6 +7,12 @@ import { Skeleton } from '@/components/ui/skeleton';
 
 const placeholderImageUrl = '/assets/images/product-placeholder.png';
 
+const stockStatusMapping: { [key: string]: string } = {
+  in_stock: 'In Stock',
+  low_stock: 'Low Stock',
+  out_of_stock: 'Out of Stock'
+};
+
 export const columns: ColumnDef<Product>[] = [
   {
     accessorKey: 'imageUrl',
@@ -31,7 +37,7 @@ export const columns: ColumnDef<Product>[] = [
     header: 'NAME'
   },
   {
-    accessorKey: 'category',
+    accessorKey: 'categoryName',
     header: 'CATEGORY'
   },
   {
@@ -48,10 +54,14 @@ export const columns: ColumnDef<Product>[] = [
   },
   {
     accessorKey: 'stockStatus',
-    header: 'STOCK STATUS'
+    header: 'STOCK STATUS',
+    cell: ({ row }) => {
+      const stockStatus = row.original.stockStatus;
+      return stockStatusMapping[stockStatus] || 'Unknown';
+    }
   },
   {
-    accessorKey: 'supplierId',
+    accessorKey: 'supplierName',
     header: 'SUPPLIER'
   },
   {

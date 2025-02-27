@@ -1,7 +1,7 @@
 /* eslint-disable no-console */
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useTransition } from 'react';
 import { useDebounce } from '@/hooks/use-debounce';
 import { useCategoryQuery } from '../../hooks/useCategoryQuery';
 import { CategoryDataTable } from '@/components/ui/table/category-data-table';
@@ -9,6 +9,7 @@ import { columns, skeletonColumns } from './category-tables/columns';
 import { Input } from '@/components/ui/input';
 import { categorySkeletonData } from '../../constants/skeletonData.category';
 import { ColumnDef } from '@tanstack/react-table';
+import { cn } from '@/lib/utils';
 
 type CategoryFiltersType = {
   searchTerm?: string;
@@ -25,7 +26,7 @@ export default function CategoryListingPage() {
 
   const { category, totalPages, totalItems, isFetching } = useCategoryQuery(
     { page, pageSize },
-    { searchTerm: debouncedSearchTerm }
+    { ...filters, searchTerm: debouncedSearchTerm }
   );
 
   // Reset pagination when filters change
@@ -35,7 +36,11 @@ export default function CategoryListingPage() {
 
   return (
     <div className='space-y-4'>
-      <CategoryFilters filters={filters} onFilterChange={setFilters} />
+      <CategoryFilters
+        filters={filters}
+        onFilterChange={setFilters}
+        setPage={setPage}
+      />
 
       <CategoryDataTable
         columns={isFetching ? (skeletonColumns as ColumnDef<any>[]) : columns}
@@ -55,24 +60,33 @@ export default function CategoryListingPage() {
 // Filters component
 function CategoryFilters({
   filters,
-  onFilterChange
+  onFilterChange,
+  setPage
 }: {
   filters: CategoryFiltersType;
   onFilterChange: (filters: CategoryFiltersType) => void;
+  setPage: (page: number) => void;
 }) {
+  const [isLoading, startTransition] = useTransition();
+
+  const handleSearch = (value: string) => {
+    startTransition(() => {
+      onFilterChange({
+        ...filters,
+        searchTerm: value
+      });
+      setPage(1); // Reset page to 1 when search changes
+    });
+  };
+
   return (
-    <div className='flex gap-4 rounded-lg bg-white p-4 shadow'>
+    <div className='flex gap-4 rounded-lg shadow'>
       <Input
         type='text'
         placeholder='Search category...'
         value={filters.searchTerm ?? ''}
-        onChange={(e) =>
-          onFilterChange({
-            ...filters,
-            searchTerm: e.target.value
-          })
-        }
-        className='w-full rounded border px-3 py-2 md:max-w-sm'
+        onChange={(e) => handleSearch(e.target.value)}
+        className={cn('w-full md:max-w-sm', isLoading && 'animate-pulse')}
       />
     </div>
   );

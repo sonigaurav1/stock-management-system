@@ -26,34 +26,34 @@ export const CellAction: React.FC<CellActionProps> = ({ data }) => {
 
   const onConfirm = async () => {
     setLoading(true); // Set loading state to true
-    try {
-      const promise = deleteProduct({
-        id: data._id as Id<'products'>
+    const promise = deleteProduct({
+      id: data._id as Id<'products'>
+    });
+
+    const imageUrl = data?.imageUrl!;
+
+    toast.promise(promise, {
+      loading: 'Deleting product...',
+      success: 'Product deleted!',
+      error: 'Failed to delete product.'
+    });
+
+    await promise
+      .then(async () => {
+        // Deleting image from edgeStore
+        if (imageUrl) {
+          await edgestore.publicFiles.delete({
+            url: imageUrl
+          });
+        }
+        setOpen(false);
+      })
+      .catch((error) => {
+        // eslint-disable-next-line no-console
+        console.error('Error deleting product:', error);
+        setOpen(false);
+        toast.error('Error deleting product!!!');
       });
-
-      const imageUrl = data?.imageUrl!;
-
-      toast.promise(promise, {
-        loading: 'Deleting product...',
-        success: 'Product deleted!',
-        error: 'Failed to delete product.'
-      });
-
-      // Deleting image from edgeStore
-      if (imageUrl) {
-        await edgestore.publicFiles.delete({
-          url: imageUrl
-        });
-      }
-
-      setOpen(false);
-    } catch (error) {
-      // eslint-disable-next-line no-console
-      console.error('Error deleting product:', error);
-      toast.error('An unexpected error occurred.');
-    } finally {
-      setLoading(false); // Set loading state to false
-    }
   };
 
   return (

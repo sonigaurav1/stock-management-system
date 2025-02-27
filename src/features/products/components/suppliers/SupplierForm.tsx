@@ -14,7 +14,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { api } from '@/../convex/_generated/api';
-import { useMutation } from 'convex/react';
+import { useMutation, useQuery } from 'convex/react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import * as z from 'zod';
@@ -25,6 +25,12 @@ import CustomImageUpload from '../CustomImageUpload';
 import { useState } from 'react';
 import { Supplier } from '../../types/supplier.types';
 import { formSchema } from '../../schema/SupplierSchema';
+import { useUser } from '@clerk/clerk-react';
+import {
+  restrictedUser,
+  restrictedUserLimit
+} from '../../constants/restrictedUserData';
+import { Progress } from '@/components/ui/progress';
 
 export default function SupplierForm({
   initialData,
@@ -33,9 +39,18 @@ export default function SupplierForm({
   initialData: Supplier | null;
   pageTitle: string;
 }) {
+  const { user } = useUser();
+
   const createSupplier = useMutation(api.documents.createSupplier);
   const updateSupplier = useMutation(api.documents.updateSupplier);
 
+  // fetch all categories to check if the user has reached the limit
+  const allSuppliers = useQuery(
+    api.documents.getAllSuppliers,
+    user?.id === restrictedUser ? undefined : 'skip'
+  );
+
+  const [isLoading, setIsLoading] = useState<boolean>(false);
   const [progress, setProgress] = useState<number>(0);
 
   const { edgestore } = useEdgeStore();
@@ -54,79 +69,71 @@ export default function SupplierForm({
     defaultValues
   });
 
+  async function uploadFile(file: File | null) {
+    if (!file) return null;
+
+    return await edgestore.publicFiles.upload({
+      file,
+      onProgressChange: (progress) => {
+        setProgress(progress);
+      }
+    });
+  }
+
   async function onSubmit(values: z.infer<typeof formSchema>) {
-    if (initialData === null) {
-      let res = null;
-
-      if (values.image) {
-        const file = values.image;
-        res = await edgestore.publicFiles.upload({
-          file,
-          onProgressChange: (progress) => {
-            setProgress(progress);
-          }
-        });
-      }
-
-      try {
-        const promise = createSupplier({
-          name: values.name,
-          phone: values.phone,
-          email: values.email,
-          address: values.address,
-          imageUrl: res?.url ?? undefined
-        });
-
-        toast.promise(promise, {
-          loading: 'Uploading supplier details...',
-          success: 'Supplier details uploaded!',
-          error: 'Failed to upload supplier details.'
-        });
-
-        await promise; // Wait for the promise to resolve
-
-        redirect('/dashboard/product/supplier');
-      } catch (error) {
-        toast.warning('You have reached the maximum supplier creation limit.');
-
-        if (res?.url) {
-          await edgestore.publicFiles.delete({
-            url: res.url
-          });
-        }
-      }
-    } else {
-      let imageUrl = initialData?.imageUrl;
-
-      if (values.image) {
-        const res = await edgestore.publicFiles.upload({
-          file: values.image,
-          onProgressChange: (progress) => {
-            console.log(progress);
-          }
-        });
-        imageUrl = res.url;
-      }
-
-      const promise = updateSupplier({
-        id: initialData?._id as Id<'suppliers'>,
-        updates: {
-          name: values.name,
-          phone: values.phone,
-          email: values.email,
-          address: values.address,
-          imageUrl: imageUrl ?? undefined
-        }
+    setIsLoading(true);
+    if (allSuppliers?.length === restrictedUserLimit) {
+      toast.warning('Failed to upload details.', {
+        description: `You have reached the limit of ${restrictedUserLimit} active suppliers.`,
+        duration: 5000
       });
-
-      toast.promise(promise, {
-        loading: 'Updating supplier details...',
-        success: 'Updated supplier details!',
-        error: 'Failed to update supplier details.'
-      });
-
-      redirect('/dashboard/product/supplier');
+      return;
     }
+
+    let imageUrl = initialData?.imageUrl;
+
+    if (values.image) {
+      const res = await uploadFile(values.image);
+      imageUrl = res?.url ?? imageUrl;
+    }
+
+    const supplierData = {
+      name: values.name,
+      phone: values.phone,
+      email: values.email,
+      address: values.address,
+      imageUrl
+    };
+
+    const promise =
+      initialData === null
+        ? createSupplier(supplierData)
+        : updateSupplier({
+            id: initialData._id as Id<'suppliers'>,
+            updates: supplierData
+          });
+
+    toast.promise(promise, {
+      loading:
+        initialData === null
+          ? 'Uploading details...'
+          : 'Updating supplier details...',
+      success:
+        initialData === null
+          ? 'Category created successfully!'
+          : 'Updated supplier details!',
+      error:
+        initialData === null
+          ? 'Failed to upload details.'
+          : 'Failed to update supplier details.'
+    });
+
+    await promise.then(() => {
+      redirect('/dashboard/product/supplier');
+    });
+
+    setProgress(0);
+    setIsLoading(false);
   }
 
   return (
@@ -217,11 +224,23 @@ export default function SupplierForm({
                 )}
               />
             </div>
-            {progress > 0 && <p>Uploading: {progress}%</p>}
+
+            {progress > 0 && (
+              <div className='flex items-center gap-4'>
+                <Progress value={progress} />
+                <span className='text-xs font-semibold text-muted-foreground'>
+                  {progress}%
+                </span>
+              </div>
+            )}
             {initialData === null ? (
-              <Button type='submit'>Add Supplier</Button>
+              <Button disabled={isLoading} type='submit'>
+                Add Supplier
+              </Button>
             ) : (
-              <Button type='submit'>Edit Supplier</Button>
+              <Button disabled={isLoading} type='submit'>
+                Edit Supplier
+              </Button>
             )}
           </form>
         </Form>

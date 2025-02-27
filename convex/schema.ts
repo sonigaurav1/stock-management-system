@@ -8,9 +8,11 @@ export default defineSchema({
     sku: v.string(), // Unique product identifier
     slug: v.string(), // URL-friendly name
     barcode: v.optional(v.string()), // Barcode for scanning
-    category: v.string(),
+    categoryName: v.string(),
+    categoryId: v.string(),
     subcategory: v.optional(v.string()),
     description: v.optional(v.string()),
+    imageUrl: v.optional(v.string()),
     brand: v.optional(v.string()),
 
     purchasePrice: v.number(), // Cost price
@@ -22,6 +24,7 @@ export default defineSchema({
     reorderLevel: v.optional(v.number()), // Minimum stock before reorder alert
     stockStatus: v.string(), // "in_stock", "low_stock", "out_of_stock"
 
+    supplierName: v.optional(v.string()), // Supplier name
     supplierId: v.optional(v.string()), // Supplier reference
     lastRestockedAt: v.optional(v.number()), // Timestamp of last restock
 
@@ -30,14 +33,17 @@ export default defineSchema({
     createdAt: v.number(),
     updatedAt: v.optional(v.number())
   })
-    .index('by_category', ['category'])
+    .index('by_category', ['categoryId'])
     .index('by_stockLevel', ['stockLevel'])
     .index('by_supplier', ['supplierId'])
     .index('by_purchasePrice', ['purchasePrice'])
     .index('by_inStock', ['inStock'])
     .index('by_stockStatus', ['stockStatus'])
     .index('by_user', ['userId'])
-    .index('by_isDeleted', ['isDeleted']), // Index for filtering active products
+    .index('by_isDeleted', ['isDeleted']) // Index for filtering active products
+    .index('by_user_and_isCategory', ['categoryId', 'isDeleted'])
+    .index('by_user_and_isSupplier', ['supplierId', 'isDeleted'])
+    .index('by_user_and_isDeleted', ['userId', 'isDeleted']),
 
   category: defineTable({
     name: v.string(),
@@ -49,7 +55,10 @@ export default defineSchema({
 
     createdAt: v.number(),
     updatedAt: v.optional(v.number())
-  }).index('by_user', ['userId']),
+  })
+    .index('by_user', ['userId'])
+    .index('by_isDeleted', ['isDeleted']) // Index for filtering active products
+    .index('by_user_and_isDeleted', ['userId', 'isDeleted']),
 
   suppliers: defineTable({
     name: v.string(),
@@ -65,7 +74,8 @@ export default defineSchema({
     updatedAt: v.optional(v.number())
   })
     .index('by_name', ['name'])
-    .index('by_user', ['userId']),
+    .index('by_user', ['userId'])
+    .index('by_user_and_isDeleted', ['userId', 'isDeleted']),
 
   stockMovements: defineTable({
     productId: v.string(), // Which product's stock changed

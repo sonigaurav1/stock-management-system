@@ -35,6 +35,12 @@ import CustomImageUpload from '../CustomImageUpload';
 import { useState } from 'react';
 import { generateSKU, generateSlug } from '@/lib/utils';
 import { Calendar } from 'lucide-react';
+import {
+  restrictedUser,
+  restrictedUserLimit
+} from '../../constants/restrictedUserData';
+import { useUser } from '@clerk/clerk-react';
+import { Progress } from '@/components/ui/progress';
 
 export default function ProductForm({
   initialData,
@@ -43,6 +49,8 @@ export default function ProductForm({
   initialData: Product | null;
   pageTitle: string;
 }) {
+  const { user } = useUser();
+
   // Mutation hooks
   const createProduct = useMutation(api.documents.createProduct);
   const updateProduct = useMutation(api.documents.updateProduct);
@@ -51,7 +59,14 @@ export default function ProductForm({
   const category = useQuery(api.documents.getAllCategories) ?? [];
   const suppliers = useQuery(api.documents.getAllSuppliers) ?? [];
 
+  // fetch all categories to check if the user has reached the limit
+  const allProducts = useQuery(
+    api.documents.getAllProducts,
+    user?.id === restrictedUser ? undefined : 'skip'
+  );
+
   // Local state
+  const [isLoading, setIsLoading] = useState<boolean>(false);
   const [progress, setProgress] = useState<number>(0);
 
   const { edgestore } = useEdgeStore();
@@ -60,7 +75,7 @@ export default function ProductForm({
   const defaultValues: Partial<FormValues> = {
     name: initialData?.name ?? 'Apple iPhone 14 Pro',
     barcode: initialData?.barcode ?? '123456789012',
-    category: initialData?.category ?? '',
+    categoryId: initialData?.categoryId ?? '',
     subcategory: initialData?.subcategory ?? '',
     description:
       initialData?.description ??
@@ -84,106 +99,88 @@ export default function ProductForm({
     defaultValues
   });
 
+  async function uploadFile(file: File | null) {
+    if (!file) return null;
+
+    return await edgestore.publicFiles.upload({
+      file,
+      onProgressChange: (progress) => {
+        setProgress(progress);
+      }
+    });
+  }
+
   async function onSubmit(values: z.infer<typeof formSchema>) {
-    if (initialData === null) {
-      const file = values?.image;
-
-      let res = null;
-
-      if (file) {
-        res = await edgestore.publicFiles.upload({
-          file,
-          onProgressChange: (progress) => {
-            setProgress(progress);
-          }
-        });
-      }
-
-      try {
-        const promise = createProduct({
-          name: values.name,
-          slug: generateSlug(values.name),
-          sku: generateSKU(values.category, values.brand, values.name),
-          barcode: values.barcode,
-          category: values.category,
-          subcategory: values.subcategory,
-          description: values.description,
-          brand: values.brand,
-          purchasePrice: values.purchasePrice ?? 0,
-          sellingPrice: values.sellingPrice ?? 0,
-          discountPrice:
-            (values.sellingPrice ?? 0) - (values.purchasePrice ?? 0),
-          stockLevel: values.stockLevel ?? 0,
-          inStock: values.inStock,
-          reorderLevel: values.reorderLevel ?? 0,
-          stockStatus: values.stockStatus,
-          supplierId: values.supplierId,
-          lastRestockedAt: values.lastRestockedAt,
-          imageUrl: res?.url ?? undefined
-        });
-
-        toast.promise(promise, {
-          loading: 'Uploading details...',
-          success: 'Details uploaded!',
-          error: 'Failed to upload details.'
-        });
-
-        redirect('/dashboard/product');
-      } catch (error) {
-        toast.warning('You have reached the maximum product creation limit.');
-
-        if (res?.url) {
-          await edgestore.publicFiles.delete({
-            url: res.url
-          });
-        }
-      }
-    } else {
-      let imageUrl = initialData?.imageUrl;
-
-      if (values.image) {
-        const res = await edgestore.publicFiles.upload({
-          file: values.image,
-          onProgressChange: (progress) => {
-            console.log(progress);
-          }
-        });
-        imageUrl = res.url;
-      }
-
-      const promise = updateProduct({
-        id: initialData?._id as Id<'products'>,
-        updates: {
-          name: values?.name || initialData?.name,
-          barcode: values?.barcode || initialData?.barcode,
-          category: values?.category || initialData?.category,
-          subcategory: values?.subcategory || initialData?.subcategory,
-          description: values?.description || initialData?.description,
-          brand: values?.brand || initialData?.brand,
-          purchasePrice: values?.purchasePrice || initialData?.purchasePrice,
-          sellingPrice: values?.sellingPrice || initialData?.sellingPrice,
-          discountPrice:
-            (values?.sellingPrice ?? 0) - (values?.purchasePrice ?? 0) ||
-            initialData?.sellingPrice - initialData?.purchasePrice,
-          stockLevel: values?.stockLevel || initialData?.stockLevel,
-          inStock: values?.inStock ?? initialData?.inStock, // || operator is not working here so using ??
-          reorderLevel: values?.reorderLevel || initialData?.reorderLevel,
-          stockStatus: values?.stockStatus || initialData?.stockStatus,
-          supplierId: values?.supplierId || initialData?.supplierId,
-          lastRestockedAt:
-            values?.lastRestockedAt || initialData?.lastRestockedAt,
-          imageUrl: imageUrl ?? undefined
-        }
+    setIsLoading(true);
+    if (allProducts?.length === restrictedUserLimit) {
+      toast.warning('Failed to upload details.', {
+        description: `You have reached the limit of ${restrictedUserLimit} active products.`,
+        duration: 5000
       });
-
-      toast.promise(promise, {
-        loading: 'Updating product details...',
-        success: 'Updated product details!',
-        error: 'Failed to update product details.'
-      });
-
-      redirect('/dashboard/product');
+      return;
     }
+
+    let imageUrl = initialData?.imageUrl;
+
+    if (values.image) {
+      const res = await uploadFile(values.image);
+      imageUrl = res?.url ?? imageUrl;
+    }
+
+    const productData = {
+      name: values.name,
+      slug: generateSlug(values.name),
+      sku: generateSKU(values.categoryId, values.brand, values.name),
+      barcode: values.barcode,
+      categoryId: values.categoryId,
+      categoryName:
+        category.find((cat) => cat._id === values.categoryId)?.name ?? '',
+      subcategory: values.subcategory,
+      description: values.description,
+      brand: values.brand,
+      purchasePrice: values.purchasePrice ?? 0,
+      sellingPrice: values.sellingPrice ?? 0,
+      discountPrice: (values.sellingPrice ?? 0) - (values.purchasePrice ?? 0),
+      stockLevel: values.stockLevel ?? 0,
+      inStock: values.inStock,
+      reorderLevel: values.reorderLevel ?? 0,
+      stockStatus: values.stockStatus,
+      supplierId: values.supplierId,
+      supplierName:
+        suppliers.find((supplier) => supplier._id === values.supplierId)
+          ?.name ?? '',
+      lastRestockedAt: values.lastRestockedAt,
+      imageUrl
+    };
+
+    const promise =
+      initialData === null
+        ? createProduct(productData)
+        : updateProduct({
+            id: initialData._id as Id<'products'>,
+            updates: productData
+          });
+
+    toast.promise(promise, {
+      loading:
+        initialData === null
+          ? 'Uploading details...'
+          : 'Updating product details...',
+      success:
+        initialData === null
+          ? 'Category created successfully!'
+          : 'Updated product details!',
+      error:
+        initialData === null
+          ? 'Failed to upload details.'
+          : 'Failed to update product details.'
+    });
+
+    await promise.then(() => {
+      redirect('/dashboard/product');
+    });
+    setProgress(0);
+    setIsLoading(false);
   }
 
   return (
@@ -246,7 +243,7 @@ export default function ProductForm({
               /> */}
               <FormField
                 control={form.control}
-                name='category'
+                name='categoryId'
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Category</FormLabel>
@@ -261,7 +258,7 @@ export default function ProductForm({
                       </FormControl>
                       <SelectContent>
                         {category?.map((cat) => (
-                          <SelectItem key={cat._id} value={cat.slug}>
+                          <SelectItem key={cat._id} value={cat._id}>
                             {cat.name}
                           </SelectItem>
                         ))}
@@ -484,10 +481,7 @@ export default function ProductForm({
                       </FormControl>
                       <SelectContent>
                         {suppliers?.map((supplier) => (
-                          <SelectItem
-                            key={supplier._id}
-                            value={generateSlug(supplier.name)}
-                          >
+                          <SelectItem key={supplier._id} value={supplier._id}>
                             {supplier.name}
                           </SelectItem>
                         ))}
@@ -557,11 +551,23 @@ export default function ProductForm({
                 </FormItem>
               )}
             />
-            {progress > 0 && <p>Uploading: {progress}%</p>}
+
+            {progress > 0 && (
+              <div className='flex items-center gap-4'>
+                <Progress value={progress} />
+                <span className='text-xs font-semibold text-muted-foreground'>
+                  {progress}%
+                </span>
+              </div>
+            )}
             {initialData === null ? (
-              <Button type='submit'>Add Product</Button>
+              <Button disabled={isLoading} type='submit'>
+                Add Product
+              </Button>
             ) : (
-              <Button type='submit'>Edit Product</Button>
+              <Button disabled={isLoading} type='submit'>
+                Edit Product
+              </Button>
             )}
           </form>
         </Form>
