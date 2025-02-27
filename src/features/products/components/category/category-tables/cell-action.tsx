@@ -10,7 +10,6 @@ import { toast } from 'sonner';
 import { useEdgeStore } from '@/lib/edgestore';
 import { useState } from 'react';
 import { Category } from '../../../types/category.types';
-import { CustomError } from '@/lib/utils';
 
 interface CellActionProps {
   data: Category;
