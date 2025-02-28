@@ -31,6 +31,7 @@ import {
   restrictedUserLimit
 } from '../../constants/restrictedUserData';
 import { Progress } from '@/components/ui/progress';
+import { maxSizeInMB } from '../../constants';
 
 export default function SupplierForm({
   initialData,
@@ -157,7 +158,7 @@ export default function SupplierForm({
                       <CustomImageUpload
                         value={field.value}
                         onChange={(file) => field.onChange(file || null)}
-                        maxSizeInMB={4}
+                        maxSizeInMB={maxSizeInMB}
                         defaultPreview={initialData?.imageUrl || undefined}
                       />
                     </FormControl>

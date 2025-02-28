@@ -4,6 +4,7 @@ import Image from 'next/image';
 import { CellAction } from './cell-action';
 import { Product, SkeletonProduct } from '../../../types/product.types';
 import { Skeleton } from '@/components/ui/skeleton';
+import CustomTooltip from '@/components/ui/custom/CustomTooltip';
 
 const placeholderImageUrl = '/assets/images/product-placeholder.png';
 
@@ -34,7 +35,20 @@ export const columns: ColumnDef<Product>[] = [
   },
   {
     accessorKey: 'name',
-    header: 'NAME'
+    header: 'NAME',
+    cell: ({ row }) => {
+      const name = row.getValue('name') as string;
+      return (
+        <div className='max-w-64'>
+          <CustomTooltip
+            triggerElement={name}
+            tooltipContent={name}
+            delayDuration={0}
+            triggerClassName='max-w-64 truncate'
+          />
+        </div>
+      );
+    }
   },
   {
     accessorKey: 'categoryName',
@@ -66,7 +80,20 @@ export const columns: ColumnDef<Product>[] = [
   },
   {
     accessorKey: 'description',
-    header: 'DESCRIPTION'
+    header: 'DESCRIPTION',
+    cell: ({ row }) => {
+      const description = row.getValue('description') as string;
+      return (
+        <div className='max-w-64'>
+          <CustomTooltip
+            triggerElement={description}
+            tooltipContent={description}
+            delayDuration={0}
+            triggerClassName='max-w-64 truncate'
+          />
+        </div>
+      );
+    }
   },
   {
     id: 'actions',

@@ -170,7 +170,11 @@ export function DataTable<TData, TValue>({
               </SelectTrigger>
               <SelectContent side='top'>
                 {pageSizeOptions.map((pageSize) => (
-                  <SelectItem key={pageSize} value={`${pageSize}`}>
+                  <SelectItem
+                    key={pageSize}
+                    value={`${pageSize}`}
+                    onChange={() => table.setPageSize(pageSize)}
+                  >
                     {pageSize}
                   </SelectItem>
                 ))}

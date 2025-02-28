@@ -33,6 +33,7 @@ import {
   restrictedUserLimit
 } from '../../constants/restrictedUserData';
 import { Progress } from '@/components/ui/progress';
+import { maxSizeInMB } from '../../constants';
 
 export default function CategoryForm({
   initialData,
@@ -159,7 +160,7 @@ export default function CategoryForm({
                       <CustomImageUpload
                         value={field.value}
                         onChange={(file) => field.onChange(file || null)}
-                        maxSizeInMB={4}
+                        maxSizeInMB={maxSizeInMB}
                         defaultPreview={initialData?.imageUrl || undefined}
                       />
                     </FormControl>

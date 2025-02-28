@@ -41,6 +41,7 @@ import {
 } from '../../constants/restrictedUserData';
 import { useUser } from '@clerk/clerk-react';
 import { Progress } from '@/components/ui/progress';
+import { maxSizeInMB } from '../../constants';
 
 export default function ProductForm({
   initialData,
@@ -73,19 +74,17 @@ export default function ProductForm({
 
   type FormValues = z.infer<typeof formSchema>;
   const defaultValues: Partial<FormValues> = {
-    name: initialData?.name ?? 'Apple iPhone 14 Pro',
-    barcode: initialData?.barcode ?? '123456789012',
+    name: initialData?.name ?? '',
+    barcode: initialData?.barcode ?? '',
     categoryId: initialData?.categoryId ?? '',
     subcategory: initialData?.subcategory ?? '',
-    description:
-      initialData?.description ??
-      'Apple iPhone 14 Pro with A16 Bionic chip and 256GB storage',
-    brand: initialData?.brand ?? 'Apple',
-    purchasePrice: initialData?.purchasePrice ?? 950,
-    sellingPrice: initialData?.sellingPrice ?? 1099,
-    stockLevel: initialData?.stockLevel ?? 50,
+    description: initialData?.description ?? '',
+    brand: initialData?.brand ?? '',
+    purchasePrice: initialData?.purchasePrice ?? 0,
+    sellingPrice: initialData?.sellingPrice ?? 0,
+    stockLevel: initialData?.stockLevel ?? 0,
     inStock: initialData?.inStock ?? true,
-    reorderLevel: initialData?.reorderLevel ?? 10,
+    reorderLevel: initialData?.reorderLevel ?? 0,
     stockStatus:
       (initialData?.stockStatus as 'in_stock' | 'low_stock' | 'out_of_stock') ??
       'in_stock',
@@ -184,7 +183,7 @@ export default function ProductForm({
   }
 
   return (
-    <Card className='mx-auto w-full'>
+    <Card className='mx-auto mb-16 w-full'>
       <CardHeader>
         <CardTitle className='text-left text-2xl font-bold'>
           {pageTitle}
@@ -204,7 +203,7 @@ export default function ProductForm({
                       <CustomImageUpload
                         value={field.value}
                         onChange={(file) => field.onChange(file || null)}
-                        maxSizeInMB={4}
+                        maxSizeInMB={maxSizeInMB}
                         defaultPreview={initialData?.imageUrl || undefined}
                       />
                     </FormControl>

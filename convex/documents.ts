@@ -16,42 +16,6 @@ export type ProductFilters = {
   inStock?: boolean;
 };
 
-// Get paginated products (excluding deleted ones)
-export const getPaginatedProducts = query({
-  args: {
-    paginationOptions: v.object({
-      page: v.number(),
-      pageSize: v.number()
-    })
-  },
-  handler: async (ctx, args) => {
-    const identify = await ctx.auth.getUserIdentity();
-
-    if (!identify) {
-      throw new Error('Not authenticated');
-    }
-    const userId = identify.subject;
-
-    const { page, pageSize } = args.paginationOptions;
-
-    const products = await ctx.db
-      .query('products')
-      .withIndex('by_user_and_isDeleted', (q) =>
-        q.eq('userId', userId).eq('isDeleted', false)
-      )
-      .collect();
-
-    const startIndex = (page - 1) * pageSize;
-    const paginatedProducts = products.slice(startIndex, startIndex + pageSize);
-
-    return {
-      products: paginatedProducts,
-      totalPages: Math.ceil(products.length / pageSize),
-      currentPage: page
-    };
-  }
-});
-
 // Get all products (excluding deleted ones)
 export const getAllProducts = query({
   handler: async (ctx) => {
@@ -586,26 +550,83 @@ export const getFilteredCategory = query({
     const { page, pageSize } = args.paginationOptions;
     const { filters } = args;
 
-    let categoryQuery = ctx.db
+    let categoryQuery = await ctx.db
       .query('category')
       .withIndex('by_user_and_isDeleted', (q) =>
         q.eq('userId', userId).eq('isDeleted', false)
-      );
+      )
+      .collect();
+
+    let filteredCategories = categoryQuery;
 
     if (filters?.searchTerm) {
       const searchTerms = filters.searchTerm.toLowerCase().split(' ');
-      categoryQuery = categoryQuery.filter((category: any) => {
+      filteredCategories = categoryQuery.filter((category: any) => {
         const searchableText =
           `${category.name ?? ''} ${category.description ?? ''}`.toLowerCase();
         return searchTerms.every((term) => searchableText.includes(term));
       });
     }
 
-    const categories = await categoryQuery.collect();
-
-    const totalCount = categories.length;
+    const totalCount = filteredCategories.length;
     const startIndex = (page - 1) * pageSize;
-    const paginatedCategories = categories.slice(
+    const paginatedCategories = filteredCategories.slice(
+      startIndex,
+      startIndex + pageSize
+    );
+
+    return {
+      category: paginatedCategories,
+      totalPages: Math.ceil(totalCount / pageSize),
+      currentPage: page,
+      totalItems: totalCount
+    };
+  }
+});
+
+// searchCategory
+export const searchCategory = query({
+  args: {
+    paginationOptions: v.object({
+      page: v.number(),
+      pageSize: v.number()
+    }),
+    filters: v.optional(
+      v.object({
+        searchTerm: v.optional(v.string())
+      })
+    )
+  },
+  handler: async (ctx, args) => {
+    const identify = await ctx.auth.getUserIdentity();
+    if (!identify) {
+      throw new Error('Not authenticated');
+    }
+    const userId = identify.subject;
+
+    const { page, pageSize } = args.paginationOptions;
+    const { filters } = args;
+
+    let categoryQuery = await ctx.db
+      .query('category')
+      .withIndex('by_user_and_isDeleted', (q) =>
+        q.eq('userId', userId).eq('isDeleted', false)
+      )
+      .collect();
+
+    const filteredCategories = categoryQuery.filter(
+      (category: any) =>
+        category.name
+          .toLowerCase()
+          .includes(filters?.searchTerm?.toLowerCase()) ||
+        category.description
+          .toLowerCase()
+          .includes(filters?.searchTerm?.toLowerCase())
+    );
+
+    const totalCount = filteredCategories.length;
+    const startIndex = (page - 1) * pageSize;
+    const paginatedCategories = filteredCategories.slice(
       startIndex,
       startIndex + pageSize
     );
@@ -804,26 +825,27 @@ export const getFilteredSupplier = query({
     const { page, pageSize } = args.paginationOptions;
     const { filters } = args;
 
-    let supplierQuery = ctx.db
+    let supplierQuery = await ctx.db
       .query('suppliers')
       .withIndex('by_user_and_isDeleted', (q) =>
         q.eq('userId', userId).eq('isDeleted', false)
-      );
+      )
+      .collect();
+
+    let filteredSuppliers = supplierQuery;
 
     if (filters?.searchTerm) {
       const searchTerms = filters.searchTerm.toLowerCase().split(' ');
-      supplierQuery = supplierQuery.filter((supplier: any) => {
+      filteredSuppliers = supplierQuery.filter((supplier: any) => {
         const searchableText =
           `${supplier.name} ${supplier.phone} ${supplier.address}`.toLowerCase();
         return searchTerms.every((term) => searchableText.includes(term));
       });
     }
 
-    const suppliers = await supplierQuery.collect();
-
-    const totalCount = suppliers.length;
+    const totalCount = filteredSuppliers.length;
     const startIndex = (page - 1) * pageSize;
-    const paginatedSuppliers = suppliers.slice(
+    const paginatedSuppliers = filteredSuppliers.slice(
       startIndex,
       startIndex + pageSize
     );
