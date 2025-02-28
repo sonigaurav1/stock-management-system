@@ -43,7 +43,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import * as React from 'react';
 import { SignOutButton, useUser } from '@clerk/clerk-react';
-import { Icons } from '../Icons';
+import { Icons } from '../icons';
 
 export const company = {
   name: 'NextTech',

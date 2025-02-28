@@ -4,7 +4,7 @@
 import { useSearchParams } from 'next/navigation';
 import { useSignIn } from '@clerk/clerk-react';
 import { Button } from '@/components/ui/button';
-import { Icons } from '@/components/Icons';
+import { Icons } from '@/components/icons';
 import { PATH } from '@/constants/PATH';
 
 export default function GithubSignInButton() {
