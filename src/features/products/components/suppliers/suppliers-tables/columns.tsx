@@ -10,7 +10,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 
 const placeholderImageUrl = '/assets/images/user-placeholder.webp';
 
-export const columns: ColumnDef<Supplier>[] = [
+export const Columns: ColumnDef<Supplier>[] = [
   {
     accessorKey: 'imageUrl',
     header: 'IMAGE',

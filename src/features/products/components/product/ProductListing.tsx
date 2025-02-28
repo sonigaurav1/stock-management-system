@@ -1,7 +1,7 @@
 'use client';
 
 import { DataTable as ProductTable } from '@/components/ui/table/ProductDataTable';
-import { columns, skeletonColumns } from './product-tables/Columns';
+import { Columns, skeletonColumns } from './product-tables/Columns';
 import { useEffect, useState } from 'react';
 import { ProductFilters as ProductFiltersType } from 'convex/documents';
 import { useDebounce } from '@/hooks/useDebounce';
@@ -37,7 +37,7 @@ export default function ProductListingPage() {
         setPage={setPage}
       />
       <ProductTable
-        columns={isFetching ? (skeletonColumns as ColumnDef<any>[]) : columns}
+        columns={isFetching ? (skeletonColumns as ColumnDef<any>[]) : Columns}
         data={isFetching ? productSkeletonData : products}
         totalItems={totalItems}
         pagination={{

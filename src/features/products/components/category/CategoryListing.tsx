@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/input';
 import { categorySkeletonData } from '../../constants/skeletonData.category';
 import { ColumnDef } from '@tanstack/react-table';
 import { cn } from '@/lib/utils';
-import { columns, skeletonColumns } from './category-tables/Columns';
+import { Columns, SkeletonColumns } from './category-tables/Columns';
 
 type CategoryFiltersType = {
   searchTerm?: string;
@@ -42,7 +42,7 @@ export default function CategoryListingPage() {
       />
 
       <CategoryDataTable
-        columns={isFetching ? (skeletonColumns as ColumnDef<any>[]) : columns}
+        columns={isFetching ? (SkeletonColumns as ColumnDef<any>[]) : Columns}
         data={isFetching ? categorySkeletonData : category}
         totalItems={totalItems}
         pagination={{

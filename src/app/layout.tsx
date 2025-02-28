@@ -5,6 +5,8 @@ import NextTopLoader from 'nextjs-toploader';
 import './globals.css';
 import { ConvexClientProvider } from '@/features/auth/providers/ConvexProvider';
 import Providers from '@/components/layout/Providers';
+import { SpeedInsights } from '@vercel/speed-insights/next';
+import { Analytics } from '@vercel/analytics/react';
 
 export const metadata: Metadata = {
   title: 'Stock Management System',
@@ -28,6 +30,8 @@ export default function RootLayout({
       <body className='overflow-hidden'>
         <ConvexClientProvider>
           <Providers>
+            <SpeedInsights />
+            <Analytics />
             <NextTopLoader showSpinner={false} />
             <Toaster richColors />
             {children}
