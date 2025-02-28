@@ -33,7 +33,7 @@ import {
 import { Progress } from '@/components/ui/progress';
 import { maxSizeInMB } from '../../constants';
 import useCompressUploadedImage from '../../hooks/useCompressUploadedImage';
-import { formSchema } from '../../schema/categorySchema';
+import { formSchema } from '../../schema/category-schema';
 
 export default function CategoryForm({
   initialData,
