@@ -1,15 +1,14 @@
-/* eslint-disable no-console */
 'use client';
 
 import { useEffect, useState, useTransition } from 'react';
 import { useDebounce } from '@/hooks/useDebounce';
 import { useCategoryQuery } from '../../hooks/useCategoryQuery';
 import { CategoryDataTable } from '@/components/ui/table/CategoryDataTable';
-import { columns, skeletonColumns } from './category-tables/Columns';
 import { Input } from '@/components/ui/input';
 import { categorySkeletonData } from '../../constants/skeletonData.category';
 import { ColumnDef } from '@tanstack/react-table';
 import { cn } from '@/lib/utils';
+import { columns, skeletonColumns } from './category-tables/Columns';
 
 type CategoryFiltersType = {
   searchTerm?: string;

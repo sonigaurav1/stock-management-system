@@ -2,9 +2,9 @@ import PageContainer from '@/components/layout/PageContainer';
 import { buttonVariants } from '@/components/ui/button';
 import { Heading } from '@/components/ui/heading';
 import { Separator } from '@/components/ui/separator';
+import ProductListingPage from '@/features/products/components/product/ProductListing';
 import { cn } from '@/lib/utils';
 import { Plus } from 'lucide-react';
-import ProductListingPage from '@/features/products/components/product/ProductListing';
 import Link from 'next/link';
 
 export const metadata = {

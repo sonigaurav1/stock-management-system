@@ -1,4 +1,3 @@
-/* eslint-disable no-console */
 'use client';
 
 import { DataTable as ProductTable } from '@/components/ui/table/ProductDataTable';

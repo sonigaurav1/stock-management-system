@@ -1,9 +1,7 @@
-/* eslint-disable no-console */
 'use client';
 
 import { useEffect, useState } from 'react';
 import { useDebounce } from '@/hooks/useDebounce';
-// import { columns } from './category-tables/columns';
 import { SupplierDataTable } from '@/components/ui/table/SupplierDataTable';
 import { useSupplierQuery } from '../../hooks/useSupplierQuery';
 import { columns, skeletonColumns } from './suppliers-tables/Columns';

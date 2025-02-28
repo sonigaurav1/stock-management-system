@@ -1,4 +1,5 @@
-/* eslint-disable no-console */
+'use client';
+
 import { useCallback, useState } from 'react';
 import { maxSizeInMB } from '../constants';
 import imageCompression from 'browser-image-compression';
@@ -8,12 +9,6 @@ const useCompressUploadedImage = () => {
   const [error, setError] = useState<Error | null>(null);
 
   const compressImage = useCallback(async (imageFile: File) => {
-    console.log('originalFile instanceof Blob', imageFile instanceof Blob); // true
-    console.log(`originalFile size ${imageFile.size / 1024 / 1024} MB`);
-    console.log(
-      `compress percentage: ${100 - (imageFile.size / 1024 / 1024) * 100}%`
-    );
-
     const options = {
       maxSizeMB: maxSizeInMB,
       maxWidthOrHeight: 1920,
@@ -26,12 +21,10 @@ const useCompressUploadedImage = () => {
 
     try {
       const compressed = await imageCompression(imageFile, options);
-      console.log('compressedFile instanceof Blob', compressed instanceof Blob); // true
-      console.log(`compressedFile size ${compressed.size / 1024 / 1024} MB`); // smaller than maxSizeMB
-
       setCompressedFile(compressed);
     } catch (err) {
-      console.log(err);
+      // eslint-disable-next-line no-console
+      console.error(err);
       setError(err as Error);
     }
   }, []);
