@@ -1,10 +1,10 @@
-import Providers from '@/components/layout/providers';
 import { Toaster } from '@/components/ui/sonner';
 import type { Metadata } from 'next';
 import { Lato } from 'next/font/google';
 import NextTopLoader from 'nextjs-toploader';
 import './globals.css';
 import { ConvexClientProvider } from '@/features/auth/providers/ConvexProvider';
+import Providers from '@/components/layout/Providers';
 
 export const metadata: Metadata = {
   title: 'Stock Management System',
@@ -27,8 +27,8 @@ export default function RootLayout({
     <html lang='en' className={lato.className} suppressHydrationWarning>
       <body className='overflow-hidden'>
         <ConvexClientProvider>
-          <NextTopLoader showSpinner={false} />
           <Providers>
+            <NextTopLoader showSpinner={false} />
             <Toaster richColors />
             {children}
           </Providers>

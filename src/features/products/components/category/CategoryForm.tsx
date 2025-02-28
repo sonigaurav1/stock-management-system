@@ -20,12 +20,11 @@ import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import * as z from 'zod';
 import { useEdgeStore } from '@/lib/edgestore';
-import { redirect } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import { Id } from 'convex/_generated/dataModel';
 import CustomImageUpload from '../CustomImageUpload';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Category } from '../../types/category.types';
-import { formSchema } from '../../schema/CategorySchema';
 import { generateSlug } from '@/lib/utils';
 import { useUser } from '@clerk/clerk-react';
 import {
@@ -34,6 +33,8 @@ import {
 } from '../../constants/restrictedUserData';
 import { Progress } from '@/components/ui/progress';
 import { maxSizeInMB } from '../../constants';
+import useCompressUploadedImage from '../../hooks/useCompressUploadedImage';
+import { formSchema } from '../../schema/categorySchema';
 
 export default function CategoryForm({
   initialData,
@@ -43,6 +44,8 @@ export default function CategoryForm({
   pageTitle: string;
 }) {
   const { user } = useUser();
+  const router = useRouter();
+  const { compressedFile, compressImage } = useCompressUploadedImage();
 
   const createCategory = useMutation(api.documents.createCategory);
   const updateCategory = useMutation(api.documents.updateCategory);
@@ -53,6 +56,7 @@ export default function CategoryForm({
     user?.id === restrictedUser ? undefined : 'skip'
   );
 
+  const [imageFile, setImageFile] = useState<File | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [progress, setProgress] = useState<number>(0);
 
@@ -70,6 +74,13 @@ export default function CategoryForm({
     defaultValues
   });
 
+  useEffect(() => {
+    if (imageFile) {
+      compressImage(imageFile);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [imageFile]);
+
   async function uploadFile(file: File | null) {
     if (!file) return null;
 
@@ -81,21 +92,27 @@ export default function CategoryForm({
     });
   }
 
+  const handleFileChange = (file: File) => {
+    setImageFile(file);
+  };
+
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsLoading(true);
+
     if (allCategories?.length === restrictedUserLimit) {
-      toast.warning('Failed to upload details.', {
+      toast.warning('Limitation Error', {
         description: `You have reached the limit of ${restrictedUserLimit} active categories.`,
         duration: 5000
       });
+      setIsLoading(false);
       return;
     }
 
     let imageUrl = initialData?.imageUrl;
 
-    if (values.image) {
-      const res = await uploadFile(values.image);
-      imageUrl = res?.url ?? imageUrl;
+    if (compressedFile) {
+      const res = await uploadFile(compressedFile as File);
+      imageUrl = res?.url ?? initialData?.imageUrl ?? '';
     }
 
     const categoryData = {
@@ -133,7 +150,7 @@ export default function CategoryForm({
     });
 
     await promise.then(() => {
-      redirect('/dashboard/product/category');
+      router.push('/dashboard/product/category');
     });
     setProgress(0);
     setIsLoading(false);
@@ -159,7 +176,9 @@ export default function CategoryForm({
                     <FormControl>
                       <CustomImageUpload
                         value={field.value}
-                        onChange={(file) => field.onChange(file || null)}
+                        onChange={(file) => {
+                          handleFileChange(file as any);
+                        }}
                         maxSizeInMB={maxSizeInMB}
                         defaultPreview={initialData?.imageUrl || undefined}
                       />

@@ -1,45 +1,65 @@
+'use client';
+
 import { useState } from 'react';
-import { signIn, signOut } from 'next-auth/react';
+import { useClerk, useSignIn } from '@clerk/clerk-react';
 import { toast } from 'sonner';
+import { useRouter } from 'next/navigation';
 
 export const useAuth = () => {
-    const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const router = useRouter();
 
-    const handleSignIn = async (email: string, password: string, callbackUrl: string) => {
-        setLoading(true);
-        try {
-            const result = await signIn('credentials', {
-                email,
-                password,
-                callbackUrl
-            });
-            if (result?.error) {
-                toast.error(result.error);
-            } else {
-                toast.success('Signed In Successfully!');
-            }
-        } catch (error) {
-            toast.error('An error occurred during sign-in.');
-        } finally {
-            setLoading(false);
-        }
-    };
+  const { signIn, setActive } = useSignIn();
+  const { signOut } = useClerk();
 
-    const handleSignOut = async () => {
-        setLoading(true);
-        try {
-            await signOut();
-            toast.success('Signed Out Successfully!');
-        } catch (error) {
-            toast.error('An error occurred during sign-out.');
-        } finally {
-            setLoading(false);
-        }
-    };
+  const handleSignIn = async (
+    email: string,
+    password: string,
+    callbackUrl: string
+  ) => {
+    if (!signIn) {
+      toast.error('Sign-in is not available.');
+      return;
+    }
+    setLoading(true);
 
-    return {
-        loading,
-        handleSignIn,
-        handleSignOut
-    };
+    try {
+      const signInAttempt = await signIn.create({
+        identifier: email,
+        password
+      });
+
+      if (signInAttempt.status === 'complete') {
+        toast.success('Signed In Successfully!');
+        await setActive({ session: signInAttempt.createdSessionId });
+        router.push(callbackUrl);
+      }
+    } catch (error: any) {
+      toast.error(
+        error?.message === 'Identifier is invalid.'
+          ? 'Email not found.'
+          : error?.message || 'An error occurred during sign-in.'
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSignOut = async () => {
+    setLoading(true);
+    try {
+      await signOut();
+      toast.success('Signed Out Successfully!');
+    } catch (error) {
+      toast.error('An error occurred during sign-out.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return {
+    loading,
+    handleSignIn,
+    handleSignOut
+  };
 };

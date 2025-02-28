@@ -1,13 +1,13 @@
 /* eslint-disable no-console */
 'use client';
 
-import { DataTable as ProductTable } from '@/components/ui/table/data-table';
-import { columns, skeletonColumns } from './product-tables/columns';
+import { DataTable as ProductTable } from '@/components/ui/table/ProductDataTable';
+import { columns, skeletonColumns } from './product-tables/Columns';
 import { useEffect, useState } from 'react';
 import { ProductFilters as ProductFiltersType } from 'convex/documents';
-import { useDebounce } from '@/hooks/use-debounce';
+import { useDebounce } from '@/hooks/useDebounce';
 import { useProductQuery } from '../../hooks/useProductQuery';
-import ProductTableAction from './product-tables/product-table-action';
+import ProductTableAction from './product-tables/ProductTableAction';
 import { ColumnDef } from '@tanstack/react-table';
 import { productSkeletonData } from '../../constants/skeletonData.product';
 

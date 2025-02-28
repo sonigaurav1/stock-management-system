@@ -1,36 +1,24 @@
-import KBar from '@/components/kbar';
-import AppSidebar from '@/components/layout/app-sidebar';
-import Header from '@/components/layout/header';
-import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar';
-import type { Metadata } from 'next';
-import { cookies } from 'next/headers';
+'use client';
 
-export const metadata: Metadata = {
-  title: 'Stock Management System',
-  description:
-    'Effortlessly manage your business inventory with our intuitive and powerful tools.'
-};
+import { useRouter } from 'next/navigation';
+import { PATH } from '@/constants/PATH';
+import { useUser } from '@clerk/clerk-react';
+import { useEffect } from 'react';
 
-export default async function DashboardLayout({
+export default function DashboardRootLayout({
   children
 }: {
   children: React.ReactNode;
 }) {
-  // Persisting the sidebar state in the cookie.
-  const cookieStore = await cookies();
-  const defaultOpen = cookieStore.get('sidebar:state')?.value === 'true';
+  const { isSignedIn, isLoaded } = useUser();
 
-  return (
-    <KBar>
-      <SidebarProvider defaultOpen={defaultOpen}>
-        <AppSidebar />
-        <SidebarInset>
-          <Header />
-          {/* page main content */}
-          {children}
-          {/* page main content ends */}
-        </SidebarInset>
-      </SidebarProvider>
-    </KBar>
-  );
+  const router = useRouter();
+
+  useEffect(() => {
+    if (!isSignedIn && isLoaded) {
+      router.push(PATH.SIGNIN);
+    }
+  }, [isSignedIn, isLoaded, router]);
+
+  return <>{children}</>;
 }

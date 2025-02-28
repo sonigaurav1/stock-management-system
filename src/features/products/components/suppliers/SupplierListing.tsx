@@ -2,11 +2,11 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useDebounce } from '@/hooks/use-debounce';
+import { useDebounce } from '@/hooks/useDebounce';
 // import { columns } from './category-tables/columns';
 import { SupplierDataTable } from '@/components/ui/table/SupplierDataTable';
 import { useSupplierQuery } from '../../hooks/useSupplierQuery';
-import { columns, skeletonColumns } from './suppliers-tables/columns';
+import { columns, skeletonColumns } from './suppliers-tables/Columns';
 import { Input } from '@/components/ui/input';
 import { ColumnDef } from '@tanstack/react-table';
 import { supplierSkeletonData } from '../../constants/skeletonData.supplier';

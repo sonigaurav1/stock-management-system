@@ -161,53 +161,6 @@ export const getProductsByCategory = query({
   }
 });
 
-// Search products
-export const searchProducts = query({
-  args: {
-    searchTerm: v.string(),
-    paginationOptions: v.object({
-      page: v.number(),
-      pageSize: v.number()
-    })
-  },
-  handler: async (ctx, args) => {
-    const identify = await ctx.auth.getUserIdentity();
-
-    if (!identify) {
-      throw new Error('Not authenticated');
-    }
-    const userId = identify.subject;
-
-    const { searchTerm, paginationOptions } = args;
-    const { page, pageSize } = paginationOptions;
-
-    const allProducts = await ctx.db
-      .query('products')
-      .withIndex('by_user_and_isDeleted', (q) =>
-        q.eq('userId', userId).eq('isDeleted', false)
-      )
-      .collect();
-
-    const filteredProducts = allProducts.filter(
-      (product) =>
-        product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        product.categoryName.toLowerCase().includes(searchTerm.toLowerCase())
-    );
-
-    const startIndex = (page - 1) * pageSize;
-    const paginatedProducts = filteredProducts.slice(
-      startIndex,
-      startIndex + pageSize
-    );
-
-    return {
-      products: paginatedProducts,
-      totalPages: Math.ceil(filteredProducts.length / pageSize),
-      currentPage: page
-    };
-  }
-});
-
 // Get product by ID
 export const getProductById = query({
   args: { id: v.id('products') },

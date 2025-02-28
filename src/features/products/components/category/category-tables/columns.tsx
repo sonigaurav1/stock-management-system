@@ -1,11 +1,11 @@
 'use client';
 import { ColumnDef } from '@tanstack/react-table';
 import Image from 'next/image';
-import { CellAction } from './cell-action';
+import { CellAction } from './CellAction';
 import { Category, SkeletonCategory } from '../../../types/category.types';
 import { Skeleton } from '@/components/ui/skeleton';
 
-const placeholderImageUrl = '/assets/images/product-placeholder.png';
+const placeholderImageUrl = '/assets/images/product-placeholder.webp';
 
 export const columns: ColumnDef<Category>[] = [
   {

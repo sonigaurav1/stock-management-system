@@ -14,7 +14,7 @@ import { useSearchParams } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { useAuth } from '../hooks/useAuth';
 import * as z from 'zod';
-import GithubSignInButton from './github-auth-button';
+import { PATH } from '@/constants/PATH';
 
 const formSchema = z.object({
   email: z.string().email({ message: 'Enter a valid email address' }),
@@ -25,7 +25,7 @@ type UserFormValue = z.infer<typeof formSchema>;
 
 export default function UserAuthForm() {
   const searchParams = useSearchParams();
-  const callbackUrl = searchParams.get('callbackUrl') ?? '/dashboard';
+  const callbackUrl = searchParams.get('callbackUrl') ?? PATH.OVERVIEW;
   const { loading, handleSignIn } = useAuth();
   const defaultValues = {
     email: '',
@@ -36,8 +36,8 @@ export default function UserAuthForm() {
     defaultValues
   });
 
-  const onSubmit = (data: UserFormValue) => {
-    handleSignIn(data.email, data.password, callbackUrl);
+  const onSubmit = async (data: UserFormValue) => {
+    await handleSignIn(data.email, data.password, callbackUrl);
   };
 
   return (
@@ -45,7 +45,7 @@ export default function UserAuthForm() {
       <Form {...form}>
         <form
           onSubmit={form.handleSubmit(onSubmit)}
-          className='w-full space-y-2'
+          className='h-full w-full space-y-2'
         >
           <FormField
             control={form.control}
@@ -88,7 +88,7 @@ export default function UserAuthForm() {
           </Button>
         </form>
       </Form>
-      <div className='relative'>
+      {/* <div className='relative'>
         <div className='absolute inset-0 flex items-center'>
           <span className='w-full border-t' />
         </div>
@@ -97,8 +97,8 @@ export default function UserAuthForm() {
             Or continue with
           </span>
         </div>
-      </div>
-      <GithubSignInButton />
+      </div> */}
+      {/* <GithubSignInButton /> */}
     </>
   );
 }

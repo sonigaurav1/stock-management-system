@@ -1,12 +1,12 @@
 'use client';
 import { ColumnDef } from '@tanstack/react-table';
 import Image from 'next/image';
-import { CellAction } from './cell-action';
+import { CellAction } from './CellAction';
 import { Product, SkeletonProduct } from '../../../types/product.types';
 import { Skeleton } from '@/components/ui/skeleton';
 import CustomTooltip from '@/components/ui/custom/CustomTooltip';
 
-const placeholderImageUrl = '/assets/images/product-placeholder.png';
+const placeholderImageUrl = '/assets/images/product-placeholder.webp';
 
 const stockStatusMapping: { [key: string]: string } = {
   in_stock: 'In Stock',

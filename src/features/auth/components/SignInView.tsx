@@ -2,7 +2,7 @@ import { buttonVariants } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { Metadata } from 'next';
 import Link from 'next/link';
-import { SignIn } from '@clerk/nextjs';
+import UserAuthForm from './UserAuthForm';
 
 export const metadata: Metadata = {
   title: 'Authentication',
@@ -47,7 +47,7 @@ export default function SignInViewPage() {
               Enter your email below to create your account
             </p>
           </div>
-          <SignIn />
+          <UserAuthForm />
           <p className='px-8 text-center text-sm text-muted-foreground'>
             By clicking continue, you agree to our{' '}
             <Link

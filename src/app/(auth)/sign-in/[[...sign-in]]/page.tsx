@@ -1,5 +1,5 @@
-import SignInViewPage from "@/features/auth/components/SignInView";
- 
-export default function Page() {
+import SignInViewPage from '@/features/auth/components/SignInView';
+
+export default function SignInCatchAllPage() {
   return <SignInViewPage />;
 }
