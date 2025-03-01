@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/input';
 import { categorySkeletonData } from '../../constants/skeletonData.category';
 import { ColumnDef } from '@tanstack/react-table';
 import { cn } from '@/lib/utils';
-import { columns, skeletonColumns } from './category-tables/Columns';
+import { columns, skeletonColumns } from './category-tables/columns';
 
 type CategoryFiltersType = {
   searchTerm?: string;
