@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { useDebounce } from '@/hooks/useDebounce';
 import { SupplierDataTable } from '@/components/ui/table/SupplierDataTable';
 import { useSupplierQuery } from '../../hooks/useSupplierQuery';
-import { columns, skeletonColumns } from './suppliers-tables/Columns';
+import { columns, skeletonColumns } from './suppliers-tables/columns';
 import { Input } from '@/components/ui/input';
 import { ColumnDef } from '@tanstack/react-table';
 import { supplierSkeletonData } from '../../constants/skeletonData.supplier';

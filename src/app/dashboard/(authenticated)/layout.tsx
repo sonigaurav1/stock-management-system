@@ -1,6 +1,6 @@
+import Header from '@/components/layout/Header';
 import KBar from '../../../components/kbar';
 import AppSidebar from '../../../components/layout/AppSidebar';
-import Header from '../../../components/layout/Header';
 import { SidebarInset, SidebarProvider } from '../../../components/ui/sidebar';
 import type { Metadata } from 'next';
 import { cookies } from 'next/headers';
