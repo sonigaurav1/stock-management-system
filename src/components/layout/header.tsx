@@ -1,7 +1,7 @@
 import React from 'react';
 import { SidebarTrigger } from '../ui/sidebar';
 import { Separator } from '../ui/separator';
-import { Breadcrumbs } from '../Breadcrumbs';
+import { Breadcrumbs } from '../breadcrumbs';
 import SearchInput from '../SearchInput';
 import { UserNav } from './UserNav';
 import ThemeToggle from './ThemeToggle/theme-toggle';
