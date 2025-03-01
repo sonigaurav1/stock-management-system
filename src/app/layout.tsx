@@ -6,7 +6,7 @@ import './globals.css';
 import { ConvexClientProvider } from '@/features/auth/providers/ConvexProvider';
 import { SpeedInsights } from '@vercel/speed-insights/next';
 import { Analytics } from '@vercel/analytics/react';
-import Providers from '@/components/layout/Providers';
+import Providers from './../components/layout/Providers';
 
 export const metadata: Metadata = {
   title: 'Stock Management System',
