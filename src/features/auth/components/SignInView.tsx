@@ -29,8 +29,8 @@ export default function SignInViewPage() {
         <div className='relative z-20 mt-auto'>
           <blockquote className='space-y-2'>
             <p className='text-lg'>
-              &ldquo;Welcome to the Stock Management System. Effortlessly manage
-              your business inventory with our intuitive and powerful
+              &ldquo;Welcome back to the Stock Management System. Effortlessly
+              manage your business inventory with our intuitive and powerful
               tools.&rdquo;
             </p>
             <footer className='text-sm'>Gaurav Soni</footer>
@@ -41,15 +41,15 @@ export default function SignInViewPage() {
         <div className='mx-auto flex w-full flex-col justify-center space-y-6 sm:w-[350px]'>
           <div className='flex flex-col space-y-2 text-center'>
             <h1 className='text-2xl font-semibold tracking-tight'>
-              Create an account
+              Sign in to your account
             </h1>
             <p className='text-sm text-muted-foreground'>
-              Enter your email below to create your account
+              Enter your email and password to sign in
             </p>
           </div>
           <UserAuthForm />
           <p className='px-8 text-center text-sm text-muted-foreground'>
-            By clicking continue, you agree to our{' '}
+            By signing in, you agree to our{' '}
             <Link
               href='/terms'
               className='underline underline-offset-4 hover:text-primary'
