@@ -1,4 +1,4 @@
-import Header from '../../../components/layout/Header';
+import Header from '../../../components/layout/header';
 import KBar from '../../../components/kbar';
 import AppSidebar from '../../../components/layout/AppSidebar';
 import { SidebarInset, SidebarProvider } from '../../../components/ui/sidebar';
