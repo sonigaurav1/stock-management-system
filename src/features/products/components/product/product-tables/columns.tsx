@@ -14,7 +14,7 @@ const stockStatusMapping: { [key: string]: string } = {
   out_of_stock: 'Out of Stock'
 };
 
-export const Columns: ColumnDef<Product>[] = [
+export const columns: ColumnDef<Product>[] = [
   {
     accessorKey: 'imageUrl',
     header: 'IMAGE',

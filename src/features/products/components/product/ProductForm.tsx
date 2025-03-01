@@ -29,7 +29,7 @@ import { Product } from '../../types/product.types';
 import { useEdgeStore } from '@/lib/edgestore';
 import { useRouter } from 'next/navigation';
 import { Id } from 'convex/_generated/dataModel';
-import { formSchema } from '../../schema/productSchema';
+import { formSchema } from '../../schema/product-schema';
 import CustomImageUpload from '../CustomImageUpload';
 import { useEffect, useState } from 'react';
 import { generateSKU, generateSlug } from '@/lib/utils';

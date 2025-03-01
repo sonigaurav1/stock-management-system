@@ -7,7 +7,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 
 const placeholderImageUrl = '/assets/images/product-placeholder.webp';
 
-export const Columns: ColumnDef<Category>[] = [
+export const columns: ColumnDef<Category>[] = [
   {
     accessorKey: 'imageUrl',
     header: 'IMAGE',
@@ -41,7 +41,7 @@ export const Columns: ColumnDef<Category>[] = [
   }
 ];
 
-export const SkeletonColumns: ColumnDef<SkeletonCategory>[] = [
+export const skeletonColumns: ColumnDef<SkeletonCategory>[] = [
   {
     id: 'imageUrl',
     header: 'IMAGE',

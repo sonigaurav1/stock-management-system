@@ -1,7 +1,7 @@
 import FormCardSkeleton from '@/components/FormCardSkeleton';
 import PageContainer from '@/components/layout/PageContainer';
-import { Suspense } from 'react';
 import SupplierViewPage from '@/features/products/components/suppliers/SupplierViewPage';
+import { Suspense } from 'react';
 
 export const metadata = {
   title: 'Dashboard : Supplier View'

@@ -22,7 +22,7 @@ import { Id } from 'convex/_generated/dataModel';
 import CustomImageUpload from '../CustomImageUpload';
 import { useEffect, useState } from 'react';
 import { Supplier } from '../../types/supplier.types';
-import { formSchema } from '../../schema/supplierSchema';
+import { formSchema } from '../../schema/supplier-schema';
 import { useUser } from '@clerk/clerk-react';
 import {
   restrictedUser,
