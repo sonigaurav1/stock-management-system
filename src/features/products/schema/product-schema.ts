@@ -10,30 +10,52 @@ const ACCEPTED_IMAGE_TYPES = [
 
 export const formSchema = z.object({
   name: z.string().nonempty({ message: 'Name is required' }),
-  // slug: z.string().nonempty({ message: 'Slug is required' }),
-  // sku: z.string().nonempty({ message: 'SKU is required' }),
   barcode: z.string().optional(),
   categoryId: z.string().nonempty({ message: 'Category is required' }),
   subcategory: z.string().optional(),
   description: z.string().optional(),
   brand: z.string(),
   purchasePrice: z
-    .union([z.string(), z.number()])
-    .transform((val) => (val === '' ? null : Number(val)))
-    .nullable(),
+    .preprocess(
+      (value) => {
+        if (typeof value === 'string' && value.trim() === '') return undefined;
+        const numberValue = Number(value);
+        return isNaN(numberValue) ? undefined : numberValue;
+      },
+      z.number().min(1, 'Purchase price must be greater than 0')
+    )
+    .optional(),
   sellingPrice: z
-    .union([z.string(), z.number()])
-    .transform((val) => (val === '' ? null : Number(val)))
-    .nullable(),
+    .preprocess(
+      (value) => {
+        if (typeof value === 'string' && value.trim() === '') return undefined;
+        const numberValue = Number(value);
+        return isNaN(numberValue) ? undefined : numberValue;
+      },
+      z.number().min(1, 'Selling price must be greater than 0')
+    )
+    .optional(),
   stockLevel: z
-    .union([z.string(), z.number()])
-    .transform((val) => (val === '' ? null : Number(val)))
-    .nullable(),
+    .preprocess(
+      (value) => {
+        if (typeof value === 'string' && value.trim() === '') return undefined;
+        const numberValue = Number(value);
+        return isNaN(numberValue) ? undefined : numberValue;
+      },
+      z.number().min(1, 'Stock Level must be greater than 0')
+    )
+    .optional(),
   inStock: z.boolean(),
   reorderLevel: z
-    .union([z.string(), z.number()])
-    .transform((val) => (val === '' ? null : Number(val)))
-    .nullable(),
+    .preprocess(
+      (value) => {
+        if (typeof value === 'string' && value.trim() === '') return undefined;
+        const numberValue = Number(value);
+        return isNaN(numberValue) ? undefined : numberValue;
+      },
+      z.number().min(1, 'Reorder Level must be greater than 0')
+    )
+    .optional(),
   stockStatus: z.enum(['in_stock', 'low_stock', 'out_of_stock']),
   supplierId: z.string().optional(),
   lastRestockedAt: z.number().optional(),

@@ -15,6 +15,8 @@ import { useForm } from 'react-hook-form';
 import { useAuth } from '../hooks/useAuth';
 import * as z from 'zod';
 import { PATH } from '@/constants/PATH';
+import { useState } from 'react';
+import { EyeIcon, EyeOffIcon } from 'lucide-react';
 
 const formSchema = z.object({
   email: z.string().email({ message: 'Enter a valid email address' }),
@@ -35,6 +37,7 @@ export default function UserAuthForm() {
     resolver: zodResolver(formSchema),
     defaultValues
   });
+  const [showPassword, setShowPassword] = useState(false);
 
   const onSubmit = async (data: UserFormValue) => {
     await handleSignIn(data.email, data.password, callbackUrl);
@@ -72,12 +75,24 @@ export default function UserAuthForm() {
               <FormItem>
                 <FormLabel>Password</FormLabel>
                 <FormControl>
-                  <Input
-                    type='password'
-                    placeholder='Enter your password...'
-                    disabled={loading}
-                    {...field}
-                  />
+                  <div className='relative'>
+                    <Input
+                      type={showPassword ? 'text' : 'password'}
+                      placeholder='Enter your password...'
+                      disabled={loading}
+                      {...field}
+                    />
+                    <div
+                      className='absolute inset-y-0 right-0 flex cursor-pointer items-center pr-3'
+                      onClick={() => setShowPassword(!showPassword)}
+                    >
+                      {showPassword ? (
+                        <EyeOffIcon className='h-5 w-5 text-gray-500' />
+                      ) : (
+                        <EyeIcon className='h-5 w-5 text-gray-500' />
+                      )}
+                    </div>
+                  </div>
                 </FormControl>
                 <FormMessage />
               </FormItem>

@@ -88,6 +88,7 @@ export const columns: ColumnDef<Product>[] = [
           <CustomTooltip
             triggerElement={description}
             tooltipContent={description}
+            contentClassName='max-w-96'
             delayDuration={0}
             triggerClassName='max-w-64 truncate'
           />

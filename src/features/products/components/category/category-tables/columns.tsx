@@ -4,6 +4,7 @@ import Image from 'next/image';
 import { CellAction } from './CellAction';
 import { Category, SkeletonCategory } from '../../../types/category.types';
 import { Skeleton } from '@/components/ui/skeleton';
+import CustomTooltip from '@/components/ui/custom/CustomTooltip';
 
 const placeholderImageUrl = '/assets/images/product-placeholder.webp';
 
@@ -28,11 +29,29 @@ export const columns: ColumnDef<Category>[] = [
   },
   {
     accessorKey: 'name',
-    header: 'NAME'
+    header: 'NAME',
+    cell: ({ row }) => {
+      const name = row.getValue('name') as string;
+      return <div className=''>{name}</div>;
+    }
   },
   {
     accessorKey: 'description',
-    header: 'DESCRIPTION'
+    header: 'DESCRIPTION',
+    cell: ({ row }) => {
+      const description = row.getValue('description') as string;
+      return (
+        <div className='max-w-[300px]'>
+          <CustomTooltip
+            triggerElement={description}
+            tooltipContent={description}
+            contentClassName='max-w-[500px]'
+            delayDuration={0}
+            triggerClassName='max-w-[600px] truncate'
+          />
+        </div>
+      );
+    }
   },
   {
     id: 'actions',

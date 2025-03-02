@@ -83,11 +83,23 @@ export default function ProductForm({
     subcategory: initialData?.subcategory ?? '',
     description: initialData?.description ?? '',
     brand: initialData?.brand ?? '',
-    purchasePrice: initialData?.purchasePrice ?? 0,
-    sellingPrice: initialData?.sellingPrice ?? 0,
-    stockLevel: initialData?.stockLevel ?? 0,
+    purchasePrice:
+      initialData?.purchasePrice !== undefined
+        ? Number(initialData.purchasePrice)
+        : undefined,
+    sellingPrice:
+      initialData?.sellingPrice !== undefined
+        ? Number(initialData.sellingPrice)
+        : undefined,
+    stockLevel:
+      initialData?.stockLevel !== undefined
+        ? Number(initialData.stockLevel)
+        : undefined,
     inStock: initialData?.inStock ?? true,
-    reorderLevel: initialData?.reorderLevel ?? 0,
+    reorderLevel:
+      initialData?.reorderLevel !== undefined
+        ? Number(initialData.reorderLevel)
+        : undefined,
     stockStatus:
       (initialData?.stockStatus as 'in_stock' | 'low_stock' | 'out_of_stock') ??
       'in_stock',
@@ -152,12 +164,15 @@ export default function ProductForm({
       subcategory: values.subcategory,
       description: values.description,
       brand: values.brand,
-      purchasePrice: values.purchasePrice ?? 0,
-      sellingPrice: values.sellingPrice ?? 0,
-      discountPrice: (values.sellingPrice ?? 0) - (values.purchasePrice ?? 0),
-      stockLevel: values.stockLevel ?? 0,
+      purchasePrice:
+        values.purchasePrice === undefined ? 0 : values.purchasePrice,
+      sellingPrice: values.sellingPrice === undefined ? 0 : values.sellingPrice,
+      discountPrice:
+        (values.sellingPrice === undefined ? 0 : values.sellingPrice) -
+        (values.purchasePrice === undefined ? 0 : values.purchasePrice),
+      stockLevel: values.stockLevel === undefined ? 0 : values.stockLevel,
       inStock: values.inStock,
-      reorderLevel: values.reorderLevel ?? 0,
+      reorderLevel: values.reorderLevel === undefined ? 0 : values.reorderLevel,
       stockStatus: values.stockStatus,
       supplierId: values.supplierId,
       supplierName:
@@ -322,14 +337,6 @@ export default function ProductForm({
                         {...field}
                         type='number'
                         placeholder='Enter purchase price'
-                        value={field.value === null ? '' : field.value}
-                        onChange={(e) => {
-                          const value =
-                            e.target.value === ''
-                              ? null
-                              : Number(e.target.value);
-                          field.onChange(value);
-                        }}
                       />
                     </FormControl>
                     <FormMessage />
@@ -347,14 +354,6 @@ export default function ProductForm({
                         type='number'
                         placeholder='Enter Selling Price'
                         {...field}
-                        value={field.value === null ? '' : field.value}
-                        onChange={(e) => {
-                          const value =
-                            e.target.value === ''
-                              ? null
-                              : Number(e.target.value);
-                          field.onChange(value);
-                        }}
                       />
                     </FormControl>
                     <FormMessage />
@@ -389,14 +388,6 @@ export default function ProductForm({
                         type='number'
                         placeholder='Enter Stock Level'
                         {...field}
-                        value={field.value === null ? '' : field.value}
-                        onChange={(e) => {
-                          const value =
-                            e.target.value === ''
-                              ? null
-                              : Number(e.target.value);
-                          field.onChange(value);
-                        }}
                       />
                     </FormControl>
                     <FormMessage />
@@ -440,14 +431,6 @@ export default function ProductForm({
                         type='number'
                         placeholder='Enter Reorder Level'
                         {...field}
-                        value={field.value === null ? '' : field.value}
-                        onChange={(e) => {
-                          const value =
-                            e.target.value === ''
-                              ? null
-                              : Number(e.target.value);
-                          field.onChange(value);
-                        }}
                       />
                     </FormControl>
                     <FormMessage />
