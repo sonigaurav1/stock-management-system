@@ -16,7 +16,7 @@ export default defineSchema({
     imageUrl: v.optional(v.string()),
     brand: v.optional(v.string()),
 
-    purchasePrice: v.optional(v.number()), // Cost price
+    purchasePrice: v.optional(v.string()), // Cost price
     sellingPrice: v.optional(v.number()), // Selling price
     discountPrice: v.optional(v.number()), // Discounted price
 

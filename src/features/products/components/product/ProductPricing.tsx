@@ -36,7 +36,7 @@ export default function ProductPricing({ product }: { product: Product }) {
           <p className='text-sm font-medium text-muted-foreground'>
             Purchase Price
           </p>
-          <p>{formatCurrency(product.purchasePrice)}</p>
+          <p>NPR {product.purchasePrice}</p>
         </div>
         <div>
           <p className='text-sm font-medium text-muted-foreground'>

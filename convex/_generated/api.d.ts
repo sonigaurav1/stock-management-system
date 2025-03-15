@@ -14,8 +14,6 @@ import type {
   FunctionReference
 } from 'convex/server';
 import type * as documents from '../documents.js';
-import type * as emptyProductPrices from '../emptyProductPrices.js';
-import type * as functions from '../functions.js';
 import type * as product from '../product.js';
 
 /**
@@ -28,8 +26,6 @@ import type * as product from '../product.js';
  */
 declare const fullApi: ApiFromModules<{
   documents: typeof documents;
-  emptyProductPrices: typeof emptyProductPrices;
-  functions: typeof functions;
   product: typeof product;
 }>;
 export declare const api: FilterApi<

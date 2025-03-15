@@ -16,16 +16,7 @@ export const formSchema = z.object({
   description: z.string().optional(),
   serialNumber: z.string().optional(),
   brand: z.string(),
-  purchasePrice: z
-    .preprocess(
-      (value) => {
-        if (typeof value === 'string' && value.trim() === '') return undefined;
-        const numberValue = Number(value);
-        return isNaN(numberValue) ? undefined : numberValue;
-      },
-      z.number().min(1, 'Purchase price must be greater than 0')
-    )
-    .optional(),
+  purchasePrice: z.string().optional(),
   sellingPrice: z
     .preprocess(
       (value) => {

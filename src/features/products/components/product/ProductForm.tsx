@@ -84,10 +84,7 @@ export default function ProductForm({
     description: initialData?.description ?? '',
     serialNumber: initialData?.serialNumber ?? '',
     brand: initialData?.brand ?? '',
-    purchasePrice:
-      initialData?.purchasePrice !== undefined
-        ? Number(initialData.purchasePrice)
-        : undefined,
+    purchasePrice: initialData?.purchasePrice ?? '',
     sellingPrice:
       initialData?.sellingPrice !== undefined
         ? Number(initialData.sellingPrice)
@@ -105,7 +102,7 @@ export default function ProductForm({
       (initialData?.stockStatus as 'in_stock' | 'low_stock' | 'out_of_stock') ??
       'in_stock',
     supplierId: initialData?.supplierId ?? '',
-    lastRestockedAt: initialData?.lastRestockedAt,
+    lastRestockedAt: initialData?.lastRestockedAt ?? Date.now(),
     image: null as File | null // Explicitly set the type of image
   };
 
@@ -324,7 +321,7 @@ export default function ProductForm({
                     <FormControl>
                       <Input
                         {...field}
-                        type='number'
+                        type='text'
                         placeholder='Enter purchase price'
                       />
                     </FormControl>

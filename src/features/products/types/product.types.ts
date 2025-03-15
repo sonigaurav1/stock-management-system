@@ -10,7 +10,7 @@ export interface Product {
   description?: string;
   serialNumber?: string;
   brand?: string;
-  purchasePrice: number; // Cost price
+  purchasePrice: string; // Cost price
   sellingPrice: number; // Selling price
   stockLevel: number; // Current stock quantity
   inStock: boolean; // In stock status
@@ -34,7 +34,7 @@ export interface SkeletonProduct {
   description?: string;
   serialNumber?: string;
   brand?: string;
-  purchasePrice?: number; // Cost price
+  purchasePrice?: string; // Cost price
   sellingPrice?: number; // Selling price
   stockLevel?: number; // Current stock quantity
   inStock?: boolean; // In stock status
