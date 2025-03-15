@@ -1,1 +1,1 @@
-export const maxSizeInMB = 1;
+export const maxSizeInMB = 3;

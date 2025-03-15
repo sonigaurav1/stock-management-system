@@ -187,11 +187,11 @@ export const createProduct = mutation({
     categoryId: v.string(),
     subcategory: v.optional(v.string()),
     description: v.optional(v.string()),
+    serialNumber: v.optional(v.string()),
     brand: v.optional(v.string()),
-    purchasePrice: v.number(),
-    sellingPrice: v.number(),
-    discountPrice: v.optional(v.number()),
-    stockLevel: v.number(),
+    purchasePrice: v.optional(v.number()),
+    sellingPrice: v.optional(v.number()),
+    stockLevel: v.optional(v.number()),
     inStock: v.boolean(),
     reorderLevel: v.optional(v.number()),
     stockStatus: v.union(
@@ -240,10 +240,10 @@ export const updateProduct = mutation({
       categoryId: v.optional(v.string()),
       subcategory: v.optional(v.string()),
       description: v.optional(v.string()),
+      serialNumber: v.optional(v.string()),
       brand: v.optional(v.string()),
       purchasePrice: v.optional(v.number()),
       sellingPrice: v.optional(v.number()),
-      discountPrice: v.optional(v.number()),
       stockLevel: v.optional(v.number()),
       inStock: v.optional(v.boolean()),
       reorderLevel: v.optional(v.number()),
@@ -379,6 +379,29 @@ export const updateCategory = mutation({
     const existingCategory = await ctx.db.get(args.id);
     if (!existingCategory || existingCategory.userId !== userId) {
       throw new Error('Unauthorized');
+    }
+
+    // Update the category
+    await ctx.db.patch(args.id, {
+      ...args.updates,
+      updatedAt: Date.now()
+    });
+
+    // If the category name is updated, update the categoryName field in associated products
+    if (args.updates.name) {
+      const associatedProducts = await ctx.db
+        .query('products')
+        .withIndex('by_user_and_isCategory', (q) =>
+          q.eq('categoryId', args.id).eq('isDeleted', false)
+        )
+        .collect();
+
+      for (const product of associatedProducts) {
+        await ctx.db.patch(product._id, {
+          categoryName: args.updates.name,
+          updatedAt: Date.now()
+        });
+      }
     }
 
     return await ctx.db.patch(args.id, {
@@ -604,7 +627,7 @@ export type SupplierFilters = {
 export const createSupplier = mutation({
   args: {
     name: v.string(),
-    phone: v.string(),
+    phone: v.optional(v.string()),
     email: v.optional(v.string()),
     address: v.optional(v.string()),
     imageUrl: v.optional(v.string())
@@ -654,6 +677,29 @@ export const updateSupplier = mutation({
     const existingSupplier = await ctx.db.get(args.id);
     if (!existingSupplier || existingSupplier.userId !== userId) {
       throw new Error('Unauthorized');
+    }
+
+    // Update the supplier
+    await ctx.db.patch(args.id, {
+      ...args.updates,
+      updatedAt: Date.now()
+    });
+
+    // If the supplier name is updated, update the supplierName field in associated products
+    if (args.updates.name) {
+      const associatedProducts = await ctx.db
+        .query('products')
+        .withIndex('by_user_and_isSupplier', (q) =>
+          q.eq('supplierId', args.id).eq('isDeleted', false)
+        )
+        .collect();
+
+      for (const product of associatedProducts) {
+        await ctx.db.patch(product._id, {
+          supplierName: args.updates.name,
+          updatedAt: Date.now()
+        });
+      }
     }
 
     return await ctx.db.patch(args.id, {

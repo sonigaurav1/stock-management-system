@@ -14,6 +14,7 @@ export const formSchema = z.object({
   categoryId: z.string().nonempty({ message: 'Category is required' }),
   subcategory: z.string().optional(),
   description: z.string().optional(),
+  serialNumber: z.string().optional(),
   brand: z.string(),
   purchasePrice: z
     .preprocess(

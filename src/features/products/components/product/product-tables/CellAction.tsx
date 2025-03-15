@@ -1,6 +1,6 @@
 'use client';
 import { AlertModal } from '@/components/modal/alert-modal';
-import { Edit, Trash } from 'lucide-react';
+import { Edit, Eye, Trash } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 
 import { Product } from '../../../types/product.types';
@@ -66,6 +66,10 @@ export const CellAction: React.FC<CellActionProps> = ({ data }) => {
         loading={loading}
       />
       <div className='flex gap-3'>
+        <Eye
+          onClick={() => router.push(`/dashboard/product/view/${data._id}`)}
+          className='mr-2 h-4 w-4 cursor-pointer hover:text-primary-foreground dark:hover:text-primary'
+        />
         <Edit
           onClick={() => router.push(`/dashboard/product/${data._id}`)}
           className='mr-2 h-4 w-4 cursor-pointer hover:text-primary-foreground dark:hover:text-primary'

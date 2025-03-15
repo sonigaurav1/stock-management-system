@@ -8,10 +8,10 @@ export interface Product {
   categoryId: string;
   subcategory?: string;
   description?: string;
+  serialNumber?: string;
   brand?: string;
   purchasePrice: number; // Cost price
   sellingPrice: number; // Selling price
-  discountPrice?: number; // Discounted price
   stockLevel: number; // Current stock quantity
   inStock: boolean; // In stock status
   reorderLevel?: number; // Minimum stock before reorder alert
@@ -32,10 +32,10 @@ export interface SkeletonProduct {
   category?: string;
   subcategory?: string;
   description?: string;
+  serialNumber?: string;
   brand?: string;
   purchasePrice?: number; // Cost price
   sellingPrice?: number; // Selling price
-  discountPrice?: number; // Discounted price
   stockLevel?: number; // Current stock quantity
   inStock?: boolean; // In stock status
   reorderLevel?: number; // Minimum stock before reorder alert

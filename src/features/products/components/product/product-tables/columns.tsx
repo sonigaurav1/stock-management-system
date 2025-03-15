@@ -34,8 +34,12 @@ export const columns: ColumnDef<Product>[] = [
     }
   },
   {
+    accessorKey: 'serialNumber',
+    header: 'SN'
+  },
+  {
     accessorKey: 'name',
-    header: 'NAME',
+    header: 'Model',
     cell: ({ row }) => {
       const name = row.getValue('name') as string;
       return (

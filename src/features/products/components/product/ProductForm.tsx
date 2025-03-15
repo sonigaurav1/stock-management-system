@@ -82,6 +82,7 @@ export default function ProductForm({
     categoryId: initialData?.categoryId ?? '',
     subcategory: initialData?.subcategory ?? '',
     description: initialData?.description ?? '',
+    serialNumber: initialData?.serialNumber ?? '',
     brand: initialData?.brand ?? '',
     purchasePrice:
       initialData?.purchasePrice !== undefined
@@ -137,7 +138,7 @@ export default function ProductForm({
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsLoading(true);
-    if (allProducts?.length === restrictedUserLimit) {
+    if (initialData === null && allProducts?.length === restrictedUserLimit) {
       toast.warning('Limitation Error', {
         description: `You have reached the limit of ${restrictedUserLimit} active products.`,
         duration: 5000
@@ -156,23 +157,24 @@ export default function ProductForm({
     const productData = {
       name: values.name,
       slug: generateSlug(values.name),
-      sku: generateSKU(values.categoryId, values.brand, values.name),
+      sku: generateSKU(
+        category.find((cat) => cat._id === values.categoryId)?.name ?? '',
+        values.brand,
+        values.name
+      ),
       barcode: values.barcode,
       categoryId: values.categoryId,
       categoryName:
         category.find((cat) => cat._id === values.categoryId)?.name ?? '',
       subcategory: values.subcategory,
       description: values.description,
+      serialNumber: values.serialNumber,
       brand: values.brand,
-      purchasePrice:
-        values.purchasePrice === undefined ? 0 : values.purchasePrice,
-      sellingPrice: values.sellingPrice === undefined ? 0 : values.sellingPrice,
-      discountPrice:
-        (values.sellingPrice === undefined ? 0 : values.sellingPrice) -
-        (values.purchasePrice === undefined ? 0 : values.purchasePrice),
-      stockLevel: values.stockLevel === undefined ? 0 : values.stockLevel,
+      purchasePrice: values.purchasePrice,
+      sellingPrice: values.sellingPrice,
+      stockLevel: values.stockLevel,
       inStock: values.inStock,
-      reorderLevel: values.reorderLevel === undefined ? 0 : values.reorderLevel,
+      reorderLevel: values.reorderLevel,
       stockStatus: values.stockStatus,
       supplierId: values.supplierId,
       supplierName:
@@ -197,7 +199,7 @@ export default function ProductForm({
           : 'Updating product details...',
       success:
         initialData === null
-          ? 'Category created successfully!'
+          ? 'Product created successfully!'
           : 'Updated product details!',
       error:
         initialData === null
@@ -252,27 +254,14 @@ export default function ProductForm({
                 name='name'
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Product Name</FormLabel>
+                    <FormLabel>Product Model</FormLabel>
                     <FormControl>
-                      <Input placeholder='Enter product name' {...field} />
+                      <Input placeholder='Enter product model' {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
-              {/* <FormField
-                control={form.control}
-                name='barcode'
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Barcode</FormLabel>
-                    <FormControl>
-                      <Input placeholder='Enter Barcode' {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              /> */}
               <FormField
                 control={form.control}
                 name='categoryId'
@@ -300,27 +289,27 @@ export default function ProductForm({
                   </FormItem>
                 )}
               />
-              {/* <FormField
-                control={form.control}
-                name='subcategory'
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Subcategory</FormLabel>
-                    <FormControl>
-                      <Input placeholder='Enter Subcategory' {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              /> */}
               <FormField
                 control={form.control}
                 name='brand'
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Brand</FormLabel>
+                    <FormLabel>Product Brand</FormLabel>
                     <FormControl>
-                      <Input placeholder='Enter Brand' {...field} />
+                      <Input placeholder='Enter product brand' {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name='serialNumber'
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Serial Number</FormLabel>
+                    <FormControl>
+                      <Input placeholder='Enter serial number' {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -360,23 +349,6 @@ export default function ProductForm({
                   </FormItem>
                 )}
               />
-              {/* <FormField
-                control={form.control}
-                name='discountPrice'
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Discount Price</FormLabel>
-                    <FormControl>
-                      <Input
-                        type='number'
-                        placeholder='Enter Discount Price'
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              /> */}
               <FormField
                 control={form.control}
                 name='stockLevel'
@@ -471,7 +443,9 @@ export default function ProductForm({
                   <FormItem>
                     <FormLabel>Supplier</FormLabel>
                     <Select
-                      onValueChange={(value) => field.onChange(value)}
+                      onValueChange={(value) =>
+                        field.onChange(field.value === value ? '' : value)
+                      }
                       value={field.value}
                     >
                       <FormControl>

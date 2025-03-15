@@ -8,7 +8,7 @@ import { Id } from 'convex/_generated/dataModel';
 import { api } from '@/../convex/_generated/api';
 
 // Define valid product view types
-type ProductViewType = 'new' | string;
+type ProductViewType = 'new' | 'view' | string;
 
 type TProductViewPageProps = {
   productId: ProductViewType;
@@ -20,7 +20,11 @@ export default function ProductViewPage({ productId }: TProductViewPageProps) {
   // Query product data
   const getProduct = useQuery(
     api.documents.getProductById,
-    !isNewProduct ? { id: productId as Id<'products'> } : 'skip'
+    productId === 'view'
+      ? notFound()
+      : isNewProduct
+        ? 'skip'
+        : { id: productId as Id<'products'> }
   );
 
   const pageTitle = isNewProduct ? 'Create New Product' : 'Edit Product';

@@ -52,3 +52,24 @@ export class CustomError extends Error {
     this.status = status;
   }
 }
+
+/**
+ * Format a timestamp into a human-readable date.
+ * @param timestamp The timestamp to format.
+ * @returns The formatted date.
+ */
+export function formatDateFromTimestamp(timestamp: number) {
+  if (!timestamp) return 'Invalid Date';
+
+  const date = new Date(timestamp);
+  if (isNaN(date.getTime())) return 'Invalid Date';
+
+  return date.toLocaleString('en-US', {
+    year: 'numeric',
+    month: 'long', // Full month name (e.g., March)
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: true // AM/PM format for clarity
+  });
+}

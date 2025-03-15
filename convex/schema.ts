@@ -7,6 +7,7 @@ export default defineSchema({
     userId: v.string(),
     sku: v.string(), // Unique product identifier
     slug: v.string(), // URL-friendly name
+    serialNumber: v.optional(v.string()),
     barcode: v.optional(v.string()), // Barcode for scanning
     categoryName: v.string(),
     categoryId: v.string(),
@@ -15,11 +16,11 @@ export default defineSchema({
     imageUrl: v.optional(v.string()),
     brand: v.optional(v.string()),
 
-    purchasePrice: v.number(), // Cost price
-    sellingPrice: v.number(), // Selling price
+    purchasePrice: v.optional(v.number()), // Cost price
+    sellingPrice: v.optional(v.number()), // Selling price
     discountPrice: v.optional(v.number()), // Discounted price
 
-    stockLevel: v.number(), // Current stock quantity
+    stockLevel: v.optional(v.number()), // Current stock quantity
     inStock: v.boolean(), // In stock status
     reorderLevel: v.optional(v.number()), // Minimum stock before reorder alert
     stockStatus: v.string(), // "in_stock", "low_stock", "out_of_stock"
@@ -63,7 +64,7 @@ export default defineSchema({
   suppliers: defineTable({
     name: v.string(),
     userId: v.string(),
-    phone: v.string(),
+    phone: v.optional(v.string()),
     email: v.optional(v.string()),
     address: v.optional(v.string()),
     imageUrl: v.optional(v.string()),

@@ -97,7 +97,7 @@ export default function SupplierForm({
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsLoading(true);
-    if (allSuppliers?.length === restrictedUserLimit) {
+    if (initialData === null && allSuppliers?.length === restrictedUserLimit) {
       toast.warning('Limitation Error', {
         description: `You have reached the limit of ${restrictedUserLimit} active suppliers.`,
         duration: 5000
@@ -193,7 +193,7 @@ export default function SupplierForm({
                   <FormItem>
                     <FormLabel>Supplier Name</FormLabel>
                     <FormControl>
-                      <Input placeholder='Enter product name' {...field} />
+                      <Input placeholder='Enter supplier name' {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>

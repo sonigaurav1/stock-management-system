@@ -98,7 +98,7 @@ export default function CategoryForm({
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsLoading(true);
 
-    if (allCategories?.length === restrictedUserLimit) {
+    if (initialData === null && allCategories?.length === restrictedUserLimit) {
       toast.warning('Limitation Error', {
         description: `You have reached the limit of ${restrictedUserLimit} active categories.`,
         duration: 5000
@@ -194,9 +194,9 @@ export default function CategoryForm({
                 name='name'
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Product Name</FormLabel>
+                    <FormLabel>Category Name</FormLabel>
                     <FormControl>
-                      <Input placeholder='Enter product name' {...field} />
+                      <Input placeholder='Enter category name' {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -210,7 +210,7 @@ export default function CategoryForm({
                     <FormLabel>Description</FormLabel>
                     <FormControl>
                       <Textarea
-                        placeholder='Enter product description'
+                        placeholder='Enter category description'
                         className='resize-none'
                         {...field}
                       />

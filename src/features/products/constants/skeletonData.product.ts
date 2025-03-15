@@ -13,7 +13,6 @@ export const productSkeletonData: SkeletonProduct[] = Array(10).fill({
   brand: '',
   purchasePrice: '', // Cost price
   sellingPrice: '', // Selling price
-  discountPrice: '', // Discounted price
   stockLevel: '', // Current stock quantity
   inStock: '', // In stock status
   reorderLevel: '', // Minimum stock before reorder alert
