@@ -21,7 +21,7 @@ import {
   TooltipTrigger
 } from '@/components/ui/tooltip';
 import { InfoIcon } from 'lucide-react';
-import { PAYMENT_METHODS } from './../constants';
+import { PAYMENT_METHODS } from '../constants';
 
 export const InvoiceNumberField = ({ control }: { control: any }) => (
   <FormField

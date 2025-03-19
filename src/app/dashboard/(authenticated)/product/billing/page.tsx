@@ -6,7 +6,7 @@ import { Form } from '@/components/ui/form';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { type z } from 'zod';
-import { formSchema } from './schema/invoice.schema';
+import { formSchema } from '../../../../../features/billing/schema/invoice.schema';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { useProductQuery } from '@/features/products/hooks/useProductQuery';
@@ -20,17 +20,23 @@ import { SearchIcon } from 'lucide-react';
 
 import { amountToWords, formatDate, getCurrentTime } from '@/lib/utils';
 import { ADToBS } from 'bikram-sambat-js';
-import ProductItem from './_components/ProductItem';
-import { InvoiceItem } from './interfaces/IBilling';
-import { COMPANY_DETAILS, DEFAULT_UNIT, VAT_PERCENTAGE } from './constants';
-import { initialState, reducer } from './reducers/reducer';
+import { InvoiceItem } from '../../../../../features/billing/interfaces/IBilling';
+import {
+  COMPANY_DETAILS,
+  DEFAULT_UNIT,
+  VAT_PERCENTAGE
+} from '../../../../../features/billing/constants';
+import {
+  initialState,
+  reducer
+} from '../../../../../features/billing/reducers/reducer';
 import {
   handleProductSelect,
   handleQuantityChange,
   handleRateChange,
   handleRemoveProduct,
   useDebouncedSetSearchTerm
-} from './utils/handlers';
+} from '../../../../../features/billing/utils/handlers';
 import {
   BuyerAddressField,
   BuyerNameField,
@@ -38,12 +44,13 @@ import {
   BuyerPhoneField,
   InvoiceNumberField,
   PaymentModeField
-} from './_components/FormFields';
-import ProductList from './_components/ProductList';
+} from '../../../../../features/billing/components/FormFields';
+import ProductList from '@/features/billing/components/ProductList';
+import ProductItem from '@/features/billing/components/ProductItem';
 
 // Lazy load the PDF viewer component
 const PDFViewerNoSSR = dynamic(
-  () => import('./_components/PDFViewerComponent'),
+  () => import('@/features/billing/components/PDFViewerComponent'),
   { ssr: false }
 );
 
@@ -97,13 +104,6 @@ const ProductBilling = () => {
 
   // Form submission
   function onSubmit(values: z.infer<typeof formSchema>) {
-    // Log form errors to the console
-    if (Object.keys(form.formState.errors).length > 0) {
-      // eslint-disable-next-line no-console
-      console.error('Form validation errors:', form.formState.errors);
-      return;
-    }
-
     // Convert selected products to the format expected by the form schema
     const items: InvoiceItem[] = state.selectedProducts.map(
       (product, index) => ({
