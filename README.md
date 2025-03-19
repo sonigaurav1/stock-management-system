@@ -10,6 +10,8 @@ Effortlessly manage your business inventory with our intuitive and powerful tool
 - **Stock Movements**: Track stock movements such as purchases, sales, damages, and returns.
 - **Sales Management**: Record and manage sales transactions with detailed information.
 - **Kanban Board**: Visualize and manage tasks using a Kanban board.
+- **Tax Invoice Bill**: Generate tax invoice bills to make your business go digital and keep records of sales transactions.
+- **Ledger Feature**: Maintain a record of financial transactions with suppliers and shopkeepers.
 
 ## Installation
 
@@ -25,7 +27,7 @@ Effortlessly manage your business inventory with our intuitive and powerful tool
     ```
 
 3. Set up environment variables:
-    - Copy  to  and update the values as needed.
+    - Copy `.env.example` to `.env` and update the values as needed.
 
 4. Start the development server:
     ```sh
@@ -39,21 +41,21 @@ Effortlessly manage your business inventory with our intuitive and powerful tool
 - `pnpm run start`: Start the production server.
 - `pnpm run lint`: Run ESLint to check for linting errors.
 - `pnpm run lint:fix`: Fix linting errors.
-- : Format the code using Prettier.
-- : Check the code formatting using Prettier.
+- `pnpm run format`: Format the code using Prettier.
+- `pnpm run format:check`: Check the code formatting using Prettier.
 
 ## Folder Structure
 
-- : Next.js build output.
-- : Convex server functions and schema.
-- : Static assets.
-- : Source code.
+- `.next/`: Next.js build output.
+- `convex/`: Convex server functions and schema.
+- `public/`: Static assets.
+- `src/`: Source code.
   - `components/`: Reusable UI components.
-  - `features/`: Feature-specific code (e.g., products, suppliers, kanban).
+  - `features/`: Feature-specific code (e.g., products, suppliers).
   - `lib/`: Utility functions and libraries.
-  - : Next.js pages.
+  - `pages/`: Next.js pages.
   - `styles/`: Global styles.
-  - : TypeScript type definitions.
+  - `types/`: TypeScript type definitions.
 
 ## Contributing
 

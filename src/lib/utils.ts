@@ -73,3 +73,136 @@ export function formatDateFromTimestamp(timestamp: number) {
     hour12: true // AM/PM format for clarity
   });
 }
+
+// Helper function to format date objects for display
+export const formatDate = (date: Date | undefined): string => {
+  if (!date) return '';
+  return date.toISOString().split('T')[0];
+};
+
+// Helper function get the current time in HH:MM format
+export const getCurrentTime = (): string => {
+  const date = new Date();
+  return date.toLocaleTimeString([], {
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: true
+  });
+};
+
+export function amountToWords(amount: number): string {
+  const ones = [
+    '',
+    'ONE',
+    'TWO',
+    'THREE',
+    'FOUR',
+    'FIVE',
+    'SIX',
+    'SEVEN',
+    'EIGHT',
+    'NINE'
+  ];
+  const teens = [
+    'ELEVEN',
+    'TWELVE',
+    'THIRTEEN',
+    'FOURTEEN',
+    'FIFTEEN',
+    'SIXTEEN',
+    'SEVENTEEN',
+    'EIGHTEEN',
+    'NINETEEN'
+  ];
+  const tens = [
+    '',
+    'TEN',
+    'TWENTY',
+    'THIRTY',
+    'FORTY',
+    'FIFTY',
+    'SIXTY',
+    'SEVENTY',
+    'EIGHTY',
+    'NINETY'
+  ];
+
+  function convertLessThanOneThousand(num: number): string {
+    if (num === 0) return '';
+
+    let words = '';
+
+    if (num >= 100) {
+      words += ones[Math.floor(num / 100)] + ' HUNDRED';
+      num %= 100;
+      if (num > 0) {
+        words += ' AND ';
+      }
+    }
+
+    if (num >= 11 && num <= 19) {
+      words += teens[num - 11];
+    } else {
+      if (num >= 20) {
+        words += tens[Math.floor(num / 10)];
+        num %= 10;
+        if (num > 0) {
+          words += ' ' + ones[num];
+        }
+      } else if (num > 0) {
+        words += ones[num];
+      }
+    }
+
+    return words;
+  }
+
+  function nepaliNumberToWords(num: number): string {
+    if (num === 0) return 'ZERO';
+
+    let words = '';
+
+    // Handle crores (10 million / 1,00,00,000)
+    if (num >= 10000000) {
+      const crores = Math.floor(num / 10000000);
+      words += convertLessThanOneThousand(crores) + ' CRORE';
+      if (crores > 1) words += 'S';
+      num %= 10000000;
+      if (num > 0) words += ' ';
+    }
+
+    // Handle lakhs (hundred thousand / 1,00,000)
+    if (num >= 100000) {
+      const lakhs = Math.floor(num / 100000);
+      words += convertLessThanOneThousand(lakhs) + ' LAKH';
+      if (lakhs > 1) words += 'S';
+      num %= 100000;
+      if (num > 0) words += ' ';
+    }
+
+    // Handle thousands
+    if (num >= 1000) {
+      const thousands = Math.floor(num / 1000);
+      words += convertLessThanOneThousand(thousands) + ' THOUSAND';
+      num %= 1000;
+      if (num > 0) words += ' ';
+    }
+
+    // Handle remaining hundreds, tens and ones
+    if (num > 0) {
+      words += convertLessThanOneThousand(num);
+    }
+
+    return words;
+  }
+
+  // Split into rupees and paise
+  const [rupees, paise] = amount.toFixed(2).split('.');
+
+  let words = nepaliNumberToWords(parseInt(rupees));
+  if (parseInt(paise) > 0) {
+    words += ' AND PAISE ' + nepaliNumberToWords(parseInt(paise));
+  }
+
+  return words + ' ONLY';
+}
