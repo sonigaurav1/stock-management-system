@@ -20,7 +20,6 @@ import { SearchIcon } from 'lucide-react';
 
 import { amountToWords, formatDate, getCurrentTime } from '@/lib/utils';
 import { ADToBS } from 'bikram-sambat-js';
-import { InvoiceItem } from '../../../../../features/billing/interfaces/IBilling';
 import {
   COMPANY_DETAILS,
   DEFAULT_UNIT,
@@ -47,6 +46,11 @@ import {
 } from '../../../../../features/billing/components/FormFields';
 import ProductList from '@/features/billing/components/ProductList';
 import ProductItem from '@/features/billing/components/ProductItem';
+import { InvoiceItem } from '../../../../../features/billing/interfaces/IBilling';
+import { Id } from 'convex/_generated/dataModel';
+import { useMutation } from 'convex/react';
+import { api } from '@/../convex/_generated/api';
+import { useCustomerManagement } from '@/features/billing/hooks/useCustomerManagement';
 
 // Lazy load the PDF viewer component
 const PDFViewerNoSSR = dynamic(
@@ -61,6 +65,12 @@ const ProductBilling = () => {
   const [state, dispatch] = useReducer(reducer, initialState);
   const [processedInvoiceData, setProcessedInvoiceData] =
     useState<FormValues | null>(null);
+
+  const createSale = useMutation(api.documents.createSale);
+  const getProductById = useMutation(api.documents.getProductByIdBilling);
+  const updateProductStock = useMutation(api.documents.updateProductStock);
+
+  const { handleCustomerManagement } = useCustomerManagement();
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -102,11 +112,55 @@ const ProductBilling = () => {
     [state.selectedProducts]
   );
 
+  async function handleSalesCreation(items: InvoiceItem[]) {
+    for (const item of items) {
+      await createSale({
+        productId: item.productId as Id<'products'>,
+        quantitySold: item.quantity,
+        sellingPrice: item.rate * 1.13,
+        totalAmount: item.amount * 1.13,
+        soldAt: Date.now()
+      });
+    }
+  }
+
+  async function handleStockManagement(items: InvoiceItem[]) {
+    for (const item of items) {
+      const product = await getProductById({
+        id: item.productId as Id<'products'>
+      });
+
+      if (product) {
+        const newStockLevel = (product.stockLevel ?? 0) - item.quantity;
+        let stockStatus = 'in_stock';
+
+        if (newStockLevel <= 0) {
+          stockStatus = 'out_of_stock';
+        } else if (newStockLevel <= (product.reorderLevel ?? 0)) {
+          stockStatus = 'low_stock';
+        }
+
+        await updateProductStock({
+          id: item.productId as Id<'products'>,
+          updates: {
+            stockLevel: newStockLevel,
+            stockStatus: stockStatus as
+              | 'in_stock'
+              | 'low_stock'
+              | 'out_of_stock'
+          }
+        });
+      }
+    }
+  }
+
   // Form submission
-  function onSubmit(values: z.infer<typeof formSchema>) {
+
+  async function onSubmit(values: z.infer<typeof formSchema>) {
     // Convert selected products to the format expected by the form schema
     const items: InvoiceItem[] = state.selectedProducts.map(
       (product, index) => ({
+        productId: product.id,
         sn: index + 1,
         hsCode: '',
         description: product.name,
@@ -147,6 +201,20 @@ const ProductBilling = () => {
       totalAmount: totalAmount > 0 ? totalAmount : null,
       amountInWords: totalAmount > 0 ? amountToWords(totalAmount) : ''
     };
+
+    // Manage customers
+    await handleCustomerManagement({
+      buyerName: enrichedValues.buyerName || '',
+      buyerPhone: enrichedValues.buyerPhone || '',
+      buyerAddress: enrichedValues.buyerAddress || '',
+      buyerPan: enrichedValues.buyerPan || ''
+    });
+
+    // Manage sales
+    await handleSalesCreation(items);
+
+    // Manage stock
+    await handleStockManagement(items);
 
     // eslint-disable-next-line no-console
     console.debug(enrichedValues);

@@ -86,9 +86,12 @@ export default defineSchema({
     reason: v.optional(v.string()), // Why stock changed
     referenceId: v.optional(v.string()), // Invoice/Sale ID for tracking
 
+    isDeleted: v.boolean(), // Soft delete flag (false = active, true = deleted)
+
     createdAt: v.number() // Timestamp of the movement
   })
     .index('by_user', ['userId'])
+    .index('by_user_and_isDeleted', ['userId', 'isDeleted'])
     .index('by_product', ['productId'])
     .index('by_type', ['type']),
 
@@ -100,9 +103,12 @@ export default defineSchema({
     totalAmount: v.number(), // quantitySold * sellingPrice
     customerId: v.optional(v.string()), // Optional customer reference
 
+    isDeleted: v.boolean(), // Soft delete flag (false = active, true = deleted)
+
     soldAt: v.number() // Timestamp of sale
   })
     .index('by_user', ['userId'])
+    .index('by_user_and_isDeleted', ['userId', 'isDeleted'])
     .index('by_product', ['productId'])
     .index('by_soldAt', ['soldAt']),
 
@@ -112,9 +118,15 @@ export default defineSchema({
     phone: v.optional(v.string()),
     email: v.optional(v.string()),
     address: v.optional(v.string()),
+    imageUrl: v.optional(v.string()),
+    pan: v.optional(v.string()),
+    dob: v.optional(v.number()),
+
+    isDeleted: v.boolean(), // Soft delete flag (false = active, true = deleted)
 
     createdAt: v.number()
   })
     .index('by_user', ['userId'])
+    .index('by_user_and_isDeleted', ['userId', 'isDeleted'])
     .index('by_name', ['name'])
 });

@@ -857,3 +857,121 @@ export const getFilteredSupplier = query({
     };
   }
 });
+
+// Stock Management
+export const createSale = mutation({
+  args: {
+    productId: v.id('products'),
+    quantitySold: v.number(),
+    sellingPrice: v.number(),
+    totalAmount: v.number(),
+    soldAt: v.number()
+  },
+  handler: async (ctx, args) => {
+    const identify = await ctx.auth.getUserIdentity();
+
+    if (!identify) {
+      throw new Error('Not authenticated');
+    }
+    const userId = identify.subject;
+
+    return await ctx.db.insert('sales', {
+      ...args,
+      userId,
+      isDeleted: false
+    });
+  }
+});
+
+export const getCustomerByPanOrPhone = mutation({
+  args: {
+    pan: v.optional(v.string()),
+    phone: v.optional(v.string())
+  },
+  handler: async (ctx, args) => {
+    const identify = await ctx.auth.getUserIdentity();
+
+    if (!identify) {
+      throw new Error('Not authenticated');
+    }
+    const userId = identify.subject;
+
+    const customers = await ctx.db
+      .query('customers')
+      .withIndex('by_user_and_isDeleted', (q) =>
+        q.eq('userId', userId).eq('isDeleted', false)
+      )
+      .collect();
+
+    return customers.find(
+      (customer) =>
+        (args.pan && customer.pan === args.pan) ||
+        (args.phone && customer.phone === args.phone)
+    );
+  }
+});
+
+export const createCustomer = mutation({
+  args: {
+    name: v.string(),
+    phone: v.optional(v.string()),
+    email: v.optional(v.string()),
+    address: v.optional(v.string()),
+    pan: v.optional(v.string()),
+    createdAt: v.number()
+  },
+  handler: async (ctx, args) => {
+    const identify = await ctx.auth.getUserIdentity();
+
+    if (!identify) {
+      throw new Error('Not authenticated');
+    }
+    const userId = identify.subject;
+
+    return await ctx.db.insert('customers', {
+      ...args,
+      userId,
+      isDeleted: false
+    });
+  }
+});
+
+export const updateProductStock = mutation({
+  args: {
+    id: v.id('products'),
+    updates: v.object({
+      stockLevel: v.number(),
+      stockStatus: v.union(
+        v.literal('in_stock'),
+        v.literal('low_stock'),
+        v.literal('out_of_stock')
+      )
+    })
+  },
+  handler: async (ctx, args) => {
+    const product = await ctx.db.get(args.id);
+
+    if (!product) {
+      throw new Error('Product not found');
+    }
+
+    return await ctx.db.patch(args.id, {
+      ...args.updates,
+      updatedAt: Date.now()
+    });
+  }
+});
+
+export const getProductByIdBilling = mutation({
+  args: { id: v.id('products') },
+  handler: async (ctx, args) => {
+    const identify = await ctx.auth.getUserIdentity();
+    if (!identify) {
+      throw new Error('Not authenticated');
+    }
+    const userId = identify.subject;
+
+    const product = await ctx.db.get(args.id);
+    return product?.isDeleted || product?.userId !== userId ? null : product; // Return null if deleted or not owned by user
+  }
+});

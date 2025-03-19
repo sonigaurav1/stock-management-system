@@ -9,6 +9,7 @@ export interface Product {
 
 // Define the item type to match the schema requirements
 export interface InvoiceItem {
+  productId: string;
   sn: number;
   hsCode: string;
   description: string;
