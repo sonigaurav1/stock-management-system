@@ -23,6 +23,7 @@ import { ADToBS } from 'bikram-sambat-js';
 import {
   COMPANY_DETAILS,
   DEFAULT_UNIT,
+  TEST_COMPANY_DETAILS,
   VAT_PERCENTAGE
 } from '../../../../../features/billing/constants';
 import {
@@ -46,11 +47,20 @@ import {
 } from '../../../../../features/billing/components/FormFields';
 import ProductList from '@/features/billing/components/ProductList';
 import ProductItem from '@/features/billing/components/ProductItem';
-import { InvoiceItem } from '../../../../../features/billing/interfaces/IBilling';
+import {
+  InvoiceItem,
+  InvoiceProps
+} from '../../../../../features/billing/interfaces/IBilling';
 import { Id } from 'convex/_generated/dataModel';
 import { useMutation } from 'convex/react';
 import { api } from '@/../convex/_generated/api';
 import { useCustomerManagement } from '@/features/billing/hooks/useCustomerManagement';
+import { useUser } from '@clerk/clerk-react';
+import { restrictedUser } from '@/features/products/constants/restrictedUserData';
+import { PDFDownloadLink } from '@react-pdf/renderer';
+import InvoiceDocument from '@/features/billing/components/InvoiceDocument';
+import AlertModal from '@/features/billing/components/BillingAction';
+import PageContainer from '@/components/layout/PageContainer';
 
 // Lazy load the PDF viewer component
 const PDFViewerNoSSR = dynamic(
@@ -70,16 +80,22 @@ const ProductBilling = () => {
   const getProductById = useMutation(api.documents.getProductByIdBilling);
   const updateProductStock = useMutation(api.documents.updateProductStock);
 
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+
+  const { user } = useUser();
+
   const { handleCustomerManagement } = useCustomerManagement();
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      invoiceNumber: '',
+      invoiceNumber: '1234567',
       paymentMode: 'CASH',
-      buyerName: '',
-      buyerAddress: '',
-      buyerPhone: '',
+      buyerName: 'gaurav',
+      buyerAddress: 'jhumka',
+      buyerPhone: '9746887763',
       buyerPan: ''
     }
   });
@@ -112,10 +128,14 @@ const ProductBilling = () => {
     [state.selectedProducts]
   );
 
-  async function handleSalesCreation(items: InvoiceItem[]) {
+  async function handleSalesCreation(
+    items: InvoiceItem[],
+    customerId?: string
+  ) {
     for (const item of items) {
       await createSale({
         productId: item.productId as Id<'products'>,
+        customerId: customerId as Id<'customers'>,
         quantitySold: item.quantity,
         sellingPrice: item.rate * 1.13,
         totalAmount: item.amount * 1.13,
@@ -156,7 +176,10 @@ const ProductBilling = () => {
 
   // Form submission
 
-  async function onSubmit(values: z.infer<typeof formSchema>) {
+  function onSubmit(values: z.infer<typeof formSchema>) {
+    // eslint-disable-next-line no-console
+    console.log('Form values', values);
+
     // Convert selected products to the format expected by the form schema
     const items: InvoiceItem[] = state.selectedProducts.map(
       (product, index) => ({
@@ -184,8 +207,12 @@ const ProductBilling = () => {
       buyerName: values.buyerName.toUpperCase(),
       buyerAddress: values.buyerAddress.toUpperCase(),
       buyerPan: values.buyerPan,
-      ...COMPANY_DETAILS,
+      ...(user?.id === restrictedUser.id
+        ? { ...TEST_COMPANY_DETAILS }
+        : { ...COMPANY_DETAILS }),
       items,
+
+      isAdmin: user?.id !== restrictedUser.id,
 
       // Calculate other financial values as needed
       transactionDate: formatDate(new Date()),
@@ -202,141 +229,257 @@ const ProductBilling = () => {
       amountInWords: totalAmount > 0 ? amountToWords(totalAmount) : ''
     };
 
-    // Manage customers
-    await handleCustomerManagement({
-      buyerName: enrichedValues.buyerName || '',
-      buyerPhone: enrichedValues.buyerPhone || '',
-      buyerAddress: enrichedValues.buyerAddress || '',
-      buyerPan: enrichedValues.buyerPan || ''
-    });
-
-    // Manage sales
-    await handleSalesCreation(items);
-
-    // Manage stock
-    await handleStockManagement(items);
-
-    // eslint-disable-next-line no-console
-    console.debug(enrichedValues);
-
     // Submit logic would go here
     setProcessedInvoiceData(enrichedValues);
 
     dispatch({ type: 'SET_GENERATING', payload: true });
+
+    setIsModalOpen(true); // Open the modal after form submission
+  }
+
+  async function handleConfirmActions() {
+    if (!processedInvoiceData) return;
+
+    setIsProcessing(true); // Start loading
+
+    try {
+      // Manage customers
+      const customerId = await handleCustomerManagement({
+        buyerName: processedInvoiceData.buyerName || '',
+        buyerPhone: processedInvoiceData.buyerPhone || '',
+        buyerAddress: processedInvoiceData.buyerAddress || '',
+        buyerPan: processedInvoiceData.buyerPan || ''
+      });
+
+      // Manage sales
+      if (processedInvoiceData.items && processedInvoiceData.items.length > 0) {
+        const extractedCustomerId =
+          customerId && 'customerId' in customerId
+            ? customerId.customerId
+            : customerId?.existingCustomer?._id;
+
+        await handleSalesCreation(
+          processedInvoiceData.items as InvoiceItem[],
+          extractedCustomerId
+        );
+      }
+
+      // Manage stock
+      await handleStockManagement(processedInvoiceData.items as InvoiceItem[]);
+
+      setIsModalOpen(false); // Close the modal after actions are completed
+    } catch (error) {
+      // eslint-disable-next-line no-console
+      console.error('Error during confirmation actions:', error);
+      alert(
+        'An error occurred while processing the invoice. Please try again.'
+      );
+    } finally {
+      setIsProcessing(false); // End loading
+    }
   }
 
   // Render component
   return (
-    <section className='flex h-full w-full flex-col justify-between p-4 md:flex-row'>
-      <div className='w-full overflow-y-auto pr-0 md:w-1/2 md:pr-4'>
-        <h2 className='mb-4 text-xl font-semibold'>Add Product</h2>
+    <PageContainer scrollable>
+      <section className='flex h-[calc(100dvh-92px)] w-full flex-col justify-between p-4 md:flex-row'>
+        <div className='w-full overflow-y-auto pr-0 md:w-1/2 md:pr-4'>
+          <h2 className='mb-4 text-xl font-semibold'>Add Product</h2>
 
-        <div className='mb-6'>
-          <Popover>
-            <PopoverTrigger asChild>
-              <div className='relative w-full'>
-                <Input
-                  value={state.searchTerm}
-                  onChange={(e) => debouncedSetSearchTerm(e.target.value)}
-                  placeholder='Search for a product'
-                  className='mb-2 w-full rounded-lg border border-gray-200 py-2 pl-10 pr-4 transition-all duration-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200'
-                />
-                <div className='pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-gray-400'>
-                  <SearchIcon className='h-4 w-4' />
-                </div>
-              </div>
-            </PopoverTrigger>
-            <PopoverContent
-              className='w-[var(--radix-popover-trigger-width)] overflow-hidden rounded-lg border border-gray-100 p-0 shadow-lg'
-              sideOffset={5}
-            >
-              <Command className='w-full rounded-lg'>
-                <div className='border-b border-gray-100'>
-                  <div className='relative'>
-                    <SearchIcon className='absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400' />
-                    <Input
-                      className='w-full border-none py-3 pl-10 pr-4 text-sm outline-none placeholder:text-gray-400 focus:ring-0'
-                      placeholder='Search for a product'
-                      value={state.searchTerm}
-                      onChange={(e) => debouncedSetSearchTerm(e.target.value)}
-                    />
+          <div className='mb-6'>
+            <Popover>
+              <PopoverTrigger asChild>
+                <div className='relative w-full'>
+                  <Input
+                    value={state.searchTerm}
+                    onChange={(e) => debouncedSetSearchTerm(e.target.value)}
+                    placeholder='Search for a product'
+                    className='mb-2 w-full rounded-lg border border-gray-200 py-2 pl-10 pr-4 transition-all duration-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200'
+                  />
+                  <div className='pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-gray-400'>
+                    <SearchIcon className='h-4 w-4' />
                   </div>
                 </div>
-                <CommandList className='max-h-64 w-full overflow-auto'>
-                  <ProductList
-                    products={products.map((product) => ({
-                      id: product._id,
-                      name: product.name,
-                      imageUrl: product.imageUrl,
-                      rate: product.sellingPrice,
-                      quantity: 1,
-                      ...(product as any)
-                    }))}
-                    isFetching={isFetching}
-                    handleProductSelect={handleProductSelect(
-                      dispatch,
-                      debouncedSetSearchTerm
-                    )}
-                  />
-                </CommandList>
-              </Command>
-            </PopoverContent>
-          </Popover>
-        </div>
+              </PopoverTrigger>
+              <PopoverContent
+                className='w-[var(--radix-popover-trigger-width)] overflow-hidden rounded-lg border border-gray-100 p-0 shadow-lg'
+                sideOffset={5}
+              >
+                <Command className='w-full rounded-lg'>
+                  <div className='border-b border-gray-100'>
+                    <div className='relative'>
+                      <SearchIcon className='absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400' />
+                      <Input
+                        className='w-full border-none py-3 pl-10 pr-4 text-sm outline-none placeholder:text-gray-400 focus:ring-0'
+                        placeholder='Search for a product'
+                        value={state.searchTerm}
+                        onChange={(e) => debouncedSetSearchTerm(e.target.value)}
+                      />
+                    </div>
+                  </div>
+                  <CommandList className='max-h-64 w-full overflow-auto'>
+                    <ProductList
+                      products={products.map((product) => ({
+                        id: product._id,
+                        name: product.name,
+                        imageUrl: product.imageUrl,
+                        rate: product.sellingPrice,
+                        ...(product as any)
+                      }))}
+                      isFetching={isFetching}
+                      handleProductSelect={handleProductSelect(
+                        dispatch,
+                        debouncedSetSearchTerm
+                      )}
+                    />
+                  </CommandList>
+                </Command>
+              </PopoverContent>
+            </Popover>
+          </div>
 
-        <h3 className='mb-2 font-medium'>
-          Selected Products ({state.selectedProducts.length})
-        </h3>
-        <div className='mb-6 space-y-4'>
-          {state.selectedProducts.length === 0 ? (
-            <p className='text-sm text-gray-500'>No products selected</p>
+          <h3 className='mb-2 font-medium'>
+            Selected Products ({state.selectedProducts.length})
+          </h3>
+          <div className='mb-6 space-y-4'>
+            {state.selectedProducts.length === 0 ? (
+              <p className='text-sm text-gray-500'>No products selected</p>
+            ) : (
+              state.selectedProducts.map((product, index) => (
+                <ProductItem
+                  key={`${product.id}-${index}`}
+                  product={product}
+                  index={index}
+                  handleQuantityChange={(productId: any, newQuantity: any) =>
+                    handleQuantityChange(dispatch)(productId, newQuantity)
+                  }
+                  handleRateChange={handleRateChange(dispatch)}
+                  handleRemoveProduct={handleRemoveProduct(dispatch)}
+                />
+              ))
+            )}
+          </div>
+
+          <h3 className='mb-2 font-medium'>Invoice Details</h3>
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className='space-y-4'>
+              <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
+                <InvoiceNumberField control={form.control} />
+                <PaymentModeField control={form.control} />
+                <BuyerNameField control={form.control} />
+                <BuyerAddressField control={form.control} />
+                <BuyerPhoneField control={form.control} />
+                <BuyerPanField control={form.control} />
+              </div>
+
+              <div className='flex w-full flex-col items-center justify-center space-y-4 md:flex-row md:items-center md:justify-between md:gap-4 md:space-y-0'>
+                <Button
+                  type='submit'
+                  className='w-1/3'
+                  disabled={state.selectedProducts.length === 0}
+                >
+                  Generate Invoice
+                </Button>
+
+                {/* Invoice PDF */}
+                {state.isGenerating && processedInvoiceData && (
+                  <>
+                    {/* Download PDF Button */}
+                    <Button asChild className='w-1/3'>
+                      <PDFDownloadLink
+                        document={
+                          <InvoiceDocument
+                            invoiceData={
+                              processedInvoiceData as InvoiceProps['invoiceData']
+                            }
+                          />
+                        }
+                        fileName={`Invoice_${processedInvoiceData.buyerName}_${processedInvoiceData.invoiceNumber}.pdf`}
+                      >
+                        {({ loading }) =>
+                          loading ? 'Loading...' : 'Download PDF'
+                        }
+                      </PDFDownloadLink>
+                    </Button>
+
+                    {/* Print Button */}
+                    <Button
+                      className='w-1/3'
+                      onClick={async () => {
+                        try {
+                          // Show loading state
+                          setIsLoading(true);
+
+                          const { pdf } = await import('@react-pdf/renderer');
+                          const blob = await pdf(
+                            <InvoiceDocument
+                              invoiceData={
+                                processedInvoiceData as InvoiceProps['invoiceData']
+                              }
+                            />
+                          ).toBlob();
+
+                          const url = URL.createObjectURL(blob);
+                          const printWindow = window.open(url, '_blank');
+
+                          if (printWindow) {
+                            printWindow.focus();
+                            printWindow.print();
+                            // Clean up the blob URL after printing
+                            printWindow.onafterprint = () => {
+                              URL.revokeObjectURL(url);
+                            };
+                          } else {
+                            // Handle popup blocker case
+                            alert(
+                              'Please allow popups for this website to print invoices.'
+                            );
+                            URL.revokeObjectURL(url);
+                          }
+                        } catch (error) {
+                          // eslint-disable-next-line no-console
+                          console.error('Error generating PDF:', error);
+                          // Show user-friendly error message
+                        } finally {
+                          setIsLoading(false);
+                        }
+                      }}
+                      disabled={isLoading}
+                    >
+                      {isLoading ? 'Generating...' : 'Print Invoice'}
+                    </Button>
+                  </>
+                )}
+              </div>
+            </form>
+          </Form>
+        </div>
+        <div className='w-full border-t pl-0 pt-4 md:w-1/2 md:border-l md:border-t-0 md:pl-4 md:pt-0'>
+          {state.isGenerating && processedInvoiceData ? (
+            <PDFViewerNoSSR
+              invoiceData={processedInvoiceData as InvoiceProps['invoiceData']}
+            />
           ) : (
-            state.selectedProducts.map((product, index) => (
-              <ProductItem
-                key={`${product.id}-${index}`}
-                product={product}
-                index={index}
-                handleQuantityChange={handleQuantityChange(dispatch)}
-                handleRateChange={handleRateChange(dispatch)}
-                handleRemoveProduct={handleRemoveProduct(dispatch)}
-              />
-            ))
+            <div className='flex h-full items-center justify-center rounded-md bg-gray-200'>
+              <p className='text-gray-500'>No invoice generated</p>
+            </div>
           )}
         </div>
 
-        <h3 className='mb-2 font-medium'>Invoice Details</h3>
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className='space-y-4'>
-            <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
-              <InvoiceNumberField control={form.control} />
-              <PaymentModeField control={form.control} />
-              <BuyerNameField control={form.control} />
-              <BuyerAddressField control={form.control} />
-              <BuyerPhoneField control={form.control} />
-              <BuyerPanField control={form.control} />
-            </div>
-            <Button
-              type='submit'
-              onClick={() => {
-                onSubmit(form.getValues());
-              }}
-              className='w-full'
-            >
-              Generate Invoice
-            </Button>
-          </form>
-        </Form>
-      </div>
-      <div className='w-full border-t pl-0 pt-4 md:w-1/2 md:border-l md:border-t-0 md:pl-4 md:pt-0'>
-        {state.isGenerating ? (
-          <PDFViewerNoSSR invoiceData={processedInvoiceData} />
-        ) : (
-          <div className='flex h-full items-center justify-center rounded-md bg-gray-200'>
-            <p className='text-gray-500'>No invoice generated</p>
-          </div>
-        )}
-      </div>
-    </section>
+        {/* Alert Modal */}
+        <AlertModal
+          isOpen={isModalOpen}
+          onConfirm={isProcessing ? () => {} : handleConfirmActions} // Disable confirm button while processing
+          onCancel={() => !isProcessing && setIsModalOpen(false)} // Prevent cancel during processing
+          title='Confirm Invoice Actions'
+          description={
+            isProcessing
+              ? 'Processing actions, please wait...'
+              : 'Are you sure you want to manage customers, sales, and stock for this invoice?'
+          }
+        />
+      </section>
+    </PageContainer>
   );
 };
 

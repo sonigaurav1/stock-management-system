@@ -10,14 +10,9 @@ interface DispatchAction {
 type Dispatch = (action: DispatchAction) => void;
 
 export const useDebouncedSetSearchTerm = (dispatch: Dispatch) => {
-  const debouncedFunction = useCallback(
-    (value: string) => {
-      debounce(() => {
-        dispatch({ type: 'SET_SEARCH_TERM', payload: value });
-      }, 300)();
-    },
-    [dispatch]
-  );
+  const debouncedFunction = debounce((value: string) => {
+    dispatch({ type: 'SET_SEARCH_TERM', payload: value });
+  }, 300);
 
   return useCallback(
     (value: string) => {
@@ -34,17 +29,27 @@ export const handleProductSelect =
   (product: Product) => {
     dispatch({
       type: 'ADD_PRODUCT',
-      payload: { ...product, quantity: 1, rate: product.rate }
+      payload: {
+        ...product,
+        quantity: 1, // Default quantity
+        rate: product.rate,
+        stockLevel: product.stockLevel // Include stockLevel
+      }
     });
     debouncedSetSearchTerm('');
   };
 
 export const handleQuantityChange =
-  (dispatch: Dispatch) => (index: number, quantity: number) => {
-    if (quantity < 1) return;
+  (dispatch: React.Dispatch<any>) =>
+  (productId: string, newQuantity: number) => {
+    if (isNaN(newQuantity) || newQuantity < 1) {
+      alert('Quantity must be a valid number and at least 1.');
+      return;
+    }
+
     dispatch({
       type: 'UPDATE_PRODUCT_QUANTITY',
-      payload: { index, quantity }
+      payload: { productId, quantity: newQuantity }
     });
   };
 

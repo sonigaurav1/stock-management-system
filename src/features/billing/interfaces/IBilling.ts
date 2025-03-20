@@ -4,12 +4,13 @@ export interface Product {
   name: string;
   imageUrl?: string;
   quantity: number;
+  stockLevel: number;
   rate: number;
 }
 
 // Define the item type to match the schema requirements
 export interface InvoiceItem {
-  productId: string;
+  productId?: string;
   sn: number;
   hsCode: string;
   description: string;
@@ -55,5 +56,6 @@ export interface InvoiceProps {
     printTime: string;
     vehicleNo: string | null;
     remarks: string | null;
+    isAdmin: boolean;
   };
 }

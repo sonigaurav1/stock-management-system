@@ -22,7 +22,10 @@ export const reducer = (
           ...state,
           selectedProducts: state.selectedProducts.map((product, index) =>
             index === existingProductIndex
-              ? { ...product, quantity: product.quantity + 1 }
+              ? {
+                  ...product,
+                  quantity: Math.min(product.quantity + 1, product.stockLevel) // Ensure quantity does not exceed stockLevel
+                }
               : product
           ),
           isGenerating: false
@@ -33,12 +36,19 @@ export const reducer = (
         selectedProducts: [...state.selectedProducts, action.payload],
         isGenerating: false
       };
+
     case 'UPDATE_PRODUCT_QUANTITY':
       return {
         ...state,
-        selectedProducts: state.selectedProducts.map((product, index) =>
-          index === action.payload.index
-            ? { ...product, quantity: action.payload.quantity }
+        selectedProducts: state.selectedProducts.map((product) =>
+          product.id === action.payload.productId
+            ? {
+                ...product,
+                quantity: Math.min(
+                  Math.max(action.payload.quantity, 1), // Ensure quantity is at least 1
+                  product.stockLevel // Ensure quantity does not exceed stockLevel
+                )
+              }
             : product
         ),
         isGenerating: false

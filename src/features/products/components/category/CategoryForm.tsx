@@ -26,10 +26,7 @@ import { useEffect, useState } from 'react';
 import { Category } from '../../types/category.types';
 import { generateSlug } from '@/lib/utils';
 import { useUser } from '@clerk/clerk-react';
-import {
-  restrictedUser,
-  restrictedUserLimit
-} from '../../constants/restrictedUserData';
+import { restrictedUser } from '../../constants/restrictedUserData';
 import { Progress } from '@/components/ui/progress';
 import { maxSizeInMB } from '../../constants';
 import useCompressUploadedImage from '../../hooks/useCompressUploadedImage';
@@ -52,7 +49,7 @@ export default function CategoryForm({
   // fetch all categories to check if the user has reached the limit
   const allCategories = useQuery(
     api.documents.getAllCategories,
-    user?.id === restrictedUser ? undefined : 'skip'
+    user?.id === restrictedUser.id ? undefined : 'skip'
   );
 
   const [imageFile, setImageFile] = useState<File | null>(null);
@@ -98,9 +95,12 @@ export default function CategoryForm({
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsLoading(true);
 
-    if (initialData === null && allCategories?.length === restrictedUserLimit) {
+    if (
+      initialData === null &&
+      allCategories?.length === restrictedUser.limit
+    ) {
       toast.warning('Limitation Error', {
-        description: `You have reached the limit of ${restrictedUserLimit} active categories.`,
+        description: `You have reached the limit of ${restrictedUser.limit} active categories.`,
         duration: 5000
       });
       setIsLoading(false);

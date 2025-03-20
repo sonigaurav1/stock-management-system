@@ -2,6 +2,7 @@
 import { api } from '@/../convex/_generated/api';
 import { useMutation } from 'convex/react';
 import { useCallback } from 'react';
+import { toast } from 'sonner';
 
 interface FormValues {
   buyerName: string;
@@ -22,23 +23,31 @@ export const useCustomerManagement = () => {
     async (values: FormValues) => {
       try {
         const { buyerPhone, buyerPan } = values;
+        if (!buyerPhone && !buyerPan) {
+          toast.warning('Validation Error', {
+            description: 'Phone Number or PAN Number is required'
+          });
+          return;
+        }
+
+        const phones = buyerPhone.split('/') ?? [];
 
         // First, directly query if this customer exists using the current values
         const existingCustomer = await initialCustomerCheck({
-          phone: buyerPhone || '',
+          phones: phones,
           pan: buyerPan || ''
         });
 
         // Only create if no customer was found
         if (!existingCustomer) {
-          await createCustomer({
+          const customerId = await createCustomer({
             name: values.buyerName,
-            phone: values.buyerPhone,
+            phone: phones,
             address: values.buyerAddress,
             pan: values.buyerPan,
             createdAt: Date.now()
           });
-          return { created: true };
+          return { customerId, created: true };
         }
 
         return { created: false, existingCustomer };

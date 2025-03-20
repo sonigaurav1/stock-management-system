@@ -13,6 +13,7 @@ import type {
   FilterApi,
   FunctionReference
 } from 'convex/server';
+import type * as analytics from '../analytics.js';
 import type * as documents from '../documents.js';
 import type * as product from '../product.js';
 
@@ -25,6 +26,7 @@ import type * as product from '../product.js';
  * ```
  */
 declare const fullApi: ApiFromModules<{
+  analytics: typeof analytics;
   documents: typeof documents;
   product: typeof product;
 }>;

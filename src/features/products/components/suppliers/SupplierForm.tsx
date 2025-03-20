@@ -24,10 +24,7 @@ import { useEffect, useState } from 'react';
 import { Supplier } from '../../types/supplier.types';
 import { formSchema } from '../../schema/supplier-schema';
 import { useUser } from '@clerk/clerk-react';
-import {
-  restrictedUser,
-  restrictedUserLimit
-} from '../../constants/restrictedUserData';
+import { restrictedUser } from '../../constants/restrictedUserData';
 import { Progress } from '@/components/ui/progress';
 import { maxSizeInMB } from '../../constants';
 import useCompressUploadedImage from '../../hooks/useCompressUploadedImage';
@@ -50,7 +47,7 @@ export default function SupplierForm({
   // fetch all categories to check if the user has reached the limit
   const allSuppliers = useQuery(
     api.documents.getAllSuppliers,
-    user?.id === restrictedUser ? undefined : 'skip'
+    user?.id === restrictedUser.id ? undefined : 'skip'
   );
 
   const [imageFile, setImageFile] = useState<File | null>(null);
@@ -97,9 +94,9 @@ export default function SupplierForm({
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsLoading(true);
-    if (initialData === null && allSuppliers?.length === restrictedUserLimit) {
+    if (initialData === null && allSuppliers?.length === restrictedUser.limit) {
       toast.warning('Limitation Error', {
-        description: `You have reached the limit of ${restrictedUserLimit} active suppliers.`,
+        description: `You have reached the limit of ${restrictedUser.limit} active suppliers.`,
         duration: 5000
       });
       setIsLoading(false);

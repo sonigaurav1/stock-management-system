@@ -1,21 +1,20 @@
 import { z } from 'zod';
 
 export const formSchema = z.object({
-  companyName: z.string(),
-  companyAddress: z.string(),
-  phone: z.string(),
-  email: z.string().email(),
-  vatNumber: z.string(),
-  transactionDate: z.string(),
-  invoiceNumber: z.string(),
-  date: z.string(),
-  miti: z.string(),
-  paymentMode: z.string(),
-  buyerName: z.string(),
-  buyerAddress: z.string(),
+  companyName: z.string().optional(),
+  companyAddress: z.string().optional(),
+  phone: z.string().optional(),
+  email: z.string().email().optional(),
+  vatNumber: z.string().optional(),
+  transactionDate: z.string().optional(),
+  invoiceNumber: z.string().nonempty({ message: 'Invoice number is required' }),
+  date: z.string().optional(),
+  miti: z.string().optional(),
+  paymentMode: z.string().nonempty({ message: 'Payment mode is required' }),
+  buyerName: z.string().nonempty({ message: 'Buyer name is required' }),
+  buyerAddress: z.string().nonempty({ message: 'Buyer address is required' }),
   buyerPhone: z
     .string()
-    .optional()
     .refine(
       (value) => {
         if (!value) return true;
@@ -26,7 +25,10 @@ export const formSchema = z.object({
         message:
           'Each phone number must be a valid 10-digit number separated by `/`'
       }
-    ),
+    )
+    .refine((value) => value.trim() !== '', {
+      message: 'Buyer phone number is required'
+    }),
   buyerPan: z
     .string()
     .optional()
@@ -52,7 +54,8 @@ export const formSchema = z.object({
         amount: z.number()
       })
     )
-    .max(19),
+    .optional(),
+  isAdmin: z.boolean().optional(),
   value: z.number().nullable().optional(),
   discount: z.number().nullable().optional(),
   nonTaxable: z.number().nullable().optional(),
@@ -60,8 +63,8 @@ export const formSchema = z.object({
   vatAmount: z.number().nullable().optional(),
   totalAmount: z.number().nullable().optional(),
   amountInWords: z.string().nullable().optional(),
-  printDate: z.string(),
-  printTime: z.string(),
+  printDate: z.string().optional(),
+  printTime: z.string().optional(),
   vehicleNo: z.string().nullable().optional(),
   remarks: z.string().nullable().optional()
 });

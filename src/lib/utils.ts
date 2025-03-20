@@ -206,3 +206,15 @@ export function amountToWords(amount: number): string {
 
   return words + ' ONLY';
 }
+
+export function formatIndianCurrency(number: number): string {
+  let str = number.toString();
+  let parts = str.split('.');
+  const lastThree = parts[0].substring(parts[0].length - 3);
+  const otherNumbers = parts[0].substring(0, parts[0].length - 3);
+  const formatted =
+    otherNumbers.replace(/\B(?=(\d{2})+(?!\d))/g, ',') +
+    (otherNumbers ? ',' : '') +
+    lastThree;
+  return formatted + (parts.length > 1 ? '.' + parts[1] : '');
+}

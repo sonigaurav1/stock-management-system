@@ -3,7 +3,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Minus, Plus, X } from 'lucide-react';
 import Image from 'next/image';
-import { useRef } from 'react';
+
+import '@/app/globals.css';
 
 const placeholderImageUrl = '/assets/images/product-placeholder.webp';
 
@@ -14,15 +15,6 @@ const ProductItem = ({
   handleRateChange,
   handleRemoveProduct
 }: any) => {
-  const inputRef = useRef<HTMLInputElement>(null);
-
-  const enableInput = () => {
-    setTimeout(() => {
-      inputRef.current?.focus();
-      inputRef.current?.setSelectionRange(0, inputRef.current.value.length);
-    }, 0);
-  };
-
   return (
     <div className='flex items-center gap-2 rounded border p-2'>
       <Image
@@ -40,24 +32,29 @@ const ProductItem = ({
           type='button'
           size='icon'
           variant='outline'
-          onClick={() => handleQuantityChange(index, product.quantity - 1)}
+          onClick={() => handleQuantityChange(product.id, product.quantity - 1)}
         >
           <Minus className='h-4 w-4' />
         </Button>
         <Input
-          type='text'
-          value={product.quantity}
-          onChange={(e) =>
-            handleQuantityChange(index, Number.parseInt(e.target.value) || 0)
-          }
-          className='w-16 text-center'
+          type='number'
+          value={product.quantity || 0} // Default to 0 if quantity is null or undefined
+          onChange={(e) => {
+            const newQuantity = Number.parseInt(e.target.value, 10);
+            if (!isNaN(newQuantity)) {
+              handleQuantityChange(product.id, newQuantity);
+            }
+          }}
+          className='no-spinner w-16 text-center'
           min='1'
+          max={product.stockLevel} // Ensure quantity does not exceed stockLevel
+          onClick={(e) => (e.target as HTMLInputElement).select()}
         />
         <Button
           type='button'
           size='icon'
           variant='outline'
-          onClick={() => handleQuantityChange(index, product.quantity + 1)}
+          onClick={() => handleQuantityChange(product.id, product.quantity + 1)}
         >
           <Plus className='h-4 w-4' />
         </Button>
@@ -70,8 +67,7 @@ const ProductItem = ({
         }
         className='w-20'
         min='0'
-        ref={inputRef}
-        onFocus={enableInput}
+        onClick={(e) => (e.target as HTMLInputElement).select()}
       />
       <Button
         type='button'

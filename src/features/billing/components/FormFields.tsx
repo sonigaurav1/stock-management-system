@@ -15,12 +15,6 @@ import {
   SelectContent,
   SelectItem
 } from '@/components/ui/select';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger
-} from '@/components/ui/tooltip';
-import { InfoIcon } from 'lucide-react';
 import { PAYMENT_METHODS } from '../constants';
 
 export const InvoiceNumberField = ({ control }: { control: any }) => (
@@ -31,14 +25,14 @@ export const InvoiceNumberField = ({ control }: { control: any }) => (
       <FormItem>
         <FormLabel className='flex items-center'>
           Invoice Number
-          <Tooltip>
+          {/* <Tooltip>
             <TooltipTrigger asChild>
               <InfoIcon className='ml-1 size-4' />
             </TooltipTrigger>
             <TooltipContent>
               <p>Enter the unique invoice number</p>
             </TooltipContent>
-          </Tooltip>
+          </Tooltip> */}
         </FormLabel>
         <FormControl>
           <Input placeholder='Enter invoice number' {...field} />

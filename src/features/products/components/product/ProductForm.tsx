@@ -34,10 +34,7 @@ import CustomImageUpload from '../CustomImageUpload';
 import { useEffect, useState } from 'react';
 import { generateSKU, generateSlug } from '@/lib/utils';
 import { Calendar } from 'lucide-react';
-import {
-  restrictedUser,
-  restrictedUserLimit
-} from '../../constants/restrictedUserData';
+import { restrictedUser } from '../../constants/restrictedUserData';
 import { useUser } from '@clerk/clerk-react';
 import { Progress } from '@/components/ui/progress';
 import { maxSizeInMB } from '../../constants';
@@ -65,7 +62,7 @@ export default function ProductForm({
   // fetch all categories to check if the user has reached the limit
   const allProducts = useQuery(
     api.documents.getAllProducts,
-    user?.id === restrictedUser ? undefined : 'skip'
+    user?.id === restrictedUser.id ? undefined : 'skip'
   );
 
   // Local state
@@ -135,9 +132,9 @@ export default function ProductForm({
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsLoading(true);
-    if (initialData === null && allProducts?.length === restrictedUserLimit) {
+    if (initialData === null && allProducts?.length === restrictedUser.limit) {
       toast.warning('Limitation Error', {
-        description: `You have reached the limit of ${restrictedUserLimit} active products.`,
+        description: `You have reached the limit of ${restrictedUser.limit} active products.`,
         duration: 5000
       });
       setIsLoading(false);
@@ -306,7 +303,13 @@ export default function ProductForm({
                   <FormItem>
                     <FormLabel>Serial Number</FormLabel>
                     <FormControl>
-                      <Input placeholder='Enter serial number' {...field} />
+                      <Input
+                        type='text'
+                        placeholder='Enter serial number'
+                        {...field}
+                        className='no-spinner'
+                        min={0}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -339,6 +342,8 @@ export default function ProductForm({
                       <Input
                         type='number'
                         placeholder='Enter Selling Price'
+                        className='no-spinner'
+                        min={0}
                         {...field}
                       />
                     </FormControl>
@@ -356,6 +361,8 @@ export default function ProductForm({
                       <Input
                         type='number'
                         placeholder='Enter Stock Level'
+                        className='no-spinner'
+                        min={0}
                         {...field}
                       />
                     </FormControl>
@@ -399,6 +406,8 @@ export default function ProductForm({
                       <Input
                         type='number'
                         placeholder='Enter Reorder Level'
+                        className='no-spinner'
+                        min={0}
                         {...field}
                       />
                     </FormControl>

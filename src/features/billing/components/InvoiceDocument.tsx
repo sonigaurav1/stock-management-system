@@ -31,13 +31,13 @@ function InvoiceDocument({ invoiceData }: InvoiceProps) {
             <Text style={styles.companyName}>
               {invoiceData.companyName.toUpperCase()}
             </Text>
-            <Text style={styles.companyAddress}>RAMDHUNI-01, SUNSARI</Text>
+            <Text style={styles.companyAddress}>
+              {invoiceData.companyAddress}
+            </Text>
             <Text style={[styles.companyPhone, { fontWeight: 600 }]}>
-              PHONE: 025-561234
+              PHONE: {invoiceData.phone}
             </Text>
-            <Text style={styles.companyEmail}>
-              e-mail: hiraelectronics@gmail.com
-            </Text>
+            <Text style={styles.companyEmail}>e-mail: {invoiceData.email}</Text>
             <View style={styles.vatSection}>
               <Text style={styles.vatText}>VAT NO: </Text>
               <View style={styles.vatNumber}>
@@ -350,6 +350,13 @@ function InvoiceDocument({ invoiceData }: InvoiceProps) {
             </View>
           </View>
         </View>
+
+        {/* Watermark */}
+        {!invoiceData?.isAdmin && (
+          <View style={styles.watermark}>
+            <Text style={styles.watermarkText}>GAURAV</Text>
+          </View>
+        )}
       </Page>
     </Document>
   );

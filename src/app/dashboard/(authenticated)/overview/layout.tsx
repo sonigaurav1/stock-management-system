@@ -1,7 +1,10 @@
 'use client';
 import PageContainer from '@/components/layout/PageContainer';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { formatIndianCurrency } from '@/lib/utils';
 import { useUser } from '@clerk/clerk-react';
+import { api } from '@/../convex/_generated/api';
+import { useQuery } from 'convex/react';
 import React from 'react';
 
 export default function OverViewLayout({
@@ -16,6 +19,10 @@ export default function OverViewLayout({
   area_stats: React.ReactNode;
 }) {
   const { user } = useUser();
+
+  const totalRevenue = useQuery(api.analytics.getTotalRevenue) ?? 0;
+  const getTotalSales = useQuery(api.analytics.getTotalSales) ?? 0;
+  const getTotalCustomers = useQuery(api.analytics.getTotalCustomers) ?? 0;
 
   const username = user?.username
     ? user.username.charAt(0).toUpperCase() + user.username.slice(1)
@@ -55,13 +62,66 @@ export default function OverViewLayout({
               </svg>
             </CardHeader>
             <CardContent>
-              <div className='text-2xl font-bold'>$145,231.89</div>
+              <div className='text-2xl font-bold'>
+                Rs. {formatIndianCurrency(totalRevenue)}
+              </div>
               <p className='text-xs text-muted-foreground'>
                 +20.1% from last month
               </p>
             </CardContent>
           </Card>
           <Card>
+            <CardHeader className='flex flex-row items-center justify-between space-y-0 pb-2'>
+              <CardTitle className='text-sm font-medium'>Customers</CardTitle>
+              <svg
+                xmlns='http://www.w3.org/2000/svg'
+                viewBox='0 0 24 24'
+                fill='none'
+                stroke='currentColor'
+                strokeLinecap='round'
+                strokeLinejoin='round'
+                strokeWidth='2'
+                className='h-4 w-4 text-muted-foreground'
+              >
+                <path d='M22 12h-4l-3 9L9 3l-3 9H2' />
+              </svg>
+            </CardHeader>
+            <CardContent>
+              <div className='text-2xl font-bold'>
+                + {formatIndianCurrency(getTotalCustomers)}
+              </div>
+              <p className='text-xs text-muted-foreground'>
+                +201 since last hour
+              </p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader className='flex flex-row items-center justify-between space-y-0 pb-2'>
+              <CardTitle className='text-sm font-medium'>Sales</CardTitle>
+              <svg
+                xmlns='http://www.w3.org/2000/svg'
+                viewBox='0 0 24 24'
+                fill='none'
+                stroke='currentColor'
+                strokeLinecap='round'
+                strokeLinejoin='round'
+                strokeWidth='2'
+                className='h-4 w-4 text-muted-foreground'
+              >
+                <rect width='20' height='14' x='2' y='5' rx='2' />
+                <path d='M2 10h20' />
+              </svg>
+            </CardHeader>
+            <CardContent>
+              <div className='text-2xl font-bold'>
+                + {formatIndianCurrency(getTotalSales)}
+              </div>
+              <p className='text-xs text-muted-foreground'>
+                +19% from last month
+              </p>
+            </CardContent>
+          </Card>
+          {/* <Card>
             <CardHeader className='flex flex-row items-center justify-between space-y-0 pb-2'>
               <CardTitle className='text-sm font-medium'>
                 Subscriptions
@@ -87,54 +147,7 @@ export default function OverViewLayout({
                 +180.1% from last month
               </p>
             </CardContent>
-          </Card>
-          <Card>
-            <CardHeader className='flex flex-row items-center justify-between space-y-0 pb-2'>
-              <CardTitle className='text-sm font-medium'>Sales</CardTitle>
-              <svg
-                xmlns='http://www.w3.org/2000/svg'
-                viewBox='0 0 24 24'
-                fill='none'
-                stroke='currentColor'
-                strokeLinecap='round'
-                strokeLinejoin='round'
-                strokeWidth='2'
-                className='h-4 w-4 text-muted-foreground'
-              >
-                <rect width='20' height='14' x='2' y='5' rx='2' />
-                <path d='M2 10h20' />
-              </svg>
-            </CardHeader>
-            <CardContent>
-              <div className='text-2xl font-bold'>+12,234</div>
-              <p className='text-xs text-muted-foreground'>
-                +19% from last month
-              </p>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader className='flex flex-row items-center justify-between space-y-0 pb-2'>
-              <CardTitle className='text-sm font-medium'>Active Now</CardTitle>
-              <svg
-                xmlns='http://www.w3.org/2000/svg'
-                viewBox='0 0 24 24'
-                fill='none'
-                stroke='currentColor'
-                strokeLinecap='round'
-                strokeLinejoin='round'
-                strokeWidth='2'
-                className='h-4 w-4 text-muted-foreground'
-              >
-                <path d='M22 12h-4l-3 9L9 3l-3 9H2' />
-              </svg>
-            </CardHeader>
-            <CardContent>
-              <div className='text-2xl font-bold'>+573</div>
-              <p className='text-xs text-muted-foreground'>
-                +201 since last hour
-              </p>
-            </CardContent>
-          </Card>
+          </Card> */}
         </div>
         <div className='grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-7'>
           <div className='col-span-4'>{bar_stats}</div>

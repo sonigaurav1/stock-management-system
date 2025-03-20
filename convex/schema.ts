@@ -115,7 +115,7 @@ export default defineSchema({
   customers: defineTable({
     name: v.string(),
     userId: v.string(),
-    phone: v.optional(v.string()),
+    phone: v.optional(v.array(v.string())),
     email: v.optional(v.string()),
     address: v.optional(v.string()),
     imageUrl: v.optional(v.string()),

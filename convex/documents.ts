@@ -211,9 +211,25 @@ export const createProduct = mutation({
     }
     const userId = identify.subject;
 
+    // Automatically set inStock and stockStatus based on stockLevel and reorderLevel
+    let inStock = args.inStock;
+    let stockStatus = args.stockStatus;
+
+    if (args.stockLevel !== undefined && args.reorderLevel !== undefined) {
+      if (args.stockLevel > args.reorderLevel) {
+        inStock = true;
+        stockStatus = 'in_stock';
+      } else if (args.stockLevel === args.reorderLevel) {
+        inStock = true;
+        stockStatus = 'low_stock';
+      }
+    }
+
     try {
       return await ctx.db.insert('products', {
         ...args,
+        inStock,
+        stockStatus,
         userId, // Associate category with user
         isDeleted: false, // New categories start as active
         createdAt: Date.now(),
@@ -270,8 +286,26 @@ export const updateProduct = mutation({
       throw new Error('Unauthorized');
     }
 
+    // Automatically set inStock and stockStatus based on stockLevel and reorderLevel
+    let updates = { ...args.updates };
+    if (
+      updates.stockLevel !== undefined &&
+      updates.reorderLevel !== undefined
+    ) {
+      if (updates.stockLevel > updates.reorderLevel) {
+        updates.inStock = true;
+        updates.stockStatus = 'in_stock';
+      } else if (updates.stockLevel === updates.reorderLevel) {
+        updates.inStock = true;
+        updates.stockStatus = 'low_stock';
+      } else {
+        updates.inStock = false;
+        updates.stockStatus = 'out_of_stock';
+      }
+    }
+
     return await ctx.db.patch(args.id, {
-      ...args.updates,
+      ...updates,
       updatedAt: Date.now()
     });
   }
@@ -862,6 +896,7 @@ export const getFilteredSupplier = query({
 export const createSale = mutation({
   args: {
     productId: v.id('products'),
+    customerId: v.id('customers'),
     quantitySold: v.number(),
     sellingPrice: v.number(),
     totalAmount: v.number(),
@@ -886,7 +921,7 @@ export const createSale = mutation({
 export const getCustomerByPanOrPhone = mutation({
   args: {
     pan: v.optional(v.string()),
-    phone: v.optional(v.string())
+    phones: v.optional(v.array(v.string())) // Accept an array of phone numbers
   },
   handler: async (ctx, args) => {
     const identify = await ctx.auth.getUserIdentity();
@@ -906,7 +941,9 @@ export const getCustomerByPanOrPhone = mutation({
     return customers.find(
       (customer) =>
         (args.pan && customer.pan === args.pan) ||
-        (args.phone && customer.phone === args.phone)
+        (Array.isArray(args.phones) &&
+          Array.isArray(customer.phone ?? []) &&
+          args.phones.some((phone) => (customer.phone ?? []).includes(phone))) // Check if any phone matches
     );
   }
 });
@@ -914,7 +951,7 @@ export const getCustomerByPanOrPhone = mutation({
 export const createCustomer = mutation({
   args: {
     name: v.string(),
-    phone: v.optional(v.string()),
+    phone: v.optional(v.array(v.string())), // Accept an array of phone numbers
     email: v.optional(v.string()),
     address: v.optional(v.string()),
     pan: v.optional(v.string()),
@@ -955,13 +992,21 @@ export const updateProductStock = mutation({
       throw new Error('Product not found');
     }
 
+    // // Debugging: Log the stockLevel value
+    // // eslint-disable-next-line no-console
+    // console.log('Stock Level:', args.updates.stockLevel);
+
+    // // Check if the stockLevel is less than 1
+    // if (args.updates.stockLevel < 1) {
+    //   throw new Error('Stock level must be at least 1 to update');
+    // }
+
     return await ctx.db.patch(args.id, {
       ...args.updates,
       updatedAt: Date.now()
     });
   }
 });
-
 export const getProductByIdBilling = mutation({
   args: { id: v.id('products') },
   handler: async (ctx, args) => {

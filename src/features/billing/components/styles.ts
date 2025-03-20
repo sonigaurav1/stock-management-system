@@ -2,6 +2,8 @@ import { StyleSheet } from '@react-pdf/renderer';
 
 export const styles = StyleSheet.create({
   page: {
+    height: '100%',
+    width: '100%',
     paddingTop: 30,
     paddingRight: 30,
     paddingBottom: 0,
@@ -299,5 +301,24 @@ export const styles = StyleSheet.create({
     textAlign: 'center',
     fontSize: 9,
     marginTop: 'auto'
+  },
+
+  // watermark
+  watermark: {
+    position: 'absolute',
+    opacity: 0.1,
+    zIndex: 0,
+    marginLeft: '-50px',
+    transform: 'rotate(-45deg)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    width: '100%',
+    height: '100%'
+  },
+  watermarkText: {
+    color: '#000',
+    fontSize: 100,
+    fontFamily: 'Helvetica-Bold',
+    textAlign: 'center'
   }
 });

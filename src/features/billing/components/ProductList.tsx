@@ -30,6 +30,7 @@ const ProductList = ({
         {products.map((product) => (
           <CommandItem
             key={product.id}
+            disabled={product.stockLevel < 1}
             onSelect={() => {
               const productHandler = handleProductSelect;
               productHandler({
@@ -37,10 +38,13 @@ const ProductList = ({
                 name: product.name,
                 imageUrl: product.imageUrl || '',
                 quantity: 1,
-                rate: (product as any).sellingPrice || 0
+                rate: (product as any).sellingPrice || 0,
+                stockLevel: product.stockLevel
               });
             }}
-            className='flex w-full cursor-pointer items-center gap-3 rounded-md p-2 transition-colors hover:bg-blue-50'
+            className={`flex w-full cursor-pointer items-center gap-3 rounded-md p-2 transition-colors hover:bg-blue-50 ${
+              product.stockLevel < 1 ? 'cursor-not-allowed' : ''
+            }`}
           >
             {product.imageUrl ? (
               <div className='h-10 w-10 flex-shrink-0 overflow-hidden rounded-md bg-gray-100'>
