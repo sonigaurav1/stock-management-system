@@ -16,6 +16,8 @@ export function RecentSales() {
     api.analytics.getRecentSalesAndMonthlyTotal
   ) ?? { recentSales: [], totalMonthlySales: [] };
 
+  const placeholderImageUrl = '/assets/images/user-placeholder.webp';
+
   return (
     <Card>
       <CardHeader>
@@ -29,16 +31,17 @@ export function RecentSales() {
           {recentSales.map((sale: any, index: number) => (
             <div key={sale._id} className='flex items-center'>
               <Avatar className='h-9 w-9'>
-                <AvatarImage
-                  src='https://api.slingacademy.com/public/sample-users/1.png'
-                  alt='Avatar'
-                />
-                <AvatarFallback>OM</AvatarFallback>
+                <AvatarImage src={placeholderImageUrl} alt='Avatar' />
+                <AvatarFallback>
+                  {sale.customerName.slice(0, 2).toUpperCase()}
+                </AvatarFallback>
               </Avatar>
               <div className='ml-4 space-y-1'>
-                <p className='text-sm font-medium leading-none'>Gaurav Soni</p>
+                <p className='text-sm font-medium leading-none'>
+                  {sale?.customerName}
+                </p>
                 <p className='text-sm text-muted-foreground'>
-                  gauravsoni@gmail.com
+                  {sale?.customerPhone.join(', ')}
                 </p>
               </div>
               <div className='ml-auto font-medium'>

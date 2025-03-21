@@ -48,9 +48,6 @@ export default function SingleProductViewPage({
     discount: 'N?A'
   };
 
-  // eslint-disable-next-line no-console
-  console.log(product);
-
   return (
     <div className='container mx-auto space-y-6 py-6'>
       <div className='flex items-center justify-between'>

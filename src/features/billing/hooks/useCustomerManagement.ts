@@ -47,10 +47,26 @@ export const useCustomerManagement = () => {
             pan: values.buyerPan,
             createdAt: Date.now()
           });
-          return { customerId, created: true };
+
+          const newCustomer = {
+            ...(typeof customerId === 'object' && customerId !== null
+              ? customerId
+              : {}),
+            customerId: customerId,
+            customerName: values.buyerName,
+            customerPhone: phones
+          };
+
+          return { ...newCustomer, created: true };
         }
 
-        return { created: false, existingCustomer };
+        const oldCustomer = {
+          customerId: existingCustomer._id,
+          customerName: existingCustomer.name,
+          customerPhone: existingCustomer.phone
+        };
+
+        return { created: false, ...oldCustomer };
       } catch (error) {
         // eslint-disable-next-line no-console
         console.error('Error managing customer:', error);

@@ -897,6 +897,8 @@ export const createSale = mutation({
   args: {
     productId: v.id('products'),
     customerId: v.id('customers'),
+    customerName: v.string(),
+    customerPhone: v.array(v.string()),
     quantitySold: v.number(),
     sellingPrice: v.number(),
     totalAmount: v.number(),

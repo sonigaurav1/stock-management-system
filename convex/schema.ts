@@ -76,6 +76,7 @@ export default defineSchema({
   })
     .index('by_name', ['name'])
     .index('by_user', ['userId'])
+    .index('by_isDeleted', ['isDeleted']) // Index for filtering active products
     .index('by_user_and_isDeleted', ['userId', 'isDeleted']),
 
   stockMovements: defineTable({
@@ -102,6 +103,8 @@ export default defineSchema({
     sellingPrice: v.number(),
     totalAmount: v.number(), // quantitySold * sellingPrice
     customerId: v.optional(v.string()), // Optional customer reference
+    customerName: v.string(), // Optional customer name
+    customerPhone: v.array(v.string()), // Optional customer phone
 
     isDeleted: v.boolean(), // Soft delete flag (false = active, true = deleted)
 
@@ -109,6 +112,7 @@ export default defineSchema({
   })
     .index('by_user', ['userId'])
     .index('by_user_and_isDeleted', ['userId', 'isDeleted'])
+    .index('by_customerId', ['customerId'])
     .index('by_product', ['productId'])
     .index('by_soldAt', ['soldAt']),
 

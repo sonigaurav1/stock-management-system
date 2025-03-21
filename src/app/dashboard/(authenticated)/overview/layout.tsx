@@ -36,11 +36,11 @@ export default function OverViewLayout({
             Hi {username}, Welcome back 👋
           </h2>
         </div>
-        <div className='flex items-center justify-between space-y-2'>
+        {/* <div className='flex items-center justify-between space-y-2'>
           <h3 className='text-xl font-semibold'>
-            This is Demo Data for Analytics
+            This is Data for Analytics
           </h3>
-        </div>
+        </div> */}
         <div className='grid gap-4 md:grid-cols-2 lg:grid-cols-4'>
           {/* TODO: split code */}
           <Card>

@@ -130,12 +130,18 @@ const ProductBilling = () => {
 
   async function handleSalesCreation(
     items: InvoiceItem[],
-    customerId?: string
+    customerDetails: {
+      customerId: Id<'customers'>;
+      customerName: string;
+      customerPhone: string[];
+    }[]
   ) {
     for (const item of items) {
       await createSale({
         productId: item.productId as Id<'products'>,
-        customerId: customerId as Id<'customers'>,
+        customerId: customerDetails[0]?.customerId as Id<'customers'>,
+        customerName: customerDetails[0]?.customerName,
+        customerPhone: customerDetails[0]?.customerPhone,
         quantitySold: item.quantity,
         sellingPrice: item.rate * 1.13,
         totalAmount: item.amount * 1.13,
@@ -177,9 +183,6 @@ const ProductBilling = () => {
   // Form submission
 
   function onSubmit(values: z.infer<typeof formSchema>) {
-    // eslint-disable-next-line no-console
-    console.log('Form values', values);
-
     // Convert selected products to the format expected by the form schema
     const items: InvoiceItem[] = state.selectedProducts.map(
       (product, index) => ({
@@ -244,24 +247,27 @@ const ProductBilling = () => {
 
     try {
       // Manage customers
-      const customerId = await handleCustomerManagement({
+      const customerDetails = await handleCustomerManagement({
         buyerName: processedInvoiceData.buyerName || '',
         buyerPhone: processedInvoiceData.buyerPhone || '',
         buyerAddress: processedInvoiceData.buyerAddress || '',
         buyerPan: processedInvoiceData.buyerPan || ''
       });
 
+      // Ensure customerDetails is in the correct format
+      if (!customerDetails) {
+        throw new Error('Customer details could not be retrieved.');
+      }
+
       // Manage sales
       if (processedInvoiceData.items && processedInvoiceData.items.length > 0) {
-        const extractedCustomerId =
-          customerId && 'customerId' in customerId
-            ? customerId.customerId
-            : customerId?.existingCustomer?._id;
-
-        await handleSalesCreation(
-          processedInvoiceData.items as InvoiceItem[],
-          extractedCustomerId
-        );
+        await handleSalesCreation(processedInvoiceData.items as InvoiceItem[], [
+          {
+            customerId: customerDetails.customerId,
+            customerName: customerDetails.customerName,
+            customerPhone: customerDetails.customerPhone || []
+          }
+        ]);
       }
 
       // Manage stock
