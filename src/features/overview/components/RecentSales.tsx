@@ -46,9 +46,7 @@ export function RecentSales() {
               </div>
               <div className='ml-auto font-medium'>
                 + Rs.{' '}
-                {Number(
-                  formatIndianCurrency(sale.sellingPrice * sale.quantity)
-                ).toFixed(0)}
+                {formatIndianCurrency(sale.sellingPrice * sale.quantitySold)}
               </div>
             </div>
           ))}

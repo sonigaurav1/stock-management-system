@@ -208,6 +208,7 @@ export function amountToWords(amount: number): string {
 }
 
 export function formatIndianCurrency(number: number): string {
+  number = Math.round(number);
   let str = number.toString();
   let parts = str.split('.');
   const lastThree = parts[0].substring(parts[0].length - 3);
@@ -216,5 +217,6 @@ export function formatIndianCurrency(number: number): string {
     otherNumbers.replace(/\B(?=(\d{2})+(?!\d))/g, ',') +
     (otherNumbers ? ',' : '') +
     lastThree;
+
   return formatted + (parts.length > 1 ? '.' + parts[1] : '');
 }
