@@ -91,11 +91,11 @@ const ProductBilling = () => {
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      invoiceNumber: '1234567',
+      invoiceNumber: '',
       paymentMode: 'CASH',
-      buyerName: 'gaurav',
-      buyerAddress: 'jhumka',
-      buyerPhone: '9746887763',
+      buyerName: '',
+      buyerAddress: '',
+      buyerPhone: '',
       buyerPan: ''
     }
   });
