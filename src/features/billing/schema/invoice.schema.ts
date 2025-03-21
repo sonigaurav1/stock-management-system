@@ -1,6 +1,8 @@
 import { z } from 'zod';
 
 export const formSchema = z.object({
+  userId: z.string().optional(),
+  isInvoice: z.boolean().optional(),
   companyName: z.string().optional(),
   companyAddress: z.string().optional(),
   phone: z.string().optional(),

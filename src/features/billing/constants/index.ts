@@ -1,9 +1,9 @@
 export const COMPANY_DETAILS = {
   companyName: 'HIRA ELECTRONICS AND MOBILE PASAL',
-  companyAddress: 'ITAHARI - 9, SUNSARI',
-  phone: '025-594001',
-  email: 'rstlsunsari@gmail.com',
-  vatNumber: '302875452'
+  companyAddress: 'Ramdhuni - 01, SUNSARI',
+  phone: '9807006446/9749249123',
+  email: 'hiraelectronicsandmobilepasal@gmail.com',
+  vatNumber: '621601471'
 };
 
 export const TEST_COMPANY_DETAILS = {

@@ -19,7 +19,7 @@ export function RecentSales() {
   const placeholderImageUrl = '/assets/images/user-placeholder.webp';
 
   return (
-    <Card>
+    <Card className='h-full'>
       <CardHeader>
         <CardTitle>Recent Sales</CardTitle>
         <CardDescription>

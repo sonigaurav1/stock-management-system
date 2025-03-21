@@ -34,7 +34,7 @@ export const formSchema = z.object({
         const numberValue = Number(value);
         return isNaN(numberValue) ? undefined : numberValue;
       },
-      z.number().min(1, 'Stock Level must be greater than 0')
+      z.number().min(0, 'Stock Level must be greater than or equal to 0')
     )
     .optional(),
   inStock: z.boolean(),

@@ -22,6 +22,7 @@ export interface InvoiceItem {
 
 export interface InvoiceProps {
   invoiceData: {
+    isInvoice?: boolean;
     companyName: string;
     companyAddress: string;
     phone: string;
@@ -51,7 +52,7 @@ export interface InvoiceProps {
     taxableAmount: number | null;
     vatAmount: number | null;
     totalAmount: number | null;
-    amountInWords: string | null;
+    amountInWords: string | null | undefined;
     printDate: string;
     printTime: string;
     vehicleNo: string | null;

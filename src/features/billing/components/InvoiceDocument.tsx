@@ -18,7 +18,7 @@ Font.register({
 
 function InvoiceDocument({ invoiceData }: InvoiceProps) {
   const totalRows = 42; // Define the total number of rows you want in the table
-  const emptyRows = Math.floor(totalRows - invoiceData.items?.length * 2.3); // Calculate the number of empty rows needed
+  const emptyRows = Math.floor(totalRows - invoiceData?.items?.length * 2.3); // Calculate the number of empty rows needed
 
   return (
     <Document>
@@ -27,9 +27,13 @@ function InvoiceDocument({ invoiceData }: InvoiceProps) {
         <View style={styles.body}>
           {/* Header with Invoice Title & Company Name */}
           <View style={styles.header}>
-            <Text style={styles.invoiceTitle}>TAX INVOICE</Text>
+            {invoiceData?.isInvoice ? (
+              <Text style={styles.invoiceTitle}>INVOICE</Text>
+            ) : (
+              <Text style={styles.invoiceTitle}>TAX INVOICE</Text>
+            )}
             <Text style={styles.companyName}>
-              {invoiceData.companyName.toUpperCase()}
+              {invoiceData?.companyName?.toUpperCase()}
             </Text>
             <Text style={styles.companyAddress}>
               {invoiceData.companyAddress}
@@ -331,7 +335,7 @@ function InvoiceDocument({ invoiceData }: InvoiceProps) {
             {/* Center */}
             <View style={styles.footerMiddle}>
               <Text>........................</Text>
-              <Text>User : Admin</Text>
+              <Text>User : S.H.K.P</Text>
             </View>
 
             {/* Right */}

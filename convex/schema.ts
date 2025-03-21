@@ -132,5 +132,50 @@ export default defineSchema({
   })
     .index('by_user', ['userId'])
     .index('by_user_and_isDeleted', ['userId', 'isDeleted'])
-    .index('by_name', ['name'])
+    .index('by_name', ['name']),
+
+  invoices: defineTable({
+    userId: v.string(),
+    isDeleted: v.boolean(),
+    transactionDate: v.string(),
+    invoiceNumber: v.string(),
+    date: v.string(),
+    miti: v.string(),
+    paymentMode: v.string(),
+    buyerName: v.string(),
+    buyerAddress: v.string(),
+    buyerPhone: v.optional(v.string()),
+    buyerPan: v.optional(v.string()),
+    items: v.array(
+      v.object({
+        sn: v.number(),
+        hsCode: v.string(),
+        description: v.string(),
+        quantity: v.number(),
+        unit: v.string(),
+        rate: v.number(),
+        amount: v.number()
+      })
+    ),
+    value: v.optional(v.number()),
+    discount: v.optional(v.number()),
+    nonTaxable: v.optional(v.number()),
+    taxableAmount: v.optional(v.number()),
+    vatAmount: v.optional(v.number()),
+    totalAmount: v.optional(v.number()),
+    amountInWords: v.optional(v.string()),
+    printDate: v.string(),
+    printTime: v.string(),
+    vehicleNo: v.optional(v.string()),
+    remarks: v.optional(v.string()),
+
+    createdAt: v.number(),
+    updatedAt: v.optional(v.number())
+  })
+    .index('by_invoiceNumber', ['invoiceNumber'])
+    .index('by_user', ['userId'])
+    .index('by_isDeleted', ['isDeleted'])
+    .index('by_user_and_invoiceNumber', ['userId', 'invoiceNumber'])
+    .index('by_user_and_isDeleted', ['userId', 'isDeleted'])
+    .index('by_transactionDate', ['transactionDate'])
 });

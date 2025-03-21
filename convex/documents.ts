@@ -88,7 +88,13 @@ export const getFilteredProducts = query({
 
     if (filters?.inStock !== undefined) {
       productsQuery = productsQuery.filter((q: any) =>
-        q.eq(q.field('inStock'), filters.inStock)
+        q.and(
+          q.or(q.eq(q.field('inStock'), true), q.eq(q.field('inStock'), false)),
+          q.or(
+            q.eq(q.field('stockStatus'), 'low_stock'),
+            q.eq(q.field('stockStatus'), 'out_of_stock')
+          )
+        )
       );
     }
 
@@ -1020,5 +1026,81 @@ export const getProductByIdBilling = mutation({
 
     const product = await ctx.db.get(args.id);
     return product?.isDeleted || product?.userId !== userId ? null : product; // Return null if deleted or not owned by user
+  }
+});
+
+// Invoice Management
+export const createInvoice = mutation({
+  args: {
+    invoiceData: v.object({
+      userId: v.string(),
+      transactionDate: v.string(),
+      invoiceNumber: v.string(),
+      date: v.string(),
+      miti: v.string(),
+      paymentMode: v.string(),
+      buyerName: v.string(),
+      buyerAddress: v.string(),
+      buyerPhone: v.optional(v.string()),
+      buyerPan: v.optional(v.string()),
+      items: v.array(
+        v.object({
+          sn: v.number(),
+          hsCode: v.string(),
+          description: v.string(),
+          quantity: v.number(),
+          unit: v.string(),
+          rate: v.number(),
+          amount: v.number()
+        })
+      ),
+      value: v.number(),
+      discount: v.number(),
+      nonTaxable: v.number(),
+      taxableAmount: v.number(),
+      vatAmount: v.number(),
+      totalAmount: v.number(),
+      amountInWords: v.string(),
+      printDate: v.string(),
+      printTime: v.string(),
+      vehicleNo: v.optional(v.string()),
+      remarks: v.optional(v.string())
+    })
+  },
+  handler: async (ctx, args) => {
+    const identify = await ctx.auth.getUserIdentity();
+
+    if (!identify) {
+      throw new Error('Not authenticated');
+    }
+    const userId = identify.subject;
+
+    return await ctx.db.insert('invoices', {
+      ...args.invoiceData,
+      userId,
+      isDeleted: false,
+      createdAt: Date.now()
+    });
+  }
+});
+
+export const getInvoiceByInvoiceNumber = query({
+  args: { invoiceNumber: v.string() },
+  handler: async (ctx, args) => {
+    const identify = await ctx.auth.getUserIdentity();
+
+    if (!identify) {
+      throw new Error('Not authenticated');
+    }
+    const userId = identify.subject;
+
+    const invoices = await ctx.db
+      .query('invoices')
+      .withIndex('by_user_and_invoiceNumber', (q) =>
+        q.eq('userId', userId).eq('invoiceNumber', args.invoiceNumber)
+      )
+      .collect();
+
+    return invoices.length > 0 ? invoices[0] : null;
   }
 });

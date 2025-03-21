@@ -66,15 +66,15 @@ export default function ProductTableAction({
       />
       <label className='flex items-center gap-2'>
         <Checkbox
-          checked={filters.inStock ?? false}
+          checked={filters.inStock === false ? true : false}
           onCheckedChange={(checked: boolean) => {
             setFilters({
               ...filters,
-              inStock: checked ? true : undefined
+              inStock: checked ? false : undefined
             });
           }}
         />
-        <p className='cursor-pointer'>In Stock Only</p>
+        <p className='cursor-pointer'>Reorder Products</p>
       </label>
     </div>
   );

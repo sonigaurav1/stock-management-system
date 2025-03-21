@@ -80,6 +80,9 @@ const ProductBilling = () => {
   const getProductById = useMutation(api.documents.getProductByIdBilling);
   const updateProductStock = useMutation(api.documents.updateProductStock);
 
+  // Invoice
+  const createInvoice = useMutation(api.documents.createInvoice);
+
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -184,8 +187,8 @@ const ProductBilling = () => {
 
   function onSubmit(values: z.infer<typeof formSchema>) {
     // Convert selected products to the format expected by the form schema
-    const items: InvoiceItem[] = state.selectedProducts.map(
-      (product, index) => ({
+    const items: (InvoiceItem & { productId: string })[] =
+      state.selectedProducts.map((product, index) => ({
         productId: product.id,
         sn: index + 1,
         hsCode: '',
@@ -194,8 +197,7 @@ const ProductBilling = () => {
         unit: DEFAULT_UNIT,
         rate: product.rate / 1.13,
         amount: product.quantity * (product.rate / 1.13)
-      })
-    );
+      }));
 
     const discount = values.discount || 0;
     const nonTaxable = values.nonTaxable || 0;
@@ -245,7 +247,42 @@ const ProductBilling = () => {
 
     setIsProcessing(true); // Start loading
 
+    // Remove `productId` from items
+    const sanitizedItems = (processedInvoiceData.items ?? []).map((item) => {
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const { productId, ...rest } = item as InvoiceItem & {
+        productId: string;
+      };
+      return rest;
+    });
+
     try {
+      // Manage invoices
+      await createInvoice({
+        invoiceData: {
+          userId: user?.id as string,
+          transactionDate: processedInvoiceData.transactionDate || '',
+          invoiceNumber: processedInvoiceData.invoiceNumber,
+          date: processedInvoiceData.date || '',
+          miti: processedInvoiceData.miti || '',
+          paymentMode: processedInvoiceData.paymentMode,
+          buyerName: processedInvoiceData.buyerName,
+          buyerAddress: processedInvoiceData.buyerAddress,
+          buyerPhone: processedInvoiceData.buyerPhone,
+          buyerPan: processedInvoiceData.buyerPan,
+          items: sanitizedItems || [],
+          value: processedInvoiceData.value ?? 0,
+          discount: processedInvoiceData.discount ?? 0,
+          nonTaxable: processedInvoiceData.nonTaxable ?? 0,
+          taxableAmount: processedInvoiceData.taxableAmount ?? 0,
+          vatAmount: processedInvoiceData.vatAmount ?? 0,
+          totalAmount: processedInvoiceData.totalAmount ?? 0,
+          amountInWords: processedInvoiceData.amountInWords || '',
+          printDate: processedInvoiceData.printDate || '',
+          printTime: processedInvoiceData.printTime || ''
+        }
+      });
+
       // Manage customers
       const customerDetails = await handleCustomerManagement({
         buyerName: processedInvoiceData.buyerName || '',
