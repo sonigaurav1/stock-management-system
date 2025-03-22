@@ -1038,6 +1038,7 @@ export const createInvoice = mutation({
       invoiceNumber: v.string(),
       date: v.string(),
       miti: v.string(),
+      isAdmin: v.boolean(),
       paymentMode: v.string(),
       buyerName: v.string(),
       buyerAddress: v.string(),

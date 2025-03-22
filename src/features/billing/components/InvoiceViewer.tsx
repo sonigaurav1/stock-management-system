@@ -5,7 +5,7 @@ import React from 'react';
 import InvoiceDocument from './InvoiceDocument';
 import { useQuery } from 'convex/react';
 import { api } from '@/../convex/_generated/api';
-import { COMPANY_DETAILS } from '../constants';
+import { COMPANY_DETAILS, TEST_COMPANY_DETAILS } from '../constants';
 
 type InvoiceViewType = 'invoice' | 'tax-invoice' | string;
 
@@ -29,11 +29,9 @@ const InvoiceViewer = ({
   if (!invoiceData) {
     return <div>Loading or no data available...</div>;
   }
-
   const transformedInvoiceData = {
     ...invoiceData,
     isInvoice: invoiceType === 'invoice' ? true : false,
-    isAdmin: true,
     value: invoiceData.value ?? null, // Ensure value is null if undefined
     discount: invoiceData.discount ?? null, // Ensure discount is null if undefined
     nonTaxable:
@@ -41,7 +39,7 @@ const InvoiceViewer = ({
     taxableAmount: invoiceData.taxableAmount ?? null, // Ensure taxableAmount is null if undefined
     vatAmount: invoiceData.vatAmount ?? null, // Ensure vatAmount is null if undefined
     totalAmount: invoiceData.totalAmount ?? null, // Ensure totalAmount is null if undefined
-    ...COMPANY_DETAILS,
+    ...(invoiceData.isAdmin === true ? COMPANY_DETAILS : TEST_COMPANY_DETAILS), // Correct usage of spread operator
     amountInWords: invoiceData.amountInWords ?? 'N/A', // Provide a default value if undefined
     vehicleNo: invoiceData.vehicleNo ?? null, // Ensure vehicleNo is null if undefined
     remarks: invoiceData.remarks ?? null // Ensure remarks is null if undefined

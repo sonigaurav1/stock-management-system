@@ -189,21 +189,21 @@ export default function AppSidebar() {
 
                 <DropdownMenuGroup>
                   <DropdownMenuItem>
-                    <BadgeCheck />
+                    <BadgeCheck className='mr-2' />
                     Account
                   </DropdownMenuItem>
                   <DropdownMenuItem>
-                    <CreditCard />
+                    <CreditCard className='mr-2' />
                     Billing
                   </DropdownMenuItem>
                   <DropdownMenuItem>
-                    <Bell />
+                    <Bell className='mr-2' />
                     Notifications
                   </DropdownMenuItem>
                 </DropdownMenuGroup>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem className='p-0'>
-                  <SignOutButton redirectUrl='/'>
+                  <SignOutButton redirectUrl='/sign-in'>
                     <div className='flex h-full w-full gap-2 px-2 py-1.5'>
                       <LogOut />
                       Log out

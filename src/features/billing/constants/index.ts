@@ -7,11 +7,11 @@ export const COMPANY_DETAILS = {
 };
 
 export const TEST_COMPANY_DETAILS = {
-  companyName: 'SONU JEWELLERS',
-  companyAddress: 'RAMDHUNI - 01, SUNSARI',
-  phone: '025-562283',
-  email: 'sonujewellers@gmail.com',
-  vatNumber: '1234567890'
+  companyName: 'SHREE GANESH STORES',
+  companyAddress: 'BIRATNAGAR - 05, MORANG',
+  phone: '021-526789',
+  email: 'shreeganeshstores@gmail.com',
+  vatNumber: '9876543210'
 };
 
 export const PAYMENT_METHODS = ['CREDIT', 'CASH', 'CHEQUE'];

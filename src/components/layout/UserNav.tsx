@@ -58,7 +58,7 @@ export function UserNav() {
           </DropdownMenuGroup>
           <DropdownMenuSeparator />
           <DropdownMenuItem className='p-0'>
-            <SignOutButton redirectUrl='/'>
+            <SignOutButton redirectUrl='/sign-in'>
               <div className='flex h-full w-full gap-2 px-2 py-1.5'>
                 Log out
                 <DropdownMenuShortcut>⇧⌘Q</DropdownMenuShortcut>

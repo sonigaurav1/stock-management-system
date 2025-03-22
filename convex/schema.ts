@@ -141,6 +141,7 @@ export default defineSchema({
     invoiceNumber: v.string(),
     date: v.string(),
     miti: v.string(),
+    isAdmin: v.boolean(),
     paymentMode: v.string(),
     buyerName: v.string(),
     buyerAddress: v.string(),
@@ -180,6 +181,7 @@ export default defineSchema({
     .index('by_transactionDate', ['transactionDate']),
 
   firms: defineTable({
+    userId: v.string(), // Reference to the user
     name: v.string(), // Firm name
     owner: v.string(), // Owner's name
     address: v.optional(v.string()), // Optional firm address
@@ -188,10 +190,12 @@ export default defineSchema({
     updatedAt: v.optional(v.number()), // Timestamp when the firm was last updated
     isDeleted: v.boolean() // Soft delete flag
   })
+    .index('by_user', ['userId'])
     .index('by_owner', ['owner'])
     .index('by_isDeleted', ['isDeleted']),
 
   transactions: defineTable({
+    userId: v.string(), // Reference to the user
     firmId: v.string(), // Reference to the firm
     date: v.number(), // Transaction date (timestamp)
     particular: v.string(), // Description of the transaction
@@ -202,6 +206,7 @@ export default defineSchema({
     updatedAt: v.optional(v.number()), // Timestamp when the transaction was last updated
     isDeleted: v.boolean() // Soft delete flag
   })
+    .index('by_user', ['userId'])
     .index('by_firmId', ['firmId'])
     .index('by_date', ['date'])
     .index('by_isDeleted', ['isDeleted'])

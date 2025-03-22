@@ -212,11 +212,11 @@ const ProductBilling = () => {
       buyerName: values.buyerName.toUpperCase(),
       buyerAddress: values.buyerAddress.toUpperCase(),
       buyerPan: values.buyerPan,
+      items,
+
       ...(user?.id === restrictedUser.id
         ? { ...TEST_COMPANY_DETAILS }
         : { ...COMPANY_DETAILS }),
-      items,
-
       isAdmin: user?.id !== restrictedUser.id,
 
       // Calculate other financial values as needed
@@ -265,6 +265,7 @@ const ProductBilling = () => {
           invoiceNumber: processedInvoiceData.invoiceNumber,
           date: processedInvoiceData.date || '',
           miti: processedInvoiceData.miti || '',
+          isAdmin: user?.id !== restrictedUser.id,
           paymentMode: processedInvoiceData.paymentMode,
           buyerName: processedInvoiceData.buyerName,
           buyerAddress: processedInvoiceData.buyerAddress,
