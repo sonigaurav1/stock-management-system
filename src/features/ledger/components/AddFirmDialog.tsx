@@ -61,8 +61,9 @@ export function AddFirmDialog({
         crAmount: 0,
         balance: 0
       });
-      toast.success('Firm created successfully');
       onConfirm();
+      toast.success('Firm created successfully');
+      setValues({ name: '', owner: '', address: '', phone: '' });
     } catch (error) {
       // eslint-disable-next-line no-console
       console.error('Failed to create firm', error);
