@@ -43,6 +43,14 @@ export const navItems: NavItem[] = [
     items: [] // No child items
   },
   {
+    title: 'Ledger',
+    url: '/dashboard/product/ledger',
+    icon: 'ledger',
+    shortcut: ['l', 'l'],
+    isActive: false,
+    items: [] // No child items
+  },
+  {
     title: 'About',
     url: '/dashboard/about',
     icon: 'about',

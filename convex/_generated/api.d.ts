@@ -15,6 +15,7 @@ import type {
 } from 'convex/server';
 import type * as analytics from '../analytics.js';
 import type * as documents from '../documents.js';
+import type * as ledger from '../ledger.js';
 import type * as product from '../product.js';
 
 /**
@@ -28,6 +29,7 @@ import type * as product from '../product.js';
 declare const fullApi: ApiFromModules<{
   analytics: typeof analytics;
   documents: typeof documents;
+  ledger: typeof ledger;
   product: typeof product;
 }>;
 export declare const api: FilterApi<

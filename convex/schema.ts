@@ -177,5 +177,32 @@ export default defineSchema({
     .index('by_isDeleted', ['isDeleted'])
     .index('by_user_and_invoiceNumber', ['userId', 'invoiceNumber'])
     .index('by_user_and_isDeleted', ['userId', 'isDeleted'])
-    .index('by_transactionDate', ['transactionDate'])
+    .index('by_transactionDate', ['transactionDate']),
+
+  firms: defineTable({
+    name: v.string(), // Firm name
+    owner: v.string(), // Owner's name
+    address: v.optional(v.string()), // Optional firm address
+    phone: v.optional(v.string()), // Optional contact number
+    createdAt: v.number(), // Timestamp when the firm was created
+    updatedAt: v.optional(v.number()), // Timestamp when the firm was last updated
+    isDeleted: v.boolean() // Soft delete flag
+  })
+    .index('by_owner', ['owner'])
+    .index('by_isDeleted', ['isDeleted']),
+
+  transactions: defineTable({
+    firmId: v.string(), // Reference to the firm
+    date: v.number(), // Transaction date (timestamp)
+    particular: v.string(), // Description of the transaction
+    drAmount: v.optional(v.number()), // Debit amount
+    crAmount: v.optional(v.number()), // Credit amount
+    balance: v.number(), // Running balance after the transaction
+    createdAt: v.number(), // Timestamp when the transaction was created
+    updatedAt: v.optional(v.number()), // Timestamp when the transaction was last updated
+    isDeleted: v.boolean() // Soft delete flag
+  })
+    .index('by_firmId', ['firmId'])
+    .index('by_date', ['date'])
+    .index('by_isDeleted', ['isDeleted'])
 });
