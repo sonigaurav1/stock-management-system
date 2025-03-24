@@ -21,7 +21,7 @@ export default function CategoryViewPage({
 
   // Query product data
   const getCategory = useQuery(
-    api.documents.getCategoryById,
+    api.categories.getCategoryById,
     !isNewCategory ? { id: categoryId as Id<'category'> } : 'skip'
   );
 

@@ -5,7 +5,7 @@ import { api } from '@/../convex/_generated/api';
 import { useMutation } from 'convex/react';
 
 const ResetProductPrices = () => {
-  const emptyProductPricesMutation = useMutation(api.product.default);
+  const emptyProductPricesMutation = useMutation(api.products.default);
 
   const handleResetPrices = async () => {
     await emptyProductPricesMutation();

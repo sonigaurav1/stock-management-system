@@ -43,12 +43,12 @@ export default function CategoryForm({
   const router = useRouter();
   const { compressedFile, compressImage } = useCompressUploadedImage();
 
-  const createCategory = useMutation(api.documents.createCategory);
-  const updateCategory = useMutation(api.documents.updateCategory);
+  const createCategory = useMutation(api.categories.createCategory);
+  const updateCategory = useMutation(api.categories.updateCategory);
 
   // fetch all categories to check if the user has reached the limit
   const allCategories = useQuery(
-    api.documents.getAllCategories,
+    api.categories.getAllCategories,
     user?.id === restrictedUser.id ? undefined : 'skip'
   );
 

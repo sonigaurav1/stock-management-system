@@ -21,7 +21,7 @@ export default function SupplierViewPage({
 
   // Query product data
   const getSupplier = useQuery(
-    api.documents.getSupplierById,
+    api.suppliers.getSupplierById,
     !isNewSupplier ? { id: supplierId as Id<'suppliers'> } : 'skip'
   );
 

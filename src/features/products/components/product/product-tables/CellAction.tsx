@@ -22,7 +22,7 @@ export const CellAction: React.FC<CellActionProps> = ({ data }) => {
 
   const { edgestore } = useEdgeStore();
 
-  const deleteProduct = useMutation(api.documents.deleteProduct);
+  const deleteProduct = useMutation(api.products.deleteProduct);
 
   const onConfirm = async () => {
     setLoading(true); // Set loading state to true

@@ -52,16 +52,16 @@ export default function ProductForm({
   const { compressedFile, compressImage } = useCompressUploadedImage();
 
   // Mutation hooks
-  const createProduct = useMutation(api.documents.createProduct);
-  const updateProduct = useMutation(api.documents.updateProduct);
+  const createProduct = useMutation(api.products.createProduct);
+  const updateProduct = useMutation(api.products.updateProduct);
 
   // Query hooks
-  const category = useQuery(api.documents.getAllCategories) ?? [];
-  const suppliers = useQuery(api.documents.getAllSuppliers) ?? [];
+  const category = useQuery(api.categories.getAllCategories) ?? [];
+  const suppliers = useQuery(api.suppliers.getAllSuppliers) ?? [];
 
   // fetch all categories to check if the user has reached the limit
   const allProducts = useQuery(
-    api.documents.getAllProducts,
+    api.products.getAllProducts,
     user?.id === restrictedUser.id ? undefined : 'skip'
   );
 

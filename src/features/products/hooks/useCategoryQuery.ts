@@ -1,5 +1,5 @@
 import { api } from '@/../convex/_generated/api';
-import { PaginationOptions, ProductFilters } from 'convex/documents';
+import { PaginationOptions, ProductFilters } from 'convex/types';
 import { useQuery } from 'convex/react';
 
 // Frontend hook for managing category queries
@@ -7,7 +7,7 @@ export const useCategoryQuery = (
   paginationOptions: PaginationOptions,
   filters: ProductFilters
 ) => {
-  const result = useQuery(api.documents.getFilteredCategory, {
+  const result = useQuery(api.categories.getFilteredCategory, {
     paginationOptions,
     filters: {
       searchTerm: filters.searchTerm?.trim() || undefined

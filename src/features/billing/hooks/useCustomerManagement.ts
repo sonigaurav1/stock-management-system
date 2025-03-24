@@ -12,12 +12,10 @@ interface FormValues {
 }
 
 export const useCustomerManagement = () => {
-  const createCustomer = useMutation(api.documents.createCustomer);
+  const createCustomer = useMutation(api.billing.createCustomer);
 
   // This query will only be used for initial rendering
-  const initialCustomerCheck = useMutation(
-    api.documents.getCustomerByPanOrPhone
-  );
+  const initialCustomerCheck = useMutation(api.billing.getCustomerByPanOrPhone);
 
   const handleCustomerManagement = useCallback(
     async (values: FormValues) => {

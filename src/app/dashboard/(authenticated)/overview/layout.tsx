@@ -5,7 +5,7 @@ import { formatIndianCurrency } from '@/lib/utils';
 import { useUser } from '@clerk/clerk-react';
 import { api } from '@/../convex/_generated/api';
 import { useQuery } from 'convex/react';
-import React from 'react';
+import React, { useState } from 'react';
 
 export default function OverViewLayout({
   sales,
@@ -49,6 +49,8 @@ export default function OverViewLayout({
     ? user.username.charAt(0).toUpperCase() + user.username.slice(1)
     : '';
 
+  const [showRevenue, setShowRevenue] = useState(false);
+
   return (
     <PageContainer>
       <div className='flex flex-1 flex-col space-y-2'>
@@ -83,8 +85,18 @@ export default function OverViewLayout({
               </svg>
             </CardHeader>
             <CardContent>
-              <div className='text-2xl font-bold'>
-                Rs. {formatIndianCurrency(currentMonthRevenue)}
+              <div
+                onClick={() => setShowRevenue((prev) => !prev)}
+                className='max-w-max cursor-pointer select-none text-2xl font-bold'
+              >
+                <p>
+                  Rs.{' '}
+                  <span className=''>
+                    {showRevenue
+                      ? formatIndianCurrency(currentMonthRevenue)
+                      : '********'}
+                  </span>
+                </p>
               </div>
               <p className='text-xs text-muted-foreground'>
                 {revenuePercentageChange?.toFixed(0) ?? 0}% from last month

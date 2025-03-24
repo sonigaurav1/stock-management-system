@@ -1,6 +1,6 @@
 import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server';
 
-const isPublicRoute = createRouteMatcher(['/sign-in(.*)']); // '/sign-up(.*)' removed from public routes, now to make new user sign up, we will use the clerk's dashboard
+const isPublicRoute = createRouteMatcher(['/sign-in(.*)', '/sign-up(.*)']); // '/sign-up(.*)' removed from public routes, now to make new user sign up, we will use the clerk's dashboard
 
 export default clerkMiddleware(async (auth, request) => {
   if (!isPublicRoute(request)) {

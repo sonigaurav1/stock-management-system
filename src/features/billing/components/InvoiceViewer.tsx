@@ -22,7 +22,7 @@ const InvoiceViewer = ({
     notFound();
   }
 
-  const invoiceData = useQuery(api.documents.getInvoiceByInvoiceNumber, {
+  const invoiceData = useQuery(api.billing.getInvoiceByInvoiceNumber, {
     invoiceNumber
   });
 

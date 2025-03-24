@@ -28,7 +28,7 @@ export default function ProductTableAction({
     setSearchQuery
   } = useProductTableFilters();
 
-  const fetchedCategories = useQuery(api.documents.getAllCategories);
+  const fetchedCategories = useQuery(api.categories.getAllCategories);
 
   return (
     <div className='flex flex-wrap items-center gap-4'>

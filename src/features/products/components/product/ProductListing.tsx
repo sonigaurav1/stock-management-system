@@ -3,7 +3,7 @@
 import { DataTable as ProductTable } from '@/components/ui/table/ProductDataTable';
 import { columns, skeletonColumns } from './product-tables/columns';
 import { useEffect, useState } from 'react';
-import { ProductFilters as ProductFiltersType } from 'convex/documents';
+import { ProductFilters as ProductFiltersType } from 'convex/types';
 import { useDebounce } from '@/hooks/useDebounce';
 import { useProductQuery } from '../../hooks/useProductQuery';
 import ProductTableAction from './product-tables/ProductTableAction';

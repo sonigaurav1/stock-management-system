@@ -19,7 +19,7 @@ export default function ProductViewPage({ productId }: TProductViewPageProps) {
 
   // Query product data
   const getProduct = useQuery(
-    api.documents.getProductById,
+    api.products.getProductById,
     productId === 'view'
       ? notFound()
       : isNewProduct

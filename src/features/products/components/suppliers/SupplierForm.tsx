@@ -41,12 +41,12 @@ export default function SupplierForm({
   const router = useRouter();
   const { compressedFile, compressImage } = useCompressUploadedImage();
 
-  const createSupplier = useMutation(api.documents.createSupplier);
-  const updateSupplier = useMutation(api.documents.updateSupplier);
+  const createSupplier = useMutation(api.suppliers.createSupplier);
+  const updateSupplier = useMutation(api.suppliers.updateSupplier);
 
   // fetch all categories to check if the user has reached the limit
   const allSuppliers = useQuery(
-    api.documents.getAllSuppliers,
+    api.suppliers.getAllSuppliers,
     user?.id === restrictedUser.id ? undefined : 'skip'
   );
 

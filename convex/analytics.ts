@@ -292,11 +292,21 @@ export const getTotalCustomersWithComparison = query({
 });
 
 //  Get 5 recent sales and total sales count for this month
+//  Get 5 recent sales and total sales count for this month
 export const getRecentSalesAndMonthlyTotal = query({
   handler: async (ctx) => {
+    const identity = await ctx.auth.getUserIdentity();
+
+    if (!identity) {
+      throw new Error('Not authenticated');
+    }
+    const userId = identity.subject;
+
     const sales = await ctx.db
       .query('sales')
-      .filter((sale: any) => sale.isDeleted !== false) // Ensure filtering is done here
+      .withIndex('by_user_and_isDeleted', (q) =>
+        q.eq('userId', userId).eq('isDeleted', false)
+      )
       .collect();
 
     // Sort sales in descending order based on the soldAt date

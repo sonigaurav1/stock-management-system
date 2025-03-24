@@ -25,7 +25,7 @@ export default function SingleProductViewPage({
   productId: string;
 }) {
   const product = useQuery(
-    api.documents.getProductById,
+    api.products.getProductById,
     productId ? { id: productId as Id<'products'> } : 'skip'
   ) ?? {
     name: 'N/A',

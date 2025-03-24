@@ -76,12 +76,12 @@ const ProductBilling = () => {
   const [processedInvoiceData, setProcessedInvoiceData] =
     useState<FormValues | null>(null);
 
-  const createSale = useMutation(api.documents.createSale);
-  const getProductById = useMutation(api.documents.getProductByIdBilling);
-  const updateProductStock = useMutation(api.documents.updateProductStock);
+  const createSale = useMutation(api.billing.createSale);
+  const getProductById = useMutation(api.billing.getProductByIdBilling);
+  const updateProductStock = useMutation(api.billing.updateProductStock);
 
   // Invoice
-  const createInvoice = useMutation(api.documents.createInvoice);
+  const createInvoice = useMutation(api.billing.createInvoice);
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
@@ -363,7 +363,7 @@ const ProductBilling = () => {
                   </div>
                   <CommandList className='max-h-64 w-full overflow-auto'>
                     <ProductList
-                      products={products.map((product) => ({
+                      products={products.map((product: any) => ({
                         id: product._id,
                         name: product.name,
                         imageUrl: product.imageUrl,
