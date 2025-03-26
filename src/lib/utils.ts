@@ -220,3 +220,69 @@ export function formatIndianCurrency(number: number): string {
 
   return formatted + (parts.length > 1 ? '.' + parts[1] : '');
 }
+
+/**
+ * Options for text truncation
+ */
+interface TruncateOptions {
+  /**
+   * Maximum length of the text
+   * @default 100
+   */
+  maxLength?: number;
+
+  /**
+   * Ellipsis to append when text is truncated
+   * @default '...'
+   */
+  ellipsis?: string;
+
+  /**
+   * Truncation mode
+   * - 'end': Truncate from the end (default)
+   * - 'middle': Truncate from the middle
+   * - 'start': Truncate from the start
+   * @default 'end'
+   */
+  mode?: 'end' | 'middle' | 'start';
+}
+
+/**
+ * Truncates text to a specified maximum length
+ *
+ * @param text - The input text to truncate
+ * @param options - Truncation configuration options
+ * @returns Truncated text
+ */
+export function truncate(text: string, options: TruncateOptions = {}): string {
+  // Set default options
+  const { maxLength = 100, ellipsis = '...', mode = 'end' } = options;
+
+  // If text is shorter than max length, return as-is
+  if (text.length <= maxLength) {
+    return text;
+  }
+
+  // Calculate available length for truncation
+  const availableLength = maxLength - ellipsis.length;
+
+  // Truncate based on mode
+  switch (mode) {
+    case 'end':
+      return text.slice(0, availableLength) + ellipsis;
+
+    case 'start':
+      return ellipsis + text.slice(-availableLength);
+
+    case 'middle':
+      const leftSideLength = Math.ceil(availableLength / 2);
+      const rightSideLength = Math.floor(availableLength / 2);
+
+      return (
+        text.slice(0, leftSideLength) + ellipsis + text.slice(-rightSideLength)
+      );
+
+    default:
+      return text.slice(0, availableLength) + ellipsis;
+  }
+}

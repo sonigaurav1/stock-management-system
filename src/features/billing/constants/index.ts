@@ -1,6 +1,6 @@
 export const COMPANY_DETAILS = {
   companyName: 'HIRA ELECTRONICS AND MOBILE PASAL',
-  companyAddress: 'Ramdhuni - 01, SUNSARI',
+  companyAddress: 'RAMDHUNI - 01, SUNSARI',
   phone: '9807006446/9749249123',
   email: 'hiraelectronicsandmobilepasal@gmail.com',
   vatNumber: '621601471'

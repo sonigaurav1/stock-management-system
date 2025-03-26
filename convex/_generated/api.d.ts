@@ -18,6 +18,7 @@ import type * as billing from '../billing.js';
 import type * as categories from '../categories.js';
 import type * as ledger from '../ledger.js';
 import type * as products from '../products.js';
+import type * as profile from '../profile.js';
 import type * as suppliers from '../suppliers.js';
 import type * as types from '../types.js';
 
@@ -35,6 +36,7 @@ declare const fullApi: ApiFromModules<{
   categories: typeof categories;
   ledger: typeof ledger;
   products: typeof products;
+  profile: typeof profile;
   suppliers: typeof suppliers;
   types: typeof types;
 }>;

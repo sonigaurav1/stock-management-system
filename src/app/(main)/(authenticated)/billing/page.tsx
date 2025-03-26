@@ -6,7 +6,7 @@ import { Form } from '@/components/ui/form';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { type z } from 'zod';
-import { formSchema } from '../../../../../features/billing/schema/invoice.schema';
+import { formSchema } from '@/features/billing/schema/invoice.schema';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { useProductQuery } from '@/features/products/hooks/useProductQuery';
@@ -25,18 +25,15 @@ import {
   DEFAULT_UNIT,
   TEST_COMPANY_DETAILS,
   VAT_PERCENTAGE
-} from '../../../../../features/billing/constants';
-import {
-  initialState,
-  reducer
-} from '../../../../../features/billing/reducers/reducer';
+} from '@/features/billing/constants';
+import { initialState, reducer } from '@/features/billing/reducers/reducer';
 import {
   handleProductSelect,
   handleQuantityChange,
   handleRateChange,
   handleRemoveProduct,
   useDebouncedSetSearchTerm
-} from '../../../../../features/billing/utils/handlers';
+} from '@/features/billing/utils/handlers';
 import {
   BuyerAddressField,
   BuyerNameField,
@@ -44,13 +41,13 @@ import {
   BuyerPhoneField,
   InvoiceNumberField,
   PaymentModeField
-} from '../../../../../features/billing/components/FormFields';
+} from '@/features/billing/components/FormFields';
 import ProductList from '@/features/billing/components/ProductList';
 import ProductItem from '@/features/billing/components/ProductItem';
 import {
   InvoiceItem,
   InvoiceProps
-} from '../../../../../features/billing/interfaces/IBilling';
+} from '@/features/billing/interfaces/IBilling';
 import { Id } from 'convex/_generated/dataModel';
 import { useMutation } from 'convex/react';
 import { api } from '@/../convex/_generated/api';

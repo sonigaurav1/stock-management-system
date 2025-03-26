@@ -34,14 +34,14 @@ export default defineSchema({
     createdAt: v.number(),
     updatedAt: v.optional(v.number())
   })
-    .index('by_category', ['categoryId'])
-    .index('by_stockLevel', ['stockLevel'])
-    .index('by_supplier', ['supplierId'])
-    .index('by_purchasePrice', ['purchasePrice'])
-    .index('by_inStock', ['inStock'])
-    .index('by_stockStatus', ['stockStatus'])
+    // .index('by_category', ['categoryId'])
+    // .index('by_stockLevel', ['stockLevel'])
+    // .index('by_supplier', ['supplierId'])
+    // .index('by_purchasePrice', ['purchasePrice'])
+    // .index('by_inStock', ['inStock'])
+    // .index('by_stockStatus', ['stockStatus'])
+    // .index('by_isDeleted', ['isDeleted']) // Index for filtering active products
     .index('by_user', ['userId'])
-    .index('by_isDeleted', ['isDeleted']) // Index for filtering active products
     .index('by_user_and_isCategory', ['categoryId', 'isDeleted'])
     .index('by_user_and_isSupplier', ['supplierId', 'isDeleted'])
     .index('by_user_and_isDeleted', ['userId', 'isDeleted']),
@@ -57,8 +57,8 @@ export default defineSchema({
     createdAt: v.number(),
     updatedAt: v.optional(v.number())
   })
-    .index('by_user', ['userId'])
-    .index('by_isDeleted', ['isDeleted']) // Index for filtering active products
+    // .index('by_user', ['userId'])
+    // .index('by_isDeleted', ['isDeleted']) // Index for filtering active products
     .index('by_user_and_isDeleted', ['userId', 'isDeleted']),
 
   suppliers: defineTable({
@@ -74,9 +74,9 @@ export default defineSchema({
     createdAt: v.number(),
     updatedAt: v.optional(v.number())
   })
-    .index('by_name', ['name'])
-    .index('by_user', ['userId'])
-    .index('by_isDeleted', ['isDeleted']) // Index for filtering active products
+    // .index('by_name', ['name'])
+    // .index('by_user', ['userId'])
+    // .index('by_isDeleted', ['isDeleted']) // Index for filtering active products
     .index('by_user_and_isDeleted', ['userId', 'isDeleted']),
 
   stockMovements: defineTable({
@@ -91,10 +91,10 @@ export default defineSchema({
 
     createdAt: v.number() // Timestamp of the movement
   })
-    .index('by_user', ['userId'])
-    .index('by_user_and_isDeleted', ['userId', 'isDeleted'])
-    .index('by_product', ['productId'])
-    .index('by_type', ['type']),
+    // .index('by_user', ['userId'])
+    // .index('by_product', ['productId'])
+    // .index('by_type', ['type']),
+    .index('by_user_and_isDeleted', ['userId', 'isDeleted']),
 
   sales: defineTable({
     productId: v.string(),
@@ -110,11 +110,11 @@ export default defineSchema({
 
     soldAt: v.number() // Timestamp of sale
   })
-    .index('by_user', ['userId'])
-    .index('by_user_and_isDeleted', ['userId', 'isDeleted'])
-    .index('by_customerId', ['customerId'])
-    .index('by_product', ['productId'])
-    .index('by_soldAt', ['soldAt']),
+    // .index('by_user', ['userId'])
+    // .index('by_customerId', ['customerId'])
+    // .index('by_product', ['productId'])
+    // .index('by_soldAt', ['soldAt'])
+    .index('by_user_and_isDeleted', ['userId', 'isDeleted']),
 
   customers: defineTable({
     name: v.string(),
@@ -130,9 +130,9 @@ export default defineSchema({
 
     createdAt: v.number()
   })
-    .index('by_user', ['userId'])
-    .index('by_user_and_isDeleted', ['userId', 'isDeleted'])
-    .index('by_name', ['name']),
+    // .index('by_user', ['userId'])
+    // .index('by_name', ['name'])
+    .index('by_user_and_isDeleted', ['userId', 'isDeleted']),
 
   invoices: defineTable({
     userId: v.string(),
@@ -173,12 +173,12 @@ export default defineSchema({
     createdAt: v.number(),
     updatedAt: v.optional(v.number())
   })
-    .index('by_invoiceNumber', ['invoiceNumber'])
-    .index('by_user', ['userId'])
-    .index('by_isDeleted', ['isDeleted'])
+    // .index('by_invoiceNumber', ['invoiceNumber'])
+    // .index('by_user', ['userId'])
+    // .index('by_isDeleted', ['isDeleted'])
+    // .index('by_transactionDate', ['transactionDate']),
     .index('by_user_and_invoiceNumber', ['userId', 'invoiceNumber'])
-    .index('by_user_and_isDeleted', ['userId', 'isDeleted'])
-    .index('by_transactionDate', ['transactionDate']),
+    .index('by_user_and_isDeleted', ['userId', 'isDeleted']),
 
   firms: defineTable({
     userId: v.string(), // Reference to the user
@@ -190,9 +190,10 @@ export default defineSchema({
     updatedAt: v.optional(v.number()), // Timestamp when the firm was last updated
     isDeleted: v.boolean() // Soft delete flag
   })
-    .index('by_user', ['userId'])
-    .index('by_owner', ['owner'])
-    .index('by_isDeleted', ['isDeleted']),
+    // .index('by_user', ['userId'])
+    // .index('by_owner', ['owner'])
+    // .index('by_isDeleted', ['isDeleted'])
+    .index('by_user_and_isDeleted', ['userId', 'isDeleted']),
 
   transactions: defineTable({
     userId: v.string(), // Reference to the user
@@ -206,8 +207,28 @@ export default defineSchema({
     updatedAt: v.optional(v.number()), // Timestamp when the transaction was last updated
     isDeleted: v.boolean() // Soft delete flag
   })
-    .index('by_user', ['userId'])
-    .index('by_firmId', ['firmId'])
-    .index('by_date', ['date'])
-    .index('by_isDeleted', ['isDeleted'])
+    // .index('by_user', ['userId'])
+    // .index('by_firmId', ['firmId'])
+    // .index('by_date', ['date'])
+    // .index('by_isDeleted', ['isDeleted'])
+    .index('by_user_firm_isDeleted', ['userId', 'firmId', 'isDeleted']),
+
+  companyDetails: defineTable({
+    userId: v.string(), // Reference to the user
+    companyName: v.string(),
+    companyAddress: v.string(),
+    phone: v.array(v.string()),
+    email: v.string(),
+    vatNumber: v.string(),
+    isVerified: v.boolean(), // VAT number verification status
+    urls: v.array(v.object({ id: v.number(), value: v.string() })), // Array of URLs
+
+    isDeleted: v.boolean(), // Soft delete flag (false = active, true = deleted)
+
+    createdAt: v.number(), // Timestamp for when the details were created
+    updatedAt: v.optional(v.number()) // Optional timestamp for updates
+  })
+    .index('by_user_and_isDeleted', ['userId', 'isDeleted'])
+    .index('by_companyName', ['companyName'])
+    .index('by_vatNumber', ['vatNumber'])
 });

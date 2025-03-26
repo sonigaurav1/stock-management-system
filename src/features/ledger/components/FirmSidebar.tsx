@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Search, Menu, X, Plus, Trash } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { cn, truncate } from '@/lib/utils';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { AddFirmDialog } from './AddFirmDialog';
 import { useMutation, useQuery } from 'convex/react';
@@ -175,11 +175,11 @@ export default function FirmSidebar({
                           {firm.name.charAt(0)}
                         </div>
                         <div className='overflow-hidden'>
-                          <div className='truncate font-medium'>
-                            {firm.name}
+                          <div className='font-medium'>
+                            {truncate(firm.name, { maxLength: 20 })}
                           </div>
-                          <div className='truncate text-xs text-gray-500'>
-                            {firm.owner}
+                          <div className='text-xs text-gray-500'>
+                            {truncate(firm.owner, { maxLength: 25 })}
                           </div>
                         </div>
                         <Trash

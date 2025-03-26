@@ -1,4 +1,4 @@
-import PageContainer from '../../../../components/layout/PageContainer';
+import PageContainer from '@/components/layout/PageContainer';
 import Link from 'next/link';
 import React from 'react';
 

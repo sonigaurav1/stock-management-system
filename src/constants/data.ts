@@ -36,7 +36,7 @@ export const navItems: NavItem[] = [
   },
   {
     title: 'Billing',
-    url: '/dashboard/product/billing',
+    url: '/billing',
     icon: 'productBilling',
     shortcut: ['b', 'b'],
     isActive: false,
@@ -44,47 +44,52 @@ export const navItems: NavItem[] = [
   },
   {
     title: 'Ledger',
-    url: '/dashboard/product/ledger',
+    url: '/ledger',
     icon: 'ledger',
     shortcut: ['l', 'l'],
     isActive: false,
     items: [] // No child items
   },
   {
+    title: 'Settings',
+    url: '/settings', // Placeholder as there is no direct link for the parent
+    icon: 'billing',
+    isActive: true,
+
+    items: [
+      {
+        title: 'Profile',
+        url: '/settings/profile',
+        icon: 'userPen'
+      },
+      {
+        title: 'Account',
+        url: '/settings/account',
+        icon: 'creditCard'
+      },
+      {
+        title: 'Appearance',
+        url: '/settings/appearance',
+        icon: 'monitor'
+      },
+      {
+        title: 'Notifications',
+        url: '/settings/notifications',
+        icon: 'bell'
+      },
+      {
+        title: 'Display',
+        url: '/settings/display',
+        icon: 'settings'
+      }
+    ]
+  },
+  {
     title: 'About',
-    url: '/dashboard/about',
+    url: '/about',
     icon: 'about',
     shortcut: ['i', 'i'],
     isActive: false,
     items: [] // No child items
   }
-  // {
-  //   title: 'Account',
-  //   url: '#', // Placeholder as there is no direct link for the parent
-  //   icon: 'billing',
-  //   isActive: true,
-
-  //   items: [
-  //     {
-  //       title: 'Profile',
-  //       url: '/dashboard/profile',
-  //       icon: 'userPen',
-  //       shortcut: ['m', 'm']
-  //     },
-  //     {
-  //       title: 'Login',
-  //       shortcut: ['l', 'l'],
-  //       url: '/',
-  //       icon: 'login'
-  //     }
-  //   ]
-  // },
-  // {
-  //   title: 'Kanban',
-  //   url: '/dashboard/kanban',
-  //   icon: 'kanban',
-  //   shortcut: ['k', 'k'],
-  //   isActive: false,
-  //   items: [] // No child items
-  // }
 ];

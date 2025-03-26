@@ -6,6 +6,7 @@ import { useUser } from '@clerk/clerk-react';
 import { api } from '@/../convex/_generated/api';
 import { useQuery } from 'convex/react';
 import React, { useState } from 'react';
+import { Asterisk, Eye, EyeOff } from 'lucide-react';
 
 export default function OverViewLayout({
   sales,
@@ -85,18 +86,27 @@ export default function OverViewLayout({
               </svg>
             </CardHeader>
             <CardContent>
-              <div
-                onClick={() => setShowRevenue((prev) => !prev)}
-                className='max-w-max cursor-pointer select-none text-2xl font-bold'
-              >
-                <p>
+              <div className='flex max-w-max select-none items-center gap-1 text-2xl font-bold transition-all duration-300'>
+                <p className='flex items-center'>
                   Rs.{' '}
-                  <span className=''>
+                  <span className='flex max-w-[100px] items-center tracking-wider'>
                     {showRevenue
                       ? formatIndianCurrency(currentMonthRevenue)
-                      : '********'}
+                      : Array.from({ length: 10 }, (_, index) => (
+                          <Asterisk key={index} className='size-6' />
+                        ))}
                   </span>
                 </p>
+                <span
+                  className='cursor-pointer'
+                  onClick={() => setShowRevenue((prev) => !prev)}
+                >
+                  {showRevenue ? (
+                    <Eye className='size-6' />
+                  ) : (
+                    <EyeOff className='size-6' />
+                  )}
+                </span>
               </div>
               <p className='text-xs text-muted-foreground'>
                 {revenuePercentageChange?.toFixed(0) ?? 0}% from last month

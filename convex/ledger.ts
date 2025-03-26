@@ -68,8 +68,9 @@ export const getAllFirms = query({
 
     return await ctx.db
       .query('firms')
-      .withIndex('by_user', (q) => q.eq('userId', userId))
-      .filter((q) => q.eq(q.field('isDeleted'), false))
+      .withIndex('by_user_and_isDeleted', (q) =>
+        q.eq('userId', userId).eq('isDeleted', false)
+      )
       .collect();
   }
 });
@@ -86,15 +87,11 @@ export const getTransactionsByFirm = query({
 
     return await ctx.db
       .query('transactions')
-      .withIndex('by_user', (q) => q.eq('userId', userId))
-      .filter((q) => q.eq(q.field('firmId'), firmId))
-      .filter((q) => q.eq(q.field('isDeleted'), false))
-      .collect()
-      .then((results) =>
-        results.sort(
-          (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
-        )
-      );
+      .withIndex('by_user_firm_isDeleted', (q) =>
+        q.eq('userId', userId).eq('firmId', firmId).eq('isDeleted', false)
+      )
+      .order('desc') // If transactions have a `date` field, sort in DB instead
+      .collect();
   }
 });
 
