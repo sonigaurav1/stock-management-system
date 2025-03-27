@@ -12,7 +12,10 @@ export const reducer = (
 ) => {
   switch (action.type) {
     case 'SET_SEARCH_TERM':
-      return { ...state, searchTerm: action.payload };
+      return {
+        ...state,
+        searchTerm: action.payload
+      };
     case 'ADD_PRODUCT':
       const existingProductIndex = state.selectedProducts.findIndex(
         (product) => product.id === action.payload.id

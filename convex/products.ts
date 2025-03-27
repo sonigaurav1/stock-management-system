@@ -164,6 +164,11 @@ export const getProductById = query({
     const userId = identify.subject;
 
     const product = await ctx.db.get(args.id);
+
+    if (!product) {
+      return null;
+    }
+
     return product?.isDeleted || product?.userId !== userId ? null : product; // Return null if deleted or not owned by user
   }
 });

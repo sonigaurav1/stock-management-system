@@ -15,10 +15,6 @@ type TProductViewPageProps = {
 };
 
 export default function ProductViewPage({ productId }: TProductViewPageProps) {
-  if (productId !== 'new' && productId !== 'view' && !/^\d+$/.test(productId)) {
-    notFound();
-  }
-
   const isNewProduct = productId === 'new';
 
   // Query product data

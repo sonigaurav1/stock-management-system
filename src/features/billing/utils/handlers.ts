@@ -1,5 +1,4 @@
 import { useCallback } from 'react';
-import { debounce } from 'lodash';
 import { Product } from '../interfaces/IBilling';
 
 interface DispatchAction {
@@ -10,15 +9,11 @@ interface DispatchAction {
 type Dispatch = (action: DispatchAction) => void;
 
 export const useDebouncedSetSearchTerm = (dispatch: Dispatch) => {
-  const debouncedFunction = debounce((value: string) => {
-    dispatch({ type: 'SET_SEARCH_TERM', payload: value });
-  }, 300);
-
   return useCallback(
     (value: string) => {
-      debouncedFunction(value);
+      dispatch({ type: 'SET_SEARCH_TERM', payload: value });
     },
-    [debouncedFunction]
+    [dispatch]
   );
 };
 
