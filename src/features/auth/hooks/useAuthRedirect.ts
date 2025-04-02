@@ -1,15 +1,14 @@
 // hooks/useAuthRedirect.ts
-import { useUser } from '@clerk/nextjs';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 import { PATH } from '@/constants/PATH';
+import { useUser } from '@clerk/clerk-react';
 
 export function useAuthRedirect(
   redirectTo: string,
   requireAuth: boolean = true
 ) {
   const { isSignedIn, isLoaded } = useUser();
-  // const { userId } = useAuth();
   const router = useRouter();
 
   useEffect(() => {

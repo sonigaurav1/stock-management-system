@@ -9,7 +9,6 @@ import { api } from '@/../convex/_generated/api';
 import { useAuth } from '@clerk/nextjs';
 
 export default function ProfileSettings() {
-  //   const router = useRouter();
   const { userId } = useAuth();
 
   const updateCompanyDetails = useMutation(

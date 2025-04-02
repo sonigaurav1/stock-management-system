@@ -3,7 +3,6 @@
 import { PATH } from '@/constants/PATH';
 import { Spinner } from '@/components/Spinner';
 import { useAuthRedirect } from '@/features/auth/hooks/useAuthRedirect';
-// import useVerifiedUser from '@/features/auth/hooks/useVerifiedUser';
 
 export default function AuthenticatedLayout({
   children
@@ -11,7 +10,6 @@ export default function AuthenticatedLayout({
   children: React.ReactNode;
 }) {
   const { isSignedIn, isLoaded } = useAuthRedirect(PATH.SIGNIN);
-  // const companyDetails = useVerifiedUser(); // Check company details and verification status
 
   if (!isLoaded) {
     return (
