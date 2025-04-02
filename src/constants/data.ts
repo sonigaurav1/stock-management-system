@@ -54,7 +54,7 @@ export const navItems: NavItem[] = [
     title: 'Settings',
     url: '/settings', // Placeholder as there is no direct link for the parent
     icon: 'billing',
-    isActive: true,
+    isActive: false,
 
     items: [
       {

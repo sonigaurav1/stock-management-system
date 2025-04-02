@@ -58,5 +58,6 @@ export interface InvoiceProps {
     vehicleNo: string | null;
     remarks: string | null;
     isAdmin: boolean;
+    processedBy?: string;
   };
 }

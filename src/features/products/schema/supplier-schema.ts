@@ -9,7 +9,7 @@ const ACCEPTED_IMAGE_TYPES = [
 ];
 
 export const formSchema = z.object({
-  name: z.string().nonempty({ message: 'Name is required' }),
+  name: z.string().nonempty({ message: 'Supplier name is required' }),
   phone: z.string().optional(),
   email: z.string().optional(),
   address: z.string().optional(),

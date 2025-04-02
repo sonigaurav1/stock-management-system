@@ -335,7 +335,10 @@ function InvoiceDocument({ invoiceData }: InvoiceProps) {
             {/* Center */}
             <View style={styles.footerMiddle}>
               <Text>........................</Text>
-              <Text>User : S.H.K.P</Text>
+              <Text>
+                User :{' '}
+                {invoiceData?.processedBy ? invoiceData.processedBy : 'Admin'}
+              </Text>
             </View>
 
             {/* Right */}

@@ -23,6 +23,7 @@ export default function ProductListingPage() {
     { page, pageSize },
     { ...filters, searchTerm: debouncedSearchTerm }
   );
+  // console.debug(products)
 
   // Reset pagination when filters change
   useEffect(() => {

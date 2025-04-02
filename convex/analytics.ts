@@ -292,7 +292,6 @@ export const getTotalCustomersWithComparison = query({
 });
 
 //  Get 5 recent sales and total sales count for this month
-//  Get 5 recent sales and total sales count for this month
 export const getRecentSalesAndMonthlyTotal = query({
   handler: async (ctx) => {
     const identity = await ctx.auth.getUserIdentity();
@@ -325,5 +324,26 @@ export const getRecentSalesAndMonthlyTotal = query({
     ).length;
 
     return { recentSales, totalMonthlySales };
+  }
+});
+
+// Get all sales
+export const getAllSales = query({
+  handler: async (ctx) => {
+    const identity = await ctx.auth.getUserIdentity();
+
+    if (!identity) {
+      throw new Error('Not authenticated');
+    }
+    const userId = identity.subject;
+
+    const sales = await ctx.db
+      .query('sales')
+      .withIndex('by_user_and_isDeleted', (q) =>
+        q.eq('userId', userId).eq('isDeleted', false)
+      )
+      .collect();
+
+    return sales;
   }
 });

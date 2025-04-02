@@ -6,7 +6,7 @@ import './globals.css';
 import { ConvexClientProvider } from '@/features/auth/providers/ConvexProvider';
 import { SpeedInsights } from '@vercel/speed-insights/next';
 import { Analytics } from '@vercel/analytics/react';
-import Providers from '@/components/layout/providers';
+import ThemeProvider from '@/components/layout/ThemeToggle/theme-provider';
 
 export const metadata: Metadata = {
   title: 'Stock Management System',
@@ -27,15 +27,15 @@ export default function RootLayout({
 }) {
   return (
     <html lang='en' className={lato.className} suppressHydrationWarning>
-      <body className='overflow-hidden'>
+      <body>
         <ConvexClientProvider>
-          <Providers>
+          <ThemeProvider attribute='class' defaultTheme='system' enableSystem>
             <SpeedInsights />
             <Analytics />
             <NextTopLoader showSpinner={false} />
             <Toaster richColors />
             {children}
-          </Providers>
+          </ThemeProvider>
         </ConvexClientProvider>
       </body>
     </html>

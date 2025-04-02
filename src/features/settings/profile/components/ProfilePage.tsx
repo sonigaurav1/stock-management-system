@@ -48,9 +48,13 @@ export default function ProfilePage() {
 
   const { user } = useUser();
 
-  const profile = useQuery(api.profile.getProfileById, {
-    userId: user?.id as Id<'companyDetails'>
+  const profile = useQuery(api.companyDetails.getCompanyDetails, {
+    userId: user?.id as string
   });
+
+  const createOrUpdateProfile = useMutation(
+    api.companyDetails.createCompanyDetails
+  );
 
   useEffect(() => {
     if (profile) {
@@ -63,9 +67,6 @@ export default function ProfilePage() {
       });
     }
   }, [profile]);
-
-  const updateProfile = useMutation(api.profile.updateProfile);
-  // const createProfile = useMutation(api.profile.createProfile);
 
   const handleEdit = () => {
     setIsEditing(true);
@@ -92,11 +93,12 @@ export default function ProfilePage() {
     };
 
     try {
-      await updateProfile({
-        id: profile?._id as Id<'companyDetails'>,
-        updates
+      await createOrUpdateProfile({
+        ...updates,
+        urls,
+        isDeleted: false,
+        createdAt: Date.now()
       });
-      // await createProfile(updates)
     } catch (error) {
       // eslint-disable-next-line no-console
       console.error('Failed to update profile:', error);

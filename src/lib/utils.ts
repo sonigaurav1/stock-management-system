@@ -286,3 +286,25 @@ export function truncate(text: string, options: TruncateOptions = {}): string {
       return text.slice(0, availableLength) + ellipsis;
   }
 }
+
+/**
+ * Determines the stock status based on stock level and reorder level
+ * @param {number|undefined} stockLevel - Current stock level
+ * @param {number|undefined} reorderLevel - Level at which to reorder
+ * @returns {'in_stock'|'low_stock'|'out_of_stock'} Stock status
+ */
+export function determineStockStatus({
+  stockLevel,
+  reorderLevel
+}: {
+  stockLevel: undefined | number;
+  reorderLevel: undefined | number;
+}): 'in_stock' | 'low_stock' | 'out_of_stock' {
+  if (stockLevel === undefined || stockLevel === 0) {
+    return 'out_of_stock';
+  }
+  if (reorderLevel !== undefined && stockLevel <= reorderLevel) {
+    return 'low_stock';
+  }
+  return 'in_stock';
+}

@@ -1,6 +1,8 @@
 import { v } from 'convex/values';
 import { mutation, query } from './_generated/server';
 import { CustomError } from '@/lib/utils';
+import { LogActivityContext, LogActivityData } from './types';
+import { Id } from './_generated/dataModel';
 
 // Get all products (excluding deleted ones)
 export const getAllProducts = query({
@@ -186,59 +188,108 @@ export const createProduct = mutation({
     description: v.optional(v.string()),
     serialNumber: v.optional(v.string()),
     brand: v.optional(v.string()),
-    purchasePrice: v.optional(v.string()),
+    purchasePrice: v.optional(v.string()), // Kept as string for privacy
     sellingPrice: v.optional(v.number()),
     stockLevel: v.optional(v.number()),
-    inStock: v.boolean(),
-    reorderLevel: v.optional(v.number()),
+    inStock: v.optional(v.boolean()),
     stockStatus: v.union(
       v.literal('in_stock'),
       v.literal('low_stock'),
       v.literal('out_of_stock')
     ),
+    reorderLevel: v.optional(v.number()),
+    imageUrl: v.optional(v.string()),
     supplierName: v.optional(v.string()),
     supplierId: v.optional(v.string()),
-    lastRestockedAt: v.optional(v.number()),
-    imageUrl: v.optional(v.string())
+    lastRestockedAt: v.optional(v.number())
   },
   handler: async (ctx, args) => {
-    const identify = await ctx.auth.getUserIdentity();
-    if (!identify) {
+    // Authentication check
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
       throw new Error('Not authenticated');
     }
-    const userId = identify.subject;
+    const userId = identity.subject;
 
-    // Automatically set inStock and stockStatus based on stockLevel and reorderLevel
-    let inStock = args.inStock;
-    let stockStatus = args.stockStatus;
-
-    if (args.stockLevel !== undefined && args.reorderLevel !== undefined) {
-      if (args.stockLevel > args.reorderLevel) {
-        inStock = true;
-        stockStatus = 'in_stock';
-      } else if (args.stockLevel === args.reorderLevel) {
-        inStock = true;
-        stockStatus = 'low_stock';
-      }
+    // Validate business rules
+    if (args.stockLevel !== undefined && args.stockLevel < 0) {
+      throw new CustomError('Stock level cannot be negative', 400);
     }
 
+    if (args.reorderLevel !== undefined && args.reorderLevel < 0) {
+      throw new CustomError('Reorder level cannot be negative', 400);
+    }
+
+    // if (
+    //   args.purchasePrice !== undefined &&
+    //   args.sellingPrice !== undefined &&
+    //   parseFloat(args.purchasePrice) > args.sellingPrice
+    // ) {
+    //   throw new CustomError('Purchase price cannot exceed selling price', 400);
+    // }
+
+    // Compute stock status
+
     try {
-      return await ctx.db.insert('products', {
+      // Create product with computed and metadata fields
+      const productId = await ctx.db.insert('products', {
         ...args,
-        inStock,
-        stockStatus,
-        userId, // Associate category with user
-        isDeleted: false, // New categories start as active
+        inStock: args.inStock ?? false, // Ensure inStock is explicitly set to a boolean
+        userId,
+        isDeleted: false,
         createdAt: Date.now(),
         updatedAt: Date.now()
       });
+
+      // Log activity for audit trail
+      await logActivity(
+        ctx as unknown as LogActivityContext,
+        'product_created',
+        {
+          productId: productId as Id<'products'>,
+          userId,
+          productName: args.name
+        }
+      );
+
+      return productId;
     } catch (error) {
+      if ((error as { code?: string }).code === 'DUPLICATE_KEY') {
+        throw new CustomError(
+          'A product with this SKU or slug already exists',
+          409
+        );
+      }
+
       // eslint-disable-next-line no-console
       console.error('Error while creating product:', error);
-      throw new CustomError('Failed to create product', 400);
+      throw new CustomError('Failed to create product', 500);
     }
   }
 });
+
+/**
+ * Logs activity for audit purposes
+ * @param {Object} ctx - Database context
+ * @param {string} action - Activity type
+ * @param {Object} data - Activity data
+ */
+async function logActivity(
+  ctx: LogActivityContext,
+  action: string,
+  data: LogActivityData
+): Promise<void> {
+  try {
+    await ctx.db.insert('activity_logs', {
+      action,
+      data,
+      timestamp: Date.now()
+    });
+  } catch (error) {
+    // eslint-disable-next-line no-console
+    console.warn('Failed to log activity:', error);
+  }
+}
 
 // Update product by ID
 export const updateProduct = mutation({
@@ -258,13 +309,15 @@ export const updateProduct = mutation({
       purchasePrice: v.optional(v.string()),
       sellingPrice: v.optional(v.number()),
       stockLevel: v.optional(v.number()),
-      inStock: v.optional(v.boolean()),
+      inStock: v.optional(v.boolean()), // Added inStock property
       reorderLevel: v.optional(v.number()),
-      stockStatus: v.union(
-        v.literal('in_stock'),
-        v.literal('low_stock'),
-        v.literal('out_of_stock')
-      ),
+      stockStatus: v.optional(
+        v.union(
+          v.literal('in_stock'),
+          v.literal('low_stock'),
+          v.literal('out_of_stock')
+        )
+      ), // Added stockStatus property
       supplierId: v.optional(v.string()),
       supplierName: v.optional(v.string()),
       lastRestockedAt: v.optional(v.number()),
@@ -283,23 +336,7 @@ export const updateProduct = mutation({
       throw new Error('Unauthorized');
     }
 
-    // Automatically set inStock and stockStatus based on stockLevel and reorderLevel
     let updates = { ...args.updates };
-    if (
-      updates.stockLevel !== undefined &&
-      updates.reorderLevel !== undefined
-    ) {
-      if (updates.stockLevel > updates.reorderLevel) {
-        updates.inStock = true;
-        updates.stockStatus = 'in_stock';
-      } else if (updates.stockLevel === updates.reorderLevel) {
-        updates.inStock = true;
-        updates.stockStatus = 'low_stock';
-      } else {
-        updates.inStock = false;
-        updates.stockStatus = 'out_of_stock';
-      }
-    }
 
     return await ctx.db.patch(args.id, {
       ...updates,

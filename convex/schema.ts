@@ -222,13 +222,29 @@ export default defineSchema({
     vatNumber: v.string(),
     isVerified: v.boolean(), // VAT number verification status
     urls: v.array(v.object({ id: v.number(), value: v.string() })), // Array of URLs
+    processedBy: v.optional(v.string()), // User who generated the invoice
 
     isDeleted: v.boolean(), // Soft delete flag (false = active, true = deleted)
 
     createdAt: v.number(), // Timestamp for when the details were created
     updatedAt: v.optional(v.number()) // Optional timestamp for updates
-  })
-    .index('by_user_and_isDeleted', ['userId', 'isDeleted'])
-    .index('by_companyName', ['companyName'])
-    .index('by_vatNumber', ['vatNumber'])
+  }).index('by_user_and_isDeleted', ['userId', 'isDeleted']),
+  // .index('by_companyName', ['companyName'])
+  // .index('by_vatNumber', ['vatNumber']),
+
+  otpVerification: defineTable({
+    userId: v.string(), // Reference to the user
+    otp: v.number(), // One-time password
+    expiresAt: v.number(), // Expiration timestamp for the OTP
+    createdAt: v.number(), // Timestamp when the OTP was created
+    updatedAt: v.optional(v.number()), // Optional timestamp for updates
+    isDeleted: v.boolean() // Soft delete flag (false = active, true = deleted)
+  }).index('by_userId', ['userId'])
+  // .index('by_otp', ['otp'])
+  // .index('by_expiresAt', ['expiresAt'])
+  // .index('by_userId_and_isDeleted', ['userId', 'isDeleted'])
+  // .index('by_otp_and_isDeleted', ['otp', 'isDeleted'])
+  // .index('by_expiresAt_and_isDeleted', ['expiresAt', 'isDeleted'])
+  // .index('by_userId_otp_expiresAt', ['userId', 'otp', 'expiresAt'])
+  // .index('by_userId_otp_expiresAt_isDeleted', ['userId', 'otp', 'expiresAt', 'isDeleted'])
 });

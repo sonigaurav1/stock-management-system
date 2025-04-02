@@ -11,3 +11,13 @@ export type ProductFilters = {
   maxPrice?: number;
   inStock?: boolean;
 };
+
+export interface LogActivityData {
+  [key: string]: any;
+}
+
+export interface LogActivityContext {
+  db: {
+    insert: (collection: string, document: any) => Promise<void>;
+  };
+}

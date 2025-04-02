@@ -49,15 +49,15 @@ import {
   InvoiceProps
 } from '@/features/billing/interfaces/IBilling';
 import { Id } from 'convex/_generated/dataModel';
-import { useMutation } from 'convex/react';
+import { useMutation, useQuery } from 'convex/react';
 import { api } from '@/../convex/_generated/api';
 import { useCustomerManagement } from '@/features/billing/hooks/useCustomerManagement';
-import { useUser } from '@clerk/clerk-react';
 import { restrictedUser } from '@/features/products/constants/restrictedUserData';
 import { PDFDownloadLink } from '@react-pdf/renderer';
 import InvoiceDocument from '@/features/billing/components/InvoiceDocument';
 import AlertModal from '@/features/billing/components/BillingAction';
 import PageContainer from '@/components/layout/PageContainer';
+import { useUser } from '@clerk/clerk-react';
 
 // Lazy load the PDF viewer component
 const PDFViewerNoSSR = dynamic(
@@ -73,6 +73,8 @@ const ProductBilling = () => {
   const [processedInvoiceData, setProcessedInvoiceData] =
     useState<FormValues | null>(null);
 
+  const { user } = useUser();
+
   const createSale = useMutation(api.billing.createSale);
   const getProductById = useMutation(api.billing.getProductByIdBilling);
   const updateProductStock = useMutation(api.billing.updateProductStock);
@@ -80,11 +82,13 @@ const ProductBilling = () => {
   // Invoice
   const createInvoice = useMutation(api.billing.createInvoice);
 
+  const companyDetails = useQuery(api.companyDetails.getCompanyDetails, {
+    userId: user?.id as string
+  });
+
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-
-  const { user } = useUser();
 
   const { handleCustomerManagement } = useCustomerManagement();
 
@@ -181,7 +185,6 @@ const ProductBilling = () => {
   }
 
   // Form submission
-
   function onSubmit(values: z.infer<typeof formSchema>) {
     // Convert selected products to the format expected by the form schema
     const items: (InvoiceItem & { productId: string })[] =
@@ -213,7 +216,16 @@ const ProductBilling = () => {
 
       ...(user?.id === restrictedUser.id
         ? { ...TEST_COMPANY_DETAILS }
-        : { ...COMPANY_DETAILS }),
+        : companyDetails
+          ? {
+              companyName: companyDetails.companyName,
+              companyAddress: companyDetails.companyAddress,
+              phone: (companyDetails.phone as string[])?.join(', '),
+              email: companyDetails.email,
+              vatNumber: companyDetails.vatNumber,
+              processedBy: companyDetails.processedBy
+            }
+          : { ...COMPANY_DETAILS }),
       isAdmin: user?.id !== restrictedUser.id,
 
       // Calculate other financial values as needed
@@ -309,6 +321,12 @@ const ProductBilling = () => {
       await handleStockManagement(processedInvoiceData.items as InvoiceItem[]);
 
       setIsModalOpen(false); // Close the modal after actions are completed
+
+      // form.reset(); // Reset the form
+      // dispatch({ type: 'RESET_SELECTED_PRODUCTS' }); // Reset selected products
+      // setProcessedInvoiceData(null); // Clear processed invoice data
+      // dispatch({ type: 'SET_GENERATING', payload: false }); // Reset generating state
+      // alert('Invoice generated successfully!'); // Show success message
     } catch (error) {
       // eslint-disable-next-line no-console
       console.error('Error during confirmation actions:', error);
@@ -323,7 +341,7 @@ const ProductBilling = () => {
   // Render component
   return (
     <PageContainer scrollable>
-      <section className='flex h-[calc(100dvh-92px)] w-full flex-col justify-between p-4 md:flex-row'>
+      <section className='flex h-[calc(100dvh-92px)] w-full flex-col justify-between md:flex-row'>
         <div className='w-full overflow-y-auto pr-0 md:w-1/2 md:pr-4'>
           <h2 className='mb-4 text-xl font-semibold'>Add Product</h2>
 

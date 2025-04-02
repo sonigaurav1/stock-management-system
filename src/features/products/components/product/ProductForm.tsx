@@ -11,13 +11,6 @@ import {
   FormMessage
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue
-} from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { api } from '@/../convex/_generated/api';
@@ -32,13 +25,15 @@ import { Id } from 'convex/_generated/dataModel';
 import { formSchema } from '../../schema/product-schema';
 import CustomImageUpload from '../CustomImageUpload';
 import { useEffect, useState } from 'react';
-import { generateSKU, generateSlug } from '@/lib/utils';
+import { determineStockStatus, generateSKU, generateSlug } from '@/lib/utils';
 import { Calendar } from 'lucide-react';
 import { restrictedUser } from '../../constants/restrictedUserData';
 import { useUser } from '@clerk/clerk-react';
 import { Progress } from '@/components/ui/progress';
 import { maxSizeInMB } from '../../constants';
 import useCompressUploadedImage from '../../hooks/useCompressUploadedImage';
+import CustomInput from '@/components/form/CustomInput';
+import CustomSelect from '@/components/form/CustomSelect';
 
 export default function ProductForm({
   initialData,
@@ -56,7 +51,7 @@ export default function ProductForm({
   const updateProduct = useMutation(api.products.updateProduct);
 
   // Query hooks
-  const category = useQuery(api.categories.getAllCategories) ?? [];
+  const categories = useQuery(api.categories.getAllCategories) ?? [];
   const suppliers = useQuery(api.suppliers.getAllSuppliers) ?? [];
 
   // fetch all categories to check if the user has reached the limit
@@ -90,14 +85,14 @@ export default function ProductForm({
       initialData?.stockLevel !== undefined
         ? Number(initialData.stockLevel)
         : undefined,
-    inStock: initialData?.inStock ?? true,
+    // inStock: initialData?.inStock ?? true,
     reorderLevel:
       initialData?.reorderLevel !== undefined
         ? Number(initialData.reorderLevel)
         : undefined,
-    stockStatus:
-      (initialData?.stockStatus as 'in_stock' | 'low_stock' | 'out_of_stock') ??
-      'in_stock',
+    // stockStatus:
+    //   (initialData?.stockStatus as 'in_stock' | 'low_stock' | 'out_of_stock') ??
+    //   'in_stock',
     supplierId: initialData?.supplierId ?? '',
     lastRestockedAt: initialData?.lastRestockedAt ?? Date.now(),
     image: null as File | null // Explicitly set the type of image
@@ -152,14 +147,14 @@ export default function ProductForm({
       name: values.name,
       slug: generateSlug(values.name),
       sku: generateSKU(
-        category.find((cat) => cat._id === values.categoryId)?.name ?? '',
+        categories.find((cat) => cat._id === values.categoryId)?.name ?? '',
         values.brand,
         values.name
       ),
       barcode: values.barcode,
       categoryId: values.categoryId,
       categoryName:
-        category.find((cat) => cat._id === values.categoryId)?.name ?? '',
+        categories.find((cat) => cat._id === values.categoryId)?.name ?? '',
       subcategory: values.subcategory,
       description: values.description,
       serialNumber: values.serialNumber,
@@ -167,9 +162,12 @@ export default function ProductForm({
       purchasePrice: values.purchasePrice,
       sellingPrice: values.sellingPrice,
       stockLevel: values.stockLevel,
-      inStock: values.inStock,
       reorderLevel: values.reorderLevel,
-      stockStatus: values.stockStatus,
+      stockStatus: determineStockStatus({
+        stockLevel: values.stockLevel,
+        reorderLevel: values.reorderLevel
+      }),
+      inStock: (values.stockLevel ?? 0) > 0,
       supplierId: values.supplierId,
       supplierName:
         suppliers.find((supplier) => supplier._id === values.supplierId)
@@ -243,38 +241,61 @@ export default function ProductForm({
             />
 
             <div className='grid grid-cols-1 gap-6 md:grid-cols-2'>
-              <FormField
-                control={form.control}
+              <CustomInput
                 name='name'
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Product Model</FormLabel>
-                    <FormControl>
-                      <Input placeholder='Enter product model' {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
+                label='Product Model'
+                placeHolder='Enter Product Model'
+                required
               />
-              <FormField
-                control={form.control}
+              <CustomInput
+                name='brand'
+                label='Product Brand'
+                placeHolder='Enter Product Brand'
+              />
+              <CustomSelect
                 name='categoryId'
+                placeholder='Select Product Category'
+                options={categories.map((category) => ({
+                  value: category._id,
+                  label: category.name
+                }))}
+                required
+                label='Category'
+                valueKey='_id'
+                labelKey='name'
+              />
+              <CustomSelect
+                name='supplierId'
+                placeholder='Select Supplier Name'
+                options={suppliers.map((supplier) => ({
+                  value: supplier._id,
+                  label: supplier.name
+                }))}
+                label='Supplier'
+                valueKey='_id'
+                labelKey='name'
+              />
+              {/* <FormField
+                control={form.control}
+                name='supplierId'
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Category</FormLabel>
+                    <FormLabel>Supplier</FormLabel>
                     <Select
-                      onValueChange={(value) => field.onChange(value)}
+                      onValueChange={(value) =>
+                        field.onChange(field.value === value ? '' : value)
+                      }
                       value={field.value}
                     >
                       <FormControl>
                         <SelectTrigger>
-                          <SelectValue placeholder='Select Category' />
+                          <SelectValue placeholder='Select Supplier Name' />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        {category?.map((cat) => (
-                          <SelectItem key={cat._id} value={cat._id}>
-                            {cat.name}
+                        {suppliers?.map((supplier) => (
+                          <SelectItem key={supplier._id} value={supplier._id}>
+                            {supplier.name}
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -282,20 +303,7 @@ export default function ProductForm({
                     <FormMessage />
                   </FormItem>
                 )}
-              />
-              <FormField
-                control={form.control}
-                name='brand'
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Product Brand</FormLabel>
-                    <FormControl>
-                      <Input placeholder='Enter product brand' {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+              /> */}
               <FormField
                 control={form.control}
                 name='serialNumber'
@@ -305,7 +313,7 @@ export default function ProductForm({
                     <FormControl>
                       <Input
                         type='text'
-                        placeholder='Enter serial number'
+                        placeholder='Enter Serial Number'
                         {...field}
                         className='no-spinner'
                         min={0}
@@ -325,7 +333,7 @@ export default function ProductForm({
                       <Input
                         {...field}
                         type='text'
-                        placeholder='Enter purchase price'
+                        placeholder='Enter Purchase Price'
                       />
                     </FormControl>
                     <FormMessage />
@@ -370,7 +378,7 @@ export default function ProductForm({
                   </FormItem>
                 )}
               />
-              <FormField
+              {/* <FormField
                 control={form.control}
                 name='inStock'
                 render={({ field }) => (
@@ -395,7 +403,7 @@ export default function ProductForm({
                     <FormMessage />
                   </FormItem>
                 )}
-              />
+              /> */}
               <FormField
                 control={form.control}
                 name='reorderLevel'
@@ -415,7 +423,7 @@ export default function ProductForm({
                   </FormItem>
                 )}
               />
-              <FormField
+              {/* <FormField
                 control={form.control}
                 name='stockStatus'
                 render={({ field }) => (
@@ -441,36 +449,7 @@ export default function ProductForm({
                     <FormMessage />
                   </FormItem>
                 )}
-              />
-              <FormField
-                control={form.control}
-                name='supplierId'
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Supplier</FormLabel>
-                    <Select
-                      onValueChange={(value) =>
-                        field.onChange(field.value === value ? '' : value)
-                      }
-                      value={field.value}
-                    >
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder='Select Supplier Name' />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {suppliers?.map((supplier) => (
-                          <SelectItem key={supplier._id} value={supplier._id}>
-                            {supplier.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+              /> */}
               <FormField
                 control={form.control}
                 name='lastRestockedAt'
@@ -522,7 +501,7 @@ export default function ProductForm({
                   <FormLabel>Description</FormLabel>
                   <FormControl>
                     <Textarea
-                      placeholder='Enter product description'
+                      placeholder='Enter Product Description'
                       className='resize-none'
                       {...field}
                     />

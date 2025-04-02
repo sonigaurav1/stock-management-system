@@ -10,7 +10,6 @@ import {
   FormLabel,
   FormMessage
 } from '@/components/ui/form';
-import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { api } from '@/../convex/_generated/api';
@@ -31,6 +30,7 @@ import { Progress } from '@/components/ui/progress';
 import { maxSizeInMB } from '../../constants';
 import useCompressUploadedImage from '../../hooks/useCompressUploadedImage';
 import { formSchema } from '../../schema/category-schema';
+import CustomInput from '@/components/form/CustomInput';
 
 export default function CategoryForm({
   initialData,
@@ -189,18 +189,11 @@ export default function CategoryForm({
             />
 
             <div className='grid grid-cols-1 gap-6 md:grid-cols-2'>
-              <FormField
-                control={form.control}
+              <CustomInput
                 name='name'
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Category Name</FormLabel>
-                    <FormControl>
-                      <Input placeholder='Enter category name' {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
+                label='Category Name'
+                placeHolder='Enter Category Name'
+                required
               />
               <FormField
                 control={form.control}
@@ -210,7 +203,7 @@ export default function CategoryForm({
                     <FormLabel>Description</FormLabel>
                     <FormControl>
                       <Textarea
-                        placeholder='Enter category description'
+                        placeholder='Enter Category Description'
                         className='resize-none'
                         {...field}
                       />

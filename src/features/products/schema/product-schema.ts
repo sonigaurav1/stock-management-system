@@ -9,9 +9,9 @@ const ACCEPTED_IMAGE_TYPES = [
 ];
 
 export const formSchema = z.object({
-  name: z.string().nonempty({ message: 'Name is required' }),
+  name: z.string().nonempty({ message: 'Product model is required' }),
   barcode: z.string().optional(),
-  categoryId: z.string().nonempty({ message: 'Category is required' }),
+  categoryId: z.string().nonempty({ message: 'Product category is required' }),
   subcategory: z.string().optional(),
   description: z.string().optional(),
   serialNumber: z.string().optional(),
@@ -37,7 +37,7 @@ export const formSchema = z.object({
       z.number().min(0, 'Stock Level must be greater than or equal to 0')
     )
     .optional(),
-  inStock: z.boolean(),
+  // inStock: z.boolean(),
   reorderLevel: z
     .preprocess(
       (value) => {
@@ -48,7 +48,7 @@ export const formSchema = z.object({
       z.number().min(1, 'Reorder Level must be greater than 0')
     )
     .optional(),
-  stockStatus: z.enum(['in_stock', 'low_stock', 'out_of_stock']),
+  // stockStatus: z.enum(['in_stock', 'low_stock', 'out_of_stock']),
   supplierId: z.string().optional(),
   lastRestockedAt: z.number().optional(),
   image: z

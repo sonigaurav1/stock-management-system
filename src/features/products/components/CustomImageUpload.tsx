@@ -144,8 +144,7 @@ const CustomImageUpload = ({
         <label
           className={cn(
             'text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70',
-            required &&
-              "after:ml-0.5 after:text-destructive after:content-['*']"
+            required && "after:ml-0.5 after:text-[#EF4444] after:content-['*']"
           )}
         >
           {label}

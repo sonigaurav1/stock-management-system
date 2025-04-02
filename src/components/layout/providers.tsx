@@ -1,5 +1,7 @@
 'use client';
 
+// Not in use
+
 import React, { useEffect, useState } from 'react';
 import ThemeProvider from './ThemeToggle/theme-provider';
 import { EdgeStoreProvider } from '@/lib/edgestore';

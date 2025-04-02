@@ -29,6 +29,7 @@ import { Progress } from '@/components/ui/progress';
 import { maxSizeInMB } from '../../constants';
 import useCompressUploadedImage from '../../hooks/useCompressUploadedImage';
 import { useRouter } from 'next/navigation';
+import CustomInput from '@/components/form/CustomInput';
 
 export default function SupplierForm({
   initialData,
@@ -183,18 +184,11 @@ export default function SupplierForm({
             />
 
             <div className='grid grid-cols-1 gap-6 md:grid-cols-2'>
-              <FormField
-                control={form.control}
+              <CustomInput
                 name='name'
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Supplier Name</FormLabel>
-                    <FormControl>
-                      <Input placeholder='Enter supplier name' {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
+                label='Supplier Name'
+                placeHolder='Enter Supplier Name'
+                required
               />
               <FormField
                 control={form.control}

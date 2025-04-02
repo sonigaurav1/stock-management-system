@@ -1,24 +1,29 @@
 'use client';
 
-import { useRouter } from 'next/navigation';
 import { PATH } from '@/constants/PATH';
-import { useUser } from '@clerk/clerk-react';
-import { useEffect } from 'react';
+import { Spinner } from '@/components/Spinner';
+import { useAuthRedirect } from '@/features/auth/hooks/useAuthRedirect';
+// import useVerifiedUser from '@/features/auth/hooks/useVerifiedUser';
 
-export default function DashboardRootLayout({
+export default function AuthenticatedLayout({
   children
 }: {
   children: React.ReactNode;
 }) {
-  const { isSignedIn, isLoaded } = useUser();
+  const { isSignedIn, isLoaded } = useAuthRedirect(PATH.SIGNIN);
+  // const companyDetails = useVerifiedUser(); // Check company details and verification status
 
-  const router = useRouter();
+  if (!isLoaded) {
+    return (
+      <div className='flex h-screen w-full flex-col items-center justify-center space-y-2'>
+        <Spinner size='xl2' />
+      </div>
+    );
+  }
 
-  useEffect(() => {
-    if (!isSignedIn && isLoaded) {
-      router.push(PATH.SIGNIN);
-    }
-  }, [isSignedIn, isLoaded, router]);
+  if (!isSignedIn) {
+    return null; // Redirects handled in hooks
+  }
 
   return <>{children}</>;
 }

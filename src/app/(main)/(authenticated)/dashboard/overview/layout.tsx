@@ -134,7 +134,7 @@ export default function OverViewLayout({
                 + {formatIndianCurrency(currentMonthCustomerCount)}
               </div>
               <p className='text-xs text-muted-foreground'>
-                {customerPercentageChange ?? 0}% since last month
+                {customerPercentageChange?.toFixed(0) ?? 0}% since last month
               </p>
             </CardContent>
           </Card>
@@ -160,10 +160,11 @@ export default function OverViewLayout({
                 + {formatIndianCurrency(currentMonthSalesCount)}
               </div>
               <p className='text-xs text-muted-foreground'>
-                {salesPercentageChange ?? 0}% from last month
+                {salesPercentageChange?.toFixed(0) ?? 0}% from last month
               </p>
             </CardContent>
           </Card>
+
           {/* <Card>
             <CardHeader className='flex flex-row items-center justify-between space-y-0 pb-2'>
               <CardTitle className='text-sm font-medium'>

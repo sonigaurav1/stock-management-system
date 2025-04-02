@@ -33,3 +33,49 @@ export interface FooterItem {
 export type MainNavItem = NavItemWithOptionalChildren;
 
 export type SidebarNavItem = NavItemWithChildren;
+
+// Define route patterns with enums for better type safety
+export enum RoutePattern {
+  SIGN_IN = '/sign-in(.*)',
+  SIGN_UP = '/sign-up(.*)',
+  HOME = '/',
+  FORGOT_PASSWORD = '/forgot-password(.*)',
+  DASHBOARD = '/dashboard(.*)',
+  PROFILE = '/profile(.*)',
+  SETTINGS = '/settings(.*)',
+  BILLING = '/billing(.*)',
+  LEDGER = '/ledger(.*)',
+  VERIFY_EMAIL = '/verify-email(.*)',
+  VERIFY = '/verify(.*)',
+  COMPANY_DETAILS = '/company-details(.*)',
+  ABOUT = '/about(.*)'
+}
+
+// Define URL destinations to prevent typos
+export enum RedirectDestination {
+  SIGN_IN = '/sign-in',
+  DASHBOARD = '/dashboard/overview',
+  VERIFY = '/verify',
+  COMPANY_DETAILS = '/company-details'
+}
+
+// Define public routes that don't require authentication
+export const PUBLIC_ROUTES = [
+  RoutePattern.SIGN_IN,
+  RoutePattern.SIGN_UP,
+  RoutePattern.FORGOT_PASSWORD,
+  RoutePattern.VERIFY_EMAIL,
+  RoutePattern.VERIFY,
+  RoutePattern.COMPANY_DETAILS,
+  RoutePattern.ABOUT
+];
+
+// Define protected routes that require authentication
+export const PROTECTED_ROUTES = [
+  RoutePattern.HOME,
+  RoutePattern.DASHBOARD,
+  RoutePattern.PROFILE,
+  RoutePattern.SETTINGS,
+  RoutePattern.BILLING,
+  RoutePattern.LEDGER
+];
