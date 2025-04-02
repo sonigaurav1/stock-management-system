@@ -12,7 +12,6 @@ interface UrlItem {
 import { useMutation, useQuery } from 'convex/react';
 import { useUser } from '@clerk/clerk-react';
 import { api } from '@/../convex/_generated/api';
-import { Id } from 'convex/_generated/dataModel';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
