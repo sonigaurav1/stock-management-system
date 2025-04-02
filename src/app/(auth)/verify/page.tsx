@@ -185,7 +185,7 @@ export default function VerificationPage() {
 
   if (companyDetails === null) {
     return (
-      <div className='flex h-screen items-center justify-center'>
+      <div className='flex h-screen items-center justify-center bg-gradient-to-b from-slate-50 to-slate-100 dark:from-slate-950 dark:to-slate-900'>
         <Card className='border-none shadow-lg'>
           <div className='mt-4 flex justify-center'>
             <div className='flex h-32 w-32 items-center justify-center rounded-full bg-muted/10'>
@@ -197,8 +197,7 @@ export default function VerificationPage() {
               Company Details Not Found
             </CardTitle>
             <CardDescription className='text-center'>
-              We didn&apos;t find company details. Please fill up company
-              details to verify your account.
+              Please fill up company details to verify your account.
             </CardDescription>
           </CardHeader>
           <CardFooter className='flex justify-center'>
@@ -212,7 +211,7 @@ export default function VerificationPage() {
   }
 
   return (
-    <div className='flex min-h-screen items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100 p-4'>
+    <div className='flex min-h-screen items-center justify-center bg-gradient-to-b from-slate-50 to-slate-100 p-4 dark:from-slate-950 dark:to-slate-900'>
       <div className='w-full max-w-md space-y-4'>
         {/* Brand header */}
         <div className='text-center'>

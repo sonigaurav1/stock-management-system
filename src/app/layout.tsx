@@ -27,9 +27,9 @@ export default function RootLayout({
 }) {
   return (
     <html lang='en' className={lato.className} suppressHydrationWarning>
-      <body>
+      <body className='overflow-hidden bg-background text-foreground antialiased'>
         <ConvexClientProvider>
-          <ThemeProvider attribute='class' defaultTheme='system' enableSystem>
+          <ThemeProvider attribute='class' defaultTheme='light' enableSystem>
             <SpeedInsights />
             <Analytics />
             <NextTopLoader showSpinner={false} />
