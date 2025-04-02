@@ -23,7 +23,7 @@ export default function StockManagementLanding() {
   const [activeTab, setActiveTab] = useState('overview');
 
   return (
-    <ScrollArea>
+    <ScrollArea className='h-screen w-full'>
       <div className='min-h-screen w-full bg-gradient-to-b from-slate-50 to-slate-100 dark:from-slate-950 dark:to-slate-900'>
         {/* Hero Section */}
         <header className='container mx-auto px-4 py-16 md:py-24'>
