@@ -1,9 +1,9 @@
 /* eslint-disable import/no-unresolved */
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { useMutation } from 'convex/react';
+import { useMutation, useQuery } from 'convex/react';
 import { api } from '@/../convex/_generated/api';
 import { useUser } from '@clerk/clerk-react';
 import {
@@ -41,10 +41,15 @@ interface FormData {
 export default function CompanyDetailsForm() {
   const router = useRouter();
   const { user } = useUser();
+
   const createCompanyDetails = useMutation(
     api.companyDetails.createCompanyDetails
   );
+  const companyDetails = useQuery(api.companyDetails.getCompanyDetails, {
+    userId: user?.id ?? ''
+  });
 
+  const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState<FormData>({
     companyName: '',
     companyAddress: '',
@@ -55,7 +60,20 @@ export default function CompanyDetailsForm() {
     urls: [{ id: 1, value: '' }]
   });
 
-  const [loading, setLoading] = useState(false);
+  // Populate form with existing data when available
+  useEffect(() => {
+    if (companyDetails) {
+      setFormData({
+        companyName: companyDetails.companyName,
+        companyAddress: companyDetails.companyAddress,
+        phone: companyDetails.phone,
+        email: companyDetails.email,
+        vatNumber: companyDetails.vatNumber,
+        processedBy: companyDetails.processedBy,
+        urls: companyDetails.urls
+      });
+    }
+  }, [companyDetails]);
 
   const handlePhoneChange = (index: any, value: any) => {
     const newPhone = [...formData.phone];

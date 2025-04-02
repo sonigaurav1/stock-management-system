@@ -6,7 +6,6 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useMutation, useQuery } from 'convex/react';
 import { api } from '@/../convex/_generated/api';
-import { useAuth } from '@clerk/nextjs';
 import {
   CheckCircle,
   RefreshCw,
@@ -31,10 +30,14 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Spinner } from '@/components/Spinner';
 import { Separator } from '@/components/ui/separator';
 import Link from 'next/link';
+import { useUser } from '@clerk/clerk-react';
 
 export default function VerificationPage() {
   const router = useRouter();
-  const { userId } = useAuth();
+  const { user } = useUser();
+
+  const userId = user?.id;
+
   const [otp, setOtp] = useState(['', '', '', '', '', '']);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
