@@ -111,13 +111,16 @@ export default function CompanyDetailsForm() {
         payload: UpdateClerkMetadataPayload
       ) => {
         try {
-          const response = await fetch('http://localhost:3000/api/verify', {
-            method: 'PATCH',
-            headers: {
-              'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(payload)
-          });
+          const response = await fetch(
+            `${process.env.NEXT_PUBLIC_API_URL}/api/verify`,
+            {
+              method: 'PATCH',
+              headers: {
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify(payload)
+            }
+          );
 
           if (!response.ok) {
             const errorData = await response.json();
