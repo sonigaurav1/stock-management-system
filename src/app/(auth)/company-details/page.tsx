@@ -213,7 +213,7 @@ export default function CompanyDetailsForm() {
                 <div className='space-y-2'>
                   <Label htmlFor='email' className='flex items-center gap-2'>
                     <Mail className='h-4 w-4 text-muted-foreground' />
-                    Email
+                    Company Email
                   </Label>
                   <Input
                     id='email'
