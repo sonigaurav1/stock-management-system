@@ -9,9 +9,24 @@ Effortlessly manage your business inventory with our intuitive and powerful tool
 - **Category Management**: Organize your products into categories for better management and reporting.
 - **Stock Movements**: Track stock movements such as purchases, sales, damages, and returns.
 - **Sales Management**: Record and manage sales transactions with detailed information.
-- **Kanban Board**: Visualize and manage tasks using a Kanban board.
 - **Tax Invoice Bill**: Generate tax invoice bills to make your business go digital and keep records of sales transactions.
 - **Ledger Feature**: Maintain a record of financial transactions with suppliers and shopkeepers.
+
+## Technologies Used
+
+This project leverages the following technologies:
+
+- **Frontend**: React, Next.js, TypeScript
+- **Styling**: Tailwind CSS, Radix UI
+- **State Management**: Zustand
+- **Backend**: Convex
+- **Database**: Convex Database
+- **Authentication**: Clerk
+- **Utilities**: Zod, React Hook Form, clsx, Tailwind Merge
+- **Charts**: Recharts
+- **PDF Generation**: jsPDF, jsPDF-AutoTable
+- **Date Handling**: date-fns, Bikram Sambat JS
+- **Other Tools**: ESLint, Prettier, Husky, Lint-Staged
 
 ## Installation
 
@@ -56,11 +71,3 @@ Effortlessly manage your business inventory with our intuitive and powerful tool
   - `pages/`: Next.js pages.
   - `styles/`: Global styles.
   - `types/`: TypeScript type definitions.
-
-## Contributing
-
-Contributions are welcome! Please open an issue or submit a pull request on GitHub.
-
-## License
-
-This project is licensed under the MIT License.

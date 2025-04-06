@@ -49,7 +49,7 @@ export default function SingleProductViewPage({
   };
 
   return (
-    <div className='container mx-auto space-y-6 py-6'>
+    <div className='space-y-6 md:container md:mx-auto md:py-6'>
       <div className='flex items-center justify-between'>
         <h1 className='text-3xl font-bold tracking-tight'>{product.name}</h1>
         <Badge variant={product.inStock ? 'default' : 'destructive'}>

@@ -106,6 +106,12 @@ export default defineSchema({
     customerName: v.string(), // Optional customer name
     customerPhone: v.array(v.string()), // Optional customer phone
 
+    // creditAmount: v.optional(v.number()), // Amount paid on credit
+    // paymentMode: v.string(), // "cash", "credit", "debit", etc.
+    // paymentStatus: v.string(), // "paid", "unpaid", "partially_paid"
+    // paymentDate: v.optional(v.number()), // Date of payment
+    // paymentReference: v.optional(v.string()), // Reference for payment
+
     isDeleted: v.boolean(), // Soft delete flag (false = active, true = deleted)
 
     soldAt: v.number() // Timestamp of sale

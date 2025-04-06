@@ -2,7 +2,7 @@ import ProfilePage from '@/features/settings/profile/components/ProfilePage';
 import { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'Profile',
+  title: 'Settings: Profile',
   description: 'Update your profile information.'
 };
 

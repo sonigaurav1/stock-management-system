@@ -121,7 +121,7 @@ export default function FirmSidebar({
       <Button
         variant='outline'
         size='icon'
-        className='fixed left-4 top-4 z-50 md:hidden'
+        className='fixed left-3 top-12 z-50 bg-white md:hidden'
         onClick={() => setIsSidebarOpen(!isSidebarOpen)}
       >
         {isSidebarOpen ? (
@@ -142,7 +142,15 @@ export default function FirmSidebar({
         <div className='flex h-full flex-col'>
           {/* Sidebar header */}
           <div className='border-b p-4'>
-            <h2 className='mb-4 text-xl font-bold'>Firms</h2>
+            <div className='flex w-full items-center justify-between'>
+              <h2 className='mb-4 text-xl font-bold'>Firms</h2>
+              <button
+                className='block md:hidden'
+                onClick={() => setIsSidebarOpen(false)}
+              >
+                <X className='h-5 w-5' />
+              </button>
+            </div>
             <div className='relative'>
               <Search className='absolute left-2.5 top-2.5 h-4 w-4 text-gray-400' />
               <Input
@@ -156,7 +164,7 @@ export default function FirmSidebar({
           </div>
 
           {/* Firms list */}
-          <ScrollArea className='h-[calc(100dvh-250px)]'>
+          <ScrollArea className='h-screen w-full'>
             <div className='flex-1 p-2'>
               {filteredFirms.length > 0 ? (
                 <ul className='space-y-1'>

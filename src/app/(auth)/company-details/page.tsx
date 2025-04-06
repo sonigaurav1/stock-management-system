@@ -203,9 +203,12 @@ export default function CompanyDetailsForm() {
                     type='text'
                     value={formData.companyName}
                     onChange={(e) =>
-                      setFormData({ ...formData, companyName: e.target.value })
+                      setFormData({
+                        ...formData,
+                        companyName: e.target.value.toUpperCase()
+                      })
                     }
-                    className='w-full'
+                    className='w-full uppercase'
                     required
                   />
                 </div>

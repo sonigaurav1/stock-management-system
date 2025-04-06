@@ -31,7 +31,7 @@ export default function ProductListingPage() {
   }, [filters]);
 
   return (
-    <div className='space-y-4'>
+    <div className='max-w-[90vh] space-y-4 md:max-w-full'>
       <ProductTableAction
         filters={filters}
         setFilters={setFilters}

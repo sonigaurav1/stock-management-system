@@ -14,7 +14,7 @@ import { useQuery } from 'convex/react';
 export function RecentSales() {
   const { recentSales, totalMonthlySales } = useQuery(
     api.analytics.getRecentSalesAndMonthlyTotal
-  ) ?? { recentSales: [], totalMonthlySales: [] };
+  ) ?? { recentSales: [], totalMonthlySales: 0 };
 
   const placeholderImageUrl = '/assets/images/user-placeholder.webp';
 

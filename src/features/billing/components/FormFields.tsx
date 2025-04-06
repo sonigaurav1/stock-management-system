@@ -38,6 +38,20 @@ export const BuyerNameField = ({ control }: { control: any }) => (
   />
 );
 
+export const BuyerCreditAmountField = ({ control }: { control: any }) => (
+  <CustomInput
+    name='buyerCreditAmount'
+    label='Buyer Credit Amount'
+    placeHolder='Enter Buyer Credit Amount'
+    required
+    onChange={(e) => {
+      // Allow only numeric characters and limit to 9 digits
+      const filteredValue = e.target.value.replace(/[^0-9]/g, '').slice(0, 9);
+      control.setValue('buyerCreditAmount', filteredValue);
+    }}
+  />
+);
+
 export const BuyerAddressField = ({ control }: { control: any }) => (
   <CustomInput
     name='buyerAddress'
@@ -84,7 +98,6 @@ export const BuyerPanField = ({ control }: { control: any }) => {
       name='buyerPan'
       label='Buyer PAN'
       placeHolder='Enter buyer PAN'
-      required
       onChange={(e) => {
         // Allow only numeric characters and limit to 9 digits
         const filteredValue = e.target.value.replace(/[^0-9]/g, '').slice(0, 9);

@@ -103,15 +103,6 @@ export const updateProductStock = mutation({
       throw new Error('Product not found');
     }
 
-    // // Debugging: Log the stockLevel value
-    // // eslint-disable-next-line no-console
-    // console.log('Stock Level:', args.updates.stockLevel);
-
-    // // Check if the stockLevel is less than 1
-    // if (args.updates.stockLevel < 1) {
-    //   throw new Error('Stock level must be at least 1 to update');
-    // }
-
     return await ctx.db.patch(args.id, {
       ...args.updates,
       updatedAt: Date.now()

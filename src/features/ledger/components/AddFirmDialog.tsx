@@ -74,7 +74,7 @@ export function AddFirmDialog({
 
   return (
     <Dialog open={isOpen} onOpenChange={onCancel}>
-      <DialogContent className='sm:max-w-[425px]'>
+      <DialogContent className='sm:max-w-[400px] md:max-w-[425px]'>
         <DialogHeader>
           <DialogTitle>Add New Firm</DialogTitle>
           <DialogDescription>
@@ -126,7 +126,7 @@ export function AddFirmDialog({
           </div>
         </div>
         <DialogFooter>
-          <Button variant='secondary' onClick={onCancel}>
+          <Button variant='secondary' onClick={onCancel} className='m-4 md:m-0'>
             Cancel
           </Button>
           <Button disabled={isSubmitting} onClick={() => onSubmit()}>

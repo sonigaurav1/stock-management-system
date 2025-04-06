@@ -5,6 +5,7 @@ import { CellAction } from './CellAction';
 import { Product, SkeletonProduct } from '../../../types/product.types';
 import { Skeleton } from '@/components/ui/skeleton';
 import CustomTooltip from '@/components/ui/custom/CustomTooltip';
+import { truncate } from '@/lib/utils';
 
 const placeholderImageUrl = '/assets/images/product-placeholder.webp';
 
@@ -35,7 +36,20 @@ export const columns: ColumnDef<Product>[] = [
   },
   {
     accessorKey: 'serialNumber',
-    header: 'SN'
+    header: 'SN',
+    cell: ({ row }) => {
+      const serialNumber = row.getValue('serialNumber') as string;
+      return (
+        <div className='max-w-64'>
+          <CustomTooltip
+            triggerElement={truncate(serialNumber, { maxLength: 10 })}
+            tooltipContent={serialNumber}
+            delayDuration={0}
+            triggerClassName='max-w-64 truncate'
+          />
+        </div>
+      );
+    }
   },
   {
     accessorKey: 'name',
@@ -45,7 +59,7 @@ export const columns: ColumnDef<Product>[] = [
       return (
         <div className='max-w-64'>
           <CustomTooltip
-            triggerElement={name}
+            triggerElement={truncate(name, { maxLength: 20 })}
             tooltipContent={name}
             delayDuration={0}
             triggerClassName='max-w-64 truncate'
@@ -80,7 +94,20 @@ export const columns: ColumnDef<Product>[] = [
   },
   {
     accessorKey: 'supplierName',
-    header: 'SUPPLIER'
+    header: 'SUPPLIER',
+    cell: ({ row }) => {
+      const supplierName = row.getValue('supplierName') as string;
+      return (
+        <div className='max-w-64'>
+          <CustomTooltip
+            triggerElement={truncate(supplierName, { maxLength: 20 })}
+            tooltipContent={supplierName}
+            delayDuration={0}
+            triggerClassName='max-w-64 truncate'
+          />
+        </div>
+      );
+    }
   },
   {
     accessorKey: 'description',
@@ -115,8 +142,13 @@ export const skeletonColumns: ColumnDef<SkeletonProduct>[] = [
     cell: () => <Skeleton className='h-10 w-10 rounded-full' />
   },
   {
+    accessorKey: 'serialNumber',
+    header: 'SN',
+    cell: () => <Skeleton className='h-5 w-5' />
+  },
+  {
     accessorKey: 'name',
-    header: 'NAME',
+    header: 'MODEL',
     cell: () => <Skeleton className='h-5 w-24' />
   },
   {
@@ -149,11 +181,11 @@ export const skeletonColumns: ColumnDef<SkeletonProduct>[] = [
     header: 'SUPPLIER',
     cell: () => <Skeleton className='h-5 w-20' />
   },
-  {
-    accessorKey: 'description',
-    header: 'DESCRIPTION',
-    cell: () => <Skeleton className='h-5 w-36' />
-  },
+  // {
+  //   accessorKey: 'description',
+  //   header: 'DESCRIPTION',
+  //   cell: () => <Skeleton className='h-5 w-36' />
+  // },
   {
     id: 'actions',
     header: 'ACTIONS',

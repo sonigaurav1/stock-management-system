@@ -301,29 +301,57 @@ export const getRecentSalesAndMonthlyTotal = query({
     }
     const userId = identity.subject;
 
-    const sales = await ctx.db
+    // Calculate date range for the current month
+    const now = new Date();
+    const currentMonthStart = new Date(
+      now.getFullYear(),
+      now.getMonth(),
+      1
+    ).getTime();
+    const currentMonthEnd = new Date(
+      now.getFullYear(),
+      now.getMonth() + 1,
+      0,
+      23,
+      59,
+      59
+    ).getTime();
+
+    // Get sales for the current month
+    const currentMonthSales = await ctx.db
       .query('sales')
       .withIndex('by_user_and_isDeleted', (q) =>
         q.eq('userId', userId).eq('isDeleted', false)
       )
+      .filter((q) =>
+        q.and(
+          q.gte(q.field('soldAt'), currentMonthStart),
+          q.lte(q.field('soldAt'), currentMonthEnd)
+        )
+      )
+      .order('desc')
+      .take(5);
+
+    // Get the count of all sales for the current month
+    const totalMonthlySales = await ctx.db
+      .query('sales')
+      .withIndex('by_user_and_isDeleted', (q) =>
+        q.eq('userId', userId).eq('isDeleted', false)
+      )
+      .filter((q) =>
+        q.and(
+          q.gte(q.field('soldAt'), currentMonthStart),
+          q.lte(q.field('soldAt'), currentMonthEnd)
+        )
+      )
       .collect();
 
-    // Sort sales in descending order based on the soldAt date
-    const sortedSales = sales.sort(
-      (a: any, b: any) =>
-        new Date(b.soldAt).getTime() - new Date(a.soldAt).getTime()
-    );
+    const totalMonthlySalesCount = totalMonthlySales.length;
 
-    // Get the first 5 sales
-    const recentSales = sortedSales.slice(0, 5);
-
-    // Calculate total sales for the current month
-    const currentMonth = new Date().getMonth();
-    const totalMonthlySales = sortedSales.filter(
-      (sale: any) => new Date(sale.soldAt).getMonth() === currentMonth
-    ).length;
-
-    return { recentSales, totalMonthlySales };
+    return {
+      recentSales: currentMonthSales,
+      totalMonthlySales: totalMonthlySalesCount
+    };
   }
 });
 

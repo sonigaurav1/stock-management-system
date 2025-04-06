@@ -51,6 +51,14 @@ export const navItems: NavItem[] = [
     items: [] // No child items
   },
   {
+    title: 'Restock',
+    url: '/restock',
+    icon: 'ledger',
+    shortcut: ['r', 'r'],
+    isActive: false,
+    items: [] // No child items
+  },
+  {
     title: 'Settings',
     url: '/settings', // Placeholder as there is no direct link for the parent
     icon: 'billing',

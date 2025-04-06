@@ -1,18 +1,21 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useFormContext } from 'react-hook-form';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue
-} from '../ui/select';
 import { cn } from '../../lib/utils';
+import { Check } from 'lucide-react'; // Import icons
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem
+} from '../ui/command'; // Import Command components
+import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover'; // Import Popover components
 
 interface SelectOption {
   value: string;
   label: string;
   _id?: string;
+  [key: string]: any; // Allow for dynamic keys
 }
 
 interface Props {
@@ -62,8 +65,20 @@ const CustomSelect: React.FC<Props> = ({
     watch
   } = useFormContext();
 
-  const uniqueId = `select-${name}-${Math.random().toString(36).substr(2, 9)}`;
+  const uniqueId = `select-${name}`;
   const value = watch(name);
+  const [open, setOpen] = useState(false);
+
+  // Map the options to the correct format
+  const normalizedOptions = options.map((option) => ({
+    value: String(option[valueKey] || option.value || ''),
+    label: String(option[labelKey] || option.label || '')
+  }));
+
+  // Find the selected option label
+  const selectedOption = normalizedOptions.find(
+    (option) => option.value === value
+  );
 
   useEffect(() => {
     if (defaultValue) {
@@ -76,18 +91,8 @@ const CustomSelect: React.FC<Props> = ({
     if (errors[name]) {
       clearErrors(name);
     }
+    setOpen(false);
   };
-
-  // Map the options to the correct format if they're using different keys
-  const normalizedOptions = options.map((option) => {
-    if (typeof option === 'object') {
-      return {
-        value: option[valueKey as keyof SelectOption] || option.value,
-        label: option[labelKey as keyof SelectOption] || option.label
-      };
-    }
-    return option;
-  });
 
   // Use form errors or passed error prop
   const errorMessage = error || errors[name]?.message?.toString();
@@ -119,38 +124,67 @@ const CustomSelect: React.FC<Props> = ({
       )}
 
       <div className='relative'>
-        <Select
-          onValueChange={handleValueChange}
-          value={value}
-          disabled={disabled}
-        >
-          <SelectTrigger
-            id={uniqueId}
-            className={cn(
-              'w-full text-sm outline-none',
-              errorMessage && 'border-[#EF4444]',
-              selectClassName,
-              className
-            )}
-            aria-invalid={!!errorMessage}
-            aria-describedby={
-              errorMessage
-                ? `${uniqueId}-error`
-                : hint
-                  ? `${uniqueId}-hint`
-                  : undefined
-            }
-          >
-            <SelectValue placeholder={placeholder} />
-          </SelectTrigger>
-          <SelectContent>
-            {normalizedOptions.map((option) => (
-              <SelectItem key={option.value} value={option.value}>
-                {option.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        <Popover open={open} onOpenChange={setOpen}>
+          <PopoverTrigger asChild>
+            <button
+              id={uniqueId}
+              type='button'
+              disabled={disabled}
+              className={cn(
+                'flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50',
+                errorMessage && 'border-[#EF4444]',
+                selectClassName,
+                className
+              )}
+              aria-describedby={
+                errorMessage
+                  ? `${uniqueId}-error`
+                  : hint
+                    ? `${uniqueId}-hint`
+                    : undefined
+              }
+            >
+              <span className={!value ? 'text-muted-foreground' : ''}>
+                {selectedOption?.label || placeholder}
+              </span>
+              <svg
+                xmlns='http://www.w3.org/2000/svg'
+                width='24'
+                height='24'
+                viewBox='0 0 24 24'
+                fill='none'
+                stroke='currentColor'
+                strokeWidth='2'
+                strokeLinecap='round'
+                strokeLinejoin='round'
+                className='h-4 w-4 opacity-50'
+              >
+                <path d='m6 9 6 6 6-6' />
+              </svg>
+            </button>
+          </PopoverTrigger>
+          <PopoverContent className='w-[--radix-popover-trigger-width] p-0'>
+            <Command>
+              <CommandInput placeholder='Search options...' className='h-9' />
+              <CommandEmpty>No option found.</CommandEmpty>
+              <CommandGroup className='max-h-64 overflow-auto'>
+                {normalizedOptions.map((option) => (
+                  <CommandItem
+                    key={option.value}
+                    value={option.label}
+                    onSelect={() => handleValueChange(option.value)}
+                    className='cursor-pointer'
+                  >
+                    {option.label}
+                    {option.value === value && (
+                      <Check className='ml-auto h-4 w-4' />
+                    )}
+                  </CommandItem>
+                ))}
+              </CommandGroup>
+            </Command>
+          </PopoverContent>
+        </Popover>
       </div>
 
       {errorMessage && (

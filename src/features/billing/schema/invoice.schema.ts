@@ -5,6 +5,7 @@ export const formSchema = z.object({
   isInvoice: z.boolean().optional(),
   companyName: z.string().optional(),
   companyAddress: z.string().optional(),
+  buyerCreditAmount: z.string().optional(),
   phone: z.string().optional(),
   email: z.string().email().optional(),
   vatNumber: z.string().optional(),

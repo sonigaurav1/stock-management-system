@@ -105,45 +105,45 @@ export default function VerificationPage() {
         return;
       }
 
-      const updateClerkMetadata = async () => {
-        try {
-          if (!process.env.NEXT_PUBLIC_API_URL) {
-            throw new Error('API URL is not defined');
-          }
-
-          // Update Clerk metadata to set isVerified to true
-          const response = await fetch(
-            `${process.env.NEXT_PUBLIC_API_URL}/api/verify`,
-            {
-              method: 'PATCH',
-              headers: {
-                'Content-Type': 'application/json'
-              },
-              body: JSON.stringify({
-                userId: userId,
-                isVerified: true
-              })
-            }
-          );
-
-          if (!response.ok) {
-            const errorData = await response.json();
-            throw new Error(
-              errorData.message || 'Failed to update verification status'
-            );
-          }
-        } catch (error) {
-          // eslint-disable-next-line no-console
-          console.error('Error updating Clerk metadata:', error);
-        }
-      };
-
       const result = await verifyOtp({ userId, otp: otpString });
 
       if (result.success) {
-        setSuccess(true);
+        const updateClerkMetadata = async () => {
+          try {
+            if (!process.env.NEXT_PUBLIC_API_URL) {
+              throw new Error('API URL is not defined');
+            }
 
+            // Update Clerk metadata to set isVerified to true
+            const response = await fetch(
+              `${process.env.NEXT_PUBLIC_API_URL}/api/verify`,
+              {
+                method: 'PATCH',
+                headers: {
+                  'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                  userId: userId,
+                  isVerified: true
+                })
+              }
+            );
+
+            if (!response.ok) {
+              const errorData = await response.json();
+              throw new Error(
+                errorData.message || 'Failed to update verification status'
+              );
+            }
+          } catch (error) {
+            // eslint-disable-next-line no-console
+            console.error('Error updating Clerk metadata:', error);
+          }
+        };
+        // Update Clerk metadata to set isVerified to true
         await updateClerkMetadata();
+
+        setSuccess(true);
 
         router.push('/dashboard/overview');
       } else {

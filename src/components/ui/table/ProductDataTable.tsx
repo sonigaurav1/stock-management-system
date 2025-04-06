@@ -87,10 +87,10 @@ export function DataTable<TData extends { _id: string }, TValue>({
   });
 
   return (
-    <div className='flex flex-1 flex-col space-y-4'>
-      <div className='relative flex flex-1 rounded-md border'>
-        <ScrollArea className='flex-1'>
-          <Table className='relative'>
+    <div className='flex flex-col space-y-4 md:flex-1'>
+      <div className='relative flex rounded-md border md:flex-1'>
+        <ScrollArea className='w-full md:flex-1'>
+          <Table className='relative overflow-x-scroll md:max-w-full'>
             <TableHeader>
               {table.getHeaderGroups().map((headerGroup) => (
                 <TableRow key={headerGroup.id}>

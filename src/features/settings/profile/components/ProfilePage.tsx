@@ -16,13 +16,6 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
-// import {
-//   Select,
-//   SelectContent,
-//   SelectItem,
-//   SelectTrigger,
-//   SelectValue
-// } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 
 interface CompanyDetailsForm {
@@ -84,7 +77,7 @@ export default function ProfilePage() {
       : formData.phone.split(/[\/,]/).map((phone) => phone.trim());
 
     const updates = {
-      companyName: formData.companyName,
+      companyName: formData.companyName.toUpperCase(),
       companyAddress: formData.companyAddress,
       phone: phoneArray,
       email: formData.email,
@@ -173,6 +166,7 @@ export default function ProfilePage() {
               <Input
                 id='companyName'
                 name='companyName'
+                className='uppercase'
                 value={formData.companyName}
                 onChange={handleChange}
                 disabled={!isEditing}
