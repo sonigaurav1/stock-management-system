@@ -41,7 +41,7 @@ export function AreaGraph() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Area Chart - Stacked</CardTitle>
+        <CardTitle>Area Chart - Stacked - Demo Data</CardTitle>
         <CardDescription>
           Showing total visitors for the last 6 months
         </CardDescription>

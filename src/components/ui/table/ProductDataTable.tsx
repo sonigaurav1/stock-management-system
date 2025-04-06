@@ -42,6 +42,7 @@ interface DataTableProps<TData extends { _id: string }, TValue> {
     pageSize: number;
     totalPages: number;
     onPageChange: (page: number) => void;
+    onPageSizeChange: (pageSize: number) => void;
   };
 }
 
@@ -49,10 +50,11 @@ export function DataTable<TData extends { _id: string }, TValue>({
   columns,
   data,
   totalItems,
-  pageSizeOptions = [10, 20, 30, 40, 50],
+  pageSizeOptions = [5, 7, 10, 15, 20],
   pagination
 }: DataTableProps<TData, TValue>) {
-  const { page, pageSize, totalPages, onPageChange } = pagination;
+  const { page, pageSize, totalPages, onPageChange, onPageSizeChange } =
+    pagination;
 
   const paginationState = {
     pageIndex: page - 1,
@@ -165,7 +167,9 @@ export function DataTable<TData extends { _id: string }, TValue>({
               <Select
                 value={`${paginationState.pageSize}`}
                 onValueChange={(value) => {
-                  table.setPageSize(Number(value));
+                  const newPageSize = Number(value);
+                  table.setPageSize(newPageSize);
+                  onPageSizeChange(newPageSize); // Call handler to update pageSize
                 }}
               >
                 <SelectTrigger className='h-8 w-[70px]'>

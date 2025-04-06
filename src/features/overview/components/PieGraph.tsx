@@ -60,7 +60,7 @@ export function PieGraph() {
   return (
     <Card className='flex flex-col'>
       <CardHeader className='items-center pb-0'>
-        <CardTitle>Pie Chart - Donut with Text</CardTitle>
+        <CardTitle>Pie Chart - Donut with Text - Demo Data</CardTitle>
         <CardDescription>January - June 2025</CardDescription>
       </CardHeader>
       <CardContent className='flex-1 pb-0'>

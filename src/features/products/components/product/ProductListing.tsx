@@ -14,7 +14,7 @@ import { productSkeletonData } from '../../constants/skeletonData.product';
 export default function ProductListingPage() {
   const [filters, setFilters] = useState<ProductFiltersType>({});
   const [page, setPage] = useState(1);
-  const pageSize = 10;
+  const [pageSize, setPageSize] = useState(5);
 
   // Debounce search term to prevent excessive queries
   const debouncedSearchTerm = useDebounce(filters.searchTerm, 300);
@@ -31,7 +31,7 @@ export default function ProductListingPage() {
   }, [filters]);
 
   return (
-    <div className='max-w-[90vh] space-y-4 md:max-w-full'>
+    <div className='space-y-4 max-sm:max-w-[90vh] md:w-full'>
       <ProductTableAction
         filters={filters}
         setFilters={setFilters}
@@ -45,7 +45,8 @@ export default function ProductListingPage() {
           page,
           pageSize,
           totalPages,
-          onPageChange: setPage
+          onPageChange: setPage,
+          onPageSizeChange: setPageSize
         }}
       />
     </div>

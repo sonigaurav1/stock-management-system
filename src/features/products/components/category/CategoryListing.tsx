@@ -18,7 +18,7 @@ type CategoryFiltersType = {
 export default function CategoryListingPage() {
   const [filters, setFilters] = useState<CategoryFiltersType>({});
   const [page, setPage] = useState(1);
-  const pageSize = 10;
+  const [pageSize, setPageSize] = useState(5);
 
   // Debounce search term to prevent excessive queries
   const debouncedSearchTerm = useDebounce(filters.searchTerm, 300);
@@ -49,7 +49,8 @@ export default function CategoryListingPage() {
           page,
           pageSize,
           totalPages,
-          onPageChange: setPage
+          onPageChange: setPage,
+          onPageSizeChange: setPageSize
         }}
       />
     </div>
