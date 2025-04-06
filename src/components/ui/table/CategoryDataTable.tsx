@@ -167,8 +167,10 @@ export function CategoryDataTable<TData, TValue>({
                 value={`${paginationState.pageSize}`}
                 onValueChange={(value) => {
                   const newPageSize = Number(value);
+                  table.setPageIndex(0); // Reset to first page when changing page size
                   table.setPageSize(newPageSize);
-                  onPageSizeChange(newPageSize); // Call handler to update pageSize
+                  onPageChange(1); // Update parent state
+                  onPageSizeChange(newPageSize);
                 }}
               >
                 <SelectTrigger className='h-8 w-[70px]'>
@@ -189,7 +191,8 @@ export function CategoryDataTable<TData, TValue>({
           <div className='flex w-[150px] items-center justify-center text-sm font-medium'>
             {totalItems > 0 ? (
               <>
-                Page {paginationState.pageIndex + 1} of {table.getPageCount()}
+                Page {paginationState.pageIndex + 1} of{' '}
+                {Math.max(1, table.getPageCount())}
               </>
             ) : (
               'No pages'

@@ -149,7 +149,7 @@ export const getProductsByCategory = query({
 
     return {
       products: paginatedProducts,
-      totalPages: Math.ceil(filteredProducts.length / pageSize),
+      totalPages: Math.ceil(filteredProducts?.length ?? 0 / pageSize),
       currentPage: page
     };
   }
