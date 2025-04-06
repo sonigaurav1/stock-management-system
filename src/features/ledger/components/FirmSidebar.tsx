@@ -164,7 +164,7 @@ export default function FirmSidebar({
           </div>
 
           {/* Firms list */}
-          <ScrollArea className='h-screen w-full'>
+          <ScrollArea className='h-screen w-full md:h-[calc(100dvh-255px)]'>
             <div className='flex-1 p-2'>
               {filteredFirms.length > 0 ? (
                 <ul className='space-y-1'>
