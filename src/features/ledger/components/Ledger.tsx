@@ -25,7 +25,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import Link from 'next/link';
 import { useMutation, useQuery } from 'convex/react';
 import { api } from '@/../convex/_generated/api';
-import { ScrollArea } from '@/components/ui/scroll-area';
+import PageContainer from '@/components/layout/PageContainer';
 
 interface Transaction {
   id: string;
@@ -243,59 +243,71 @@ export default function LedgerComponent({
   }
 
   return (
-    <ScrollArea className='h-screen w-full'>
-      <div className='no-scrollbar mx-auto w-full max-w-6xl overflow-hidden rounded-lg border bg-white pb-10'>
+    <PageContainer scrollable>
+      <div className='no-scrollbar w-full overflow-hidden rounded-lg pb-10 md:mx-auto md:w-full md:max-w-6xl'>
         {/* Firm section with profile pic, business name, owner name, and call button */}
-        <div className='flex items-center justify-between bg-blue-500 p-4 text-white'>
-          <div className='flex items-center gap-3'>
-            <div className='flex h-12 w-12 items-center justify-center rounded-full bg-gray-300 text-xl font-bold text-blue-900'>
+        <div className='flex items-center justify-between bg-blue-500 p-3 text-white sm:p-4'>
+          <div className='flex items-center gap-2 sm:gap-3'>
+            <div className='flex h-10 w-10 items-center justify-center rounded-full bg-white text-lg font-bold text-blue-900 sm:h-12 sm:w-12 sm:text-xl'>
               {selectedFirm.name.charAt(0)}
             </div>
             <div>
-              <h1 className='text-xl font-bold'>{selectedFirm.name}</h1>
-              <p className='text-sm opacity-80'>{selectedFirm.owner}</p>
+              <h1 className='max-w-[180px] truncate text-lg font-bold sm:max-w-none sm:text-xl'>
+                {selectedFirm.name}
+              </h1>
+              <p className='max-w-[180px] truncate text-xs opacity-80 sm:max-w-none sm:text-sm'>
+                {selectedFirm.owner}
+              </p>
             </div>
           </div>
           <Button variant='ghost' size='icon' className='text-white'>
-            <Link href={`tel:${selectedFirm.phone}`}>
+            <Link href={`tel:${selectedFirm?.phone}`}>
               <Phone className='h-6 w-6' />
             </Link>
           </Button>
         </div>
 
         {/* Transaction History section */}
-        <div className='flex items-center justify-between border-b bg-white p-4'>
-          <h2 className='text-xl font-bold'>Transaction History</h2>
-          <Button onClick={handleAddTransaction} disabled={isAddingTransaction}>
+        <div className='flex items-center justify-between border-b p-3 sm:p-4'>
+          <h2 className='text-lg font-bold sm:text-xl'>Transaction History</h2>
+          <Button
+            onClick={handleAddTransaction}
+            disabled={isAddingTransaction}
+            className='px-2 text-xs sm:px-4 sm:text-sm'
+          >
             Add Transaction
           </Button>
         </div>
 
         {/* Summary section with Total Debit, Total Credit, and Net Balance */}
-        <div className='border-b bg-gray-50 p-4'>
-          <div className='grid grid-cols-1 gap-4 md:grid-cols-3'>
+        <div className='border-b p-4'>
+          <div className='grid grid-cols-3 gap-4'>
             <Card className='border shadow-sm'>
-              <CardContent className='p-4'>
-                <p className='text-sm text-gray-500'>Total Debit(-)</p>
-                <p className='text-xl font-bold text-red-600'>
+              <CardContent className='p-3 sm:p-4'>
+                <p className='text-xs text-gray-500 sm:text-sm'>
+                  Total Debit(-)
+                </p>
+                <p className='text-base font-bold text-red-600 sm:text-xl'>
                   ₹{totalDebit.toLocaleString()}
                 </p>
               </CardContent>
             </Card>
 
             <Card className='border shadow-sm'>
-              <CardContent className='p-4'>
-                <p className='text-sm text-gray-500'>Total Credit(+)</p>
-                <p className='text-xl font-bold text-green-600'>
+              <CardContent className='p-3 sm:p-4'>
+                <p className='text-xs text-gray-500 sm:text-sm'>
+                  Total Credit(+)
+                </p>
+                <p className='text-base font-bold text-green-600 sm:text-xl'>
                   ₹{totalCredit.toLocaleString()}
                 </p>
               </CardContent>
             </Card>
 
             <Card className='border shadow-sm'>
-              <CardContent className='p-4'>
-                <p className='text-sm text-gray-500'>Net Balance</p>
-                <p className='text-xl font-bold text-red-600'>
+              <CardContent className='p-3 sm:p-4'>
+                <p className='text-xs text-gray-500 sm:text-sm'>Net Balance</p>
+                <p className='text-base font-bold text-red-600 sm:text-xl'>
                   ₹{netBalance.toLocaleString()} Dr
                 </p>
               </CardContent>
@@ -305,65 +317,36 @@ export default function LedgerComponent({
 
         {/* Delete selected button */}
         {selectedTransactions.length > 0 && (
-          <div className='flex items-center justify-between bg-gray-100 p-2'>
-            <p>{selectedTransactions.length} item(s) selected</p>
+          <div className='flex items-center justify-between p-2 sm:p-3'>
+            <p className='text-xs sm:text-sm'>
+              {selectedTransactions.length} item(s) selected
+            </p>
             <Button
               variant='destructive'
               size='sm'
               onClick={handleDeleteSelected}
-              className='flex items-center gap-1'
+              className='flex h-8 items-center gap-1 text-xs'
             >
-              <Trash2 className='h-4 w-4' /> Delete
+              <Trash2 className='h-3 w-3 sm:h-4 sm:w-4' /> Delete
             </Button>
           </div>
         )}
 
-        <div className='overflow-x-auto'>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className='w-[150px]'>
-                  <div className='flex items-center gap-2'>
-                    <CalendarIcon className='h-4 w-4' />
-                    Date
-                  </div>
-                </TableHead>
-                <TableHead>
-                  <div className='flex items-center gap-2'>
-                    <ListFilter className='h-4 w-4' />
-                    Particular
-                  </div>
-                </TableHead>
-                <TableHead className='bg-red-50'>
-                  <div className='flex items-center gap-2 text-red-600'>
-                    Dr Amount
-                  </div>
-                </TableHead>
-                <TableHead className='bg-green-50'>
-                  <div className='flex items-center gap-2 text-green-600'>
-                    <Hash className='h-4 w-4' />
-                    Cr Amount
-                  </div>
-                </TableHead>
-                <TableHead>
-                  <div className='flex items-center gap-2'>
-                    <Hash className='h-4 w-4' />
-                    Balance
-                  </div>
-                </TableHead>
-                <TableHead className='w-[50px]'></TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {isAddingTransaction && (
-                <TableRow>
-                  <TableCell>
+        {/* Responsive Table/Card View */}
+        <div className='mt-4'>
+          {/* Mobile Card View */}
+          <div className='block space-y-4 sm:px-4 md:hidden'>
+            {isAddingTransaction && (
+              <Card className='border shadow-sm'>
+                <CardContent className='space-y-3 p-4'>
+                  <div className='space-y-2'>
+                    <label className='text-sm font-medium'>Date</label>
                     <Popover>
                       <PopoverTrigger asChild>
                         <Button
                           variant={'outline'}
                           className={cn(
-                            'w-full justify-start text-left font-normal',
+                            'w-full justify-start text-left text-sm font-normal',
                             !newTransaction.date && 'text-muted-foreground'
                           )}
                         >
@@ -381,8 +364,10 @@ export default function LedgerComponent({
                         />
                       </PopoverContent>
                     </Popover>
-                  </TableCell>
-                  <TableCell>
+                  </div>
+
+                  <div className='space-y-2'>
+                    <label className='text-sm font-medium'>Particular</label>
                     <Input
                       autoFocus
                       placeholder='Enter description'
@@ -391,8 +376,12 @@ export default function LedgerComponent({
                         handleInputChange('particular', e.target.value)
                       }
                     />
-                  </TableCell>
-                  <TableCell className='bg-red-50'>
+                  </div>
+
+                  <div className='space-y-2'>
+                    <label className='text-sm font-medium text-red-600'>
+                      Dr Amount
+                    </label>
                     <Input
                       type='number'
                       placeholder='0.00'
@@ -408,8 +397,12 @@ export default function LedgerComponent({
                         )
                       }
                     />
-                  </TableCell>
-                  <TableCell className='bg-green-50'>
+                  </div>
+
+                  <div className='space-y-2'>
+                    <label className='text-sm font-medium text-green-600'>
+                      Cr Amount
+                    </label>
                     <Input
                       type='number'
                       min={0}
@@ -425,62 +418,253 @@ export default function LedgerComponent({
                         )
                       }
                     />
-                  </TableCell>
-                  <TableCell>
-                    <div className='flex gap-2'>
-                      <Button size='sm' onClick={handleSaveTransaction}>
-                        Save
-                      </Button>
-                      <Button
-                        size='sm'
-                        variant='outline'
-                        onClick={handleCancelTransaction}
-                      >
-                        Cancel
-                      </Button>
-                    </div>
-                  </TableCell>
-                  <TableCell></TableCell>
-                </TableRow>
-              )}
+                  </div>
 
-              {transactions.map((transaction) => (
-                <TableRow key={transaction.id}>
-                  <TableCell>
-                    {transaction.date ? format(transaction.date, 'PPP') : ''}
-                  </TableCell>
-                  <TableCell>{transaction.particular}</TableCell>
-                  <TableCell
-                    className={cn(
-                      'bg-red-50',
-                      transaction.drAmount ? 'font-medium text-red-600' : ''
-                    )}
-                  >
-                    {transaction.drAmount?.toLocaleString() || ''}
-                  </TableCell>
-                  <TableCell
-                    className={cn(
-                      'bg-green-50',
-                      transaction.crAmount ? 'font-medium text-green-600' : ''
-                    )}
-                  >
-                    {transaction.crAmount?.toLocaleString() || ''}
-                  </TableCell>
-                  <TableCell>{transaction.balance.toLocaleString()}</TableCell>
-                  <TableCell>
+                  <div className='flex gap-2 pt-2'>
+                    <Button className='flex-1' onClick={handleSaveTransaction}>
+                      Save
+                    </Button>
+                    <Button
+                      className='flex-1'
+                      variant='outline'
+                      onClick={handleCancelTransaction}
+                    >
+                      Cancel
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {transactions.map((transaction) => (
+              <Card key={transaction.id} className='border shadow-sm'>
+                <CardContent className='p-4'>
+                  <div className='mb-3 flex items-center justify-between'>
+                    <div className='text-sm font-medium'>
+                      {transaction.date ? format(transaction.date, 'PPP') : ''}
+                    </div>
                     <Checkbox
                       checked={selectedTransactions.includes(transaction.id)}
                       onCheckedChange={() =>
                         handleCheckboxChange(transaction.id)
                       }
                     />
-                  </TableCell>
+                  </div>
+
+                  <div className='flex w-full gap-4'>
+                    <div className='mb-3 w-1/4'>
+                      <div className='text-xs text-gray-500'>Particular</div>
+                      <div className='font-medium'>
+                        {transaction.particular}
+                      </div>
+                    </div>
+
+                    <div className='w-1/4'>
+                      {transaction.drAmount ? (
+                        <div>
+                          <div className='text-xs text-gray-500'>Dr Amount</div>
+                          <div className='font-medium text-red-600'>
+                            ₹{transaction.drAmount.toLocaleString()}
+                          </div>
+                        </div>
+                      ) : (
+                        <div></div>
+                      )}
+                    </div>
+
+                    <div className='w-1/4'>
+                      {transaction.crAmount ? (
+                        <div>
+                          <div className='text-xs text-gray-500'>Cr Amount</div>
+                          <div className='font-medium text-green-600'>
+                            ₹{transaction.crAmount.toLocaleString()}
+                          </div>
+                        </div>
+                      ) : (
+                        <div></div>
+                      )}
+                    </div>
+
+                    <div className='w-1/4'>
+                      <div className='text-xs text-gray-500'>Balance</div>
+                      <div className='font-medium'>
+                        ₹{transaction.balance.toLocaleString()}
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+
+          {/* Desktop Table View */}
+          <div className='hidden overflow-x-auto md:block'>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className='whitespace-nowrap'>
+                    <div className='flex items-center gap-2'>
+                      <CalendarIcon className='h-4 w-4' />
+                      <span>Date</span>
+                    </div>
+                  </TableHead>
+                  <TableHead className='whitespace-nowrap'>
+                    <div className='flex items-center gap-2'>
+                      <ListFilter className='h-4 w-4' />
+                      <span>Particular</span>
+                    </div>
+                  </TableHead>
+                  <TableHead className='whitespace-nowrap bg-red-50 dark:bg-red-200'>
+                    <div className='flex items-center gap-2 text-red-600'>
+                      Dr Amount
+                    </div>
+                  </TableHead>
+                  <TableHead className='whitespace-nowrap bg-green-50 dark:bg-green-200'>
+                    <div className='flex items-center gap-2 text-green-600'>
+                      <Hash className='h-4 w-4' />
+                      Cr Amount
+                    </div>
+                  </TableHead>
+                  <TableHead className='whitespace-nowrap'>
+                    <div className='flex items-center gap-2'>
+                      <Hash className='h-4 w-4' />
+                      Balance
+                    </div>
+                  </TableHead>
+                  <TableHead className='w-[50px]'></TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+              </TableHeader>
+
+              <TableBody>
+                {isAddingTransaction && (
+                  <TableRow>
+                    <TableCell>
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <Button
+                            variant={'outline'}
+                            className={cn(
+                              'w-full justify-start text-left font-normal',
+                              !newTransaction.date && 'text-muted-foreground'
+                            )}
+                          >
+                            {newTransaction.date
+                              ? format(newTransaction.date, 'PPP')
+                              : 'Select date'}
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className='w-auto p-0'>
+                          <Calendar
+                            mode='single'
+                            selected={newTransaction.date || undefined}
+                            onSelect={(date) => handleInputChange('date', date)}
+                            initialFocus
+                          />
+                        </PopoverContent>
+                      </Popover>
+                    </TableCell>
+                    <TableCell>
+                      <Input
+                        autoFocus
+                        placeholder='Enter description'
+                        value={newTransaction.particular}
+                        onChange={(e) =>
+                          handleInputChange('particular', e.target.value)
+                        }
+                      />
+                    </TableCell>
+                    <TableCell className='bg-red-50'>
+                      <Input
+                        type='number'
+                        placeholder='0.00'
+                        className='no-spinner dark:text-black'
+                        min={0}
+                        value={newTransaction.drAmount || ''}
+                        onChange={(e) =>
+                          handleInputChange(
+                            'drAmount',
+                            e.target.value
+                              ? Number.parseFloat(e.target.value)
+                              : null
+                          )
+                        }
+                      />
+                    </TableCell>
+                    <TableCell className='bg-green-50'>
+                      <Input
+                        type='number'
+                        min={0}
+                        placeholder='0.00'
+                        className='no-spinner dark:text-black'
+                        value={newTransaction.crAmount || ''}
+                        onChange={(e) =>
+                          handleInputChange(
+                            'crAmount',
+                            e.target.value
+                              ? Number.parseFloat(e.target.value)
+                              : null
+                          )
+                        }
+                      />
+                    </TableCell>
+                    <TableCell>
+                      <div className='flex gap-2'>
+                        <Button size='sm' onClick={handleSaveTransaction}>
+                          Save
+                        </Button>
+                        <Button
+                          size='sm'
+                          variant='outline'
+                          onClick={handleCancelTransaction}
+                        >
+                          Cancel
+                        </Button>
+                      </div>
+                    </TableCell>
+                    <TableCell></TableCell>
+                  </TableRow>
+                )}
+
+                {transactions.map((transaction) => (
+                  <TableRow key={transaction.id}>
+                    <TableCell>
+                      {transaction.date ? format(transaction.date, 'PPP') : ''}
+                    </TableCell>
+                    <TableCell>{transaction.particular}</TableCell>
+                    <TableCell
+                      className={cn(
+                        'bg-red-50',
+                        transaction.drAmount ? 'font-medium text-red-600' : ''
+                      )}
+                    >
+                      {transaction.drAmount?.toLocaleString() || ''}
+                    </TableCell>
+                    <TableCell
+                      className={cn(
+                        'bg-green-50',
+                        transaction.crAmount ? 'font-medium text-green-600' : ''
+                      )}
+                    >
+                      {transaction.crAmount?.toLocaleString() || ''}
+                    </TableCell>
+                    <TableCell>
+                      {transaction.balance.toLocaleString()}
+                    </TableCell>
+                    <TableCell>
+                      <Checkbox
+                        checked={selectedTransactions.includes(transaction.id)}
+                        onCheckedChange={() =>
+                          handleCheckboxChange(transaction.id)
+                        }
+                      />
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
         </div>
       </div>
-    </ScrollArea>
+    </PageContainer>
   );
 }

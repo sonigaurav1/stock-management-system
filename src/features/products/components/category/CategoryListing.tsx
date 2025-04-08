@@ -34,7 +34,7 @@ export default function CategoryListingPage() {
   }, [filters]);
 
   return (
-    <div className='space-y-4'>
+    <div className='w-full space-y-4 overflow-hidden lg:px-4'>
       <CategoryFilters
         filters={filters}
         onFilterChange={setFilters}

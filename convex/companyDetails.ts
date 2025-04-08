@@ -137,3 +137,24 @@ export const updateVerificationStatus = mutation({
     });
   }
 });
+
+// Get company name by ID
+export const getCompanyNameById = query({
+  args: { userId: v.string() },
+  handler: async (ctx, args) => {
+    const { userId } = args;
+
+    const companyDetails = await ctx.db
+      .query('companyDetails')
+      .withIndex('by_user_and_isDeleted', (q) =>
+        q.eq('userId', userId).eq('isDeleted', false)
+      )
+      .first();
+
+    if (!companyDetails) {
+      return null;
+    }
+
+    return companyDetails.companyName;
+  }
+});

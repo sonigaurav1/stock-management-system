@@ -308,3 +308,18 @@ export function determineStockStatus({
   }
   return 'in_stock';
 }
+
+/**
+ * Capitalizes the first letter of each word in a string and makes the rest lowercase.
+ * @param text The input string to format.
+ * @returns The formatted string.
+ * @example
+ * capitalizeWords("hello world"); // "Hello World"
+ * capitalizeWords("javaSCRIPT is FUN"); // "Javascript Is Fun"
+ */
+export function capitalizeWords(text: string): string {
+  return text
+    .split(' ')
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+    .join(' ');
+}

@@ -112,7 +112,7 @@ export default function FirmSidebar({
       {/* Mobile overlay */}
       {isSidebarOpen && (
         <div
-          className='fixed inset-0 z-40 bg-black/30 md:hidden'
+          className='fixed inset-0 z-50 bg-black/30 md:hidden'
           onClick={() => setIsSidebarOpen(false)}
         />
       )}
@@ -121,7 +121,7 @@ export default function FirmSidebar({
       <Button
         variant='outline'
         size='icon'
-        className='fixed left-3 top-12 z-50 bg-white md:hidden'
+        className='fixed left-3 top-16 z-40 mt-1 bg-background text-foreground md:hidden'
         onClick={() => setIsSidebarOpen(!isSidebarOpen)}
       >
         {isSidebarOpen ? (
@@ -134,7 +134,7 @@ export default function FirmSidebar({
       {/* Sidebar */}
       <div
         className={cn(
-          'fixed left-0 top-0 z-50 h-full w-72 border-r bg-white transition-transform duration-300 ease-in-out md:sticky',
+          'fixed left-0 top-0 z-50 h-full w-72 border-r bg-background text-foreground transition-transform duration-300 ease-in-out md:sticky',
           'md:z-0 md:translate-x-0',
           isSidebarOpen ? 'translate-x-0' : '-translate-x-full'
         )}
@@ -164,7 +164,7 @@ export default function FirmSidebar({
           </div>
 
           {/* Firms list */}
-          <ScrollArea className='h-screen w-full md:h-[calc(100dvh-255px)]'>
+          <ScrollArea className='h-[calc(100dvh-255px)] w-full'>
             <div className='flex-1 p-2'>
               {filteredFirms.length > 0 ? (
                 <ul className='space-y-1'>
@@ -183,7 +183,7 @@ export default function FirmSidebar({
                           {firm.name.charAt(0)}
                         </div>
                         <div className='overflow-hidden'>
-                          <div className='font-medium'>
+                          <div className='font-medium group-hover:text-black'>
                             {truncate(firm.name, { maxLength: 20 })}
                           </div>
                           <div className='text-xs text-gray-500'>
@@ -192,7 +192,7 @@ export default function FirmSidebar({
                         </div>
                         <Trash
                           onClick={(e) => handleTrashClick(e, firm)}
-                          className='ml-auto hidden size-6 hover:text-red-600 group-hover:block'
+                          className='ml-auto size-6 text-red-600 group-hover:block md:hidden md:hover:text-red-600'
                         />
                       </button>
                     </li>
@@ -242,8 +242,9 @@ export default function FirmSidebar({
               {firmToDelete?.name}&quot;? This action cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
-          <AlertDialogFooter>
+          <AlertDialogFooter className='flex flex-row justify-end gap-4'>
             <AlertDialogCancel
+              className='flex-1 sm:w-auto sm:flex-none'
               onClick={(e) => {
                 e.stopPropagation();
               }}
@@ -251,7 +252,7 @@ export default function FirmSidebar({
               Cancel
             </AlertDialogCancel>
             <AlertDialogAction
-              className='bg-red-500 text-white hover:bg-white hover:text-red-600'
+              className='flex-1 bg-red-500 text-white hover:bg-white hover:text-red-600 sm:w-auto sm:flex-none'
               onClick={async (e) => {
                 e.stopPropagation();
                 handleDeleteConfirm();

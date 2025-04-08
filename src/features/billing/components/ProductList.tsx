@@ -62,7 +62,9 @@ const ProductList = ({
               </div>
             )}
             <div className='flex flex-1 flex-col'>
-              <span className='font-medium text-gray-800'>{product.name}</span>
+              <span className='font-medium text-gray-800 dark:text-white'>
+                {product.name}
+              </span>
               {(product as any).sellingPrice && (
                 <span className='text-sm text-gray-500'>
                   NPR {(product as any).sellingPrice.toFixed(2)}

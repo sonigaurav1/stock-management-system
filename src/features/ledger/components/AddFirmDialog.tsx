@@ -83,7 +83,7 @@ export function AddFirmDialog({
         </DialogHeader>
         <div className='grid gap-4 py-4'>
           <div className='grid grid-cols-4 items-center gap-4'>
-            <Label htmlFor='name' className='text-right'>
+            <Label htmlFor='name' className='text-left'>
               Firm Name
             </Label>
             <Input
@@ -93,7 +93,7 @@ export function AddFirmDialog({
             />
           </div>
           <div className='grid grid-cols-4 items-center gap-4'>
-            <Label htmlFor='username' className='text-right'>
+            <Label htmlFor='username' className='text-left'>
               Firm Owner
             </Label>
             <Input
@@ -103,7 +103,7 @@ export function AddFirmDialog({
             />
           </div>
           <div className='grid grid-cols-4 items-center gap-4'>
-            <Label htmlFor='username' className='text-right'>
+            <Label htmlFor='username' className='text-left'>
               Address
             </Label>
             <Input
@@ -115,7 +115,7 @@ export function AddFirmDialog({
             />
           </div>
           <div className='grid grid-cols-4 items-center gap-4'>
-            <Label htmlFor='username' className='text-nowrap text-right'>
+            <Label htmlFor='username' className='text-nowrap text-left'>
               Phone Number
             </Label>
             <Input
@@ -125,12 +125,21 @@ export function AddFirmDialog({
             />
           </div>
         </div>
-        <DialogFooter>
-          <Button variant='secondary' onClick={onCancel} className='m-4 md:m-0'>
+        <DialogFooter className='flex flex-row justify-end gap-4'>
+          <Button
+            variant='secondary'
+            disabled={isSubmitting}
+            onClick={onCancel}
+            className='flex-1 sm:w-auto sm:flex-none'
+          >
             Cancel
           </Button>
-          <Button disabled={isSubmitting} onClick={() => onSubmit()}>
-            Save changes
+          <Button
+            onClick={onSubmit}
+            disabled={isSubmitting}
+            className='flex-1 sm:w-auto sm:flex-none'
+          >
+            Confirm
           </Button>
         </DialogFooter>
       </DialogContent>

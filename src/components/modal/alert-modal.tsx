@@ -33,11 +33,21 @@ export const AlertModal: React.FC<AlertModalProps> = ({
       isOpen={isOpen}
       onClose={onClose}
     >
-      <div className='flex w-full items-center justify-end space-x-2 pt-6'>
-        <Button disabled={loading} variant='outline' onClick={onClose}>
+      <div className='flex w-full items-center gap-4 pt-4'>
+        <Button
+          disabled={loading}
+          className='flex-1 sm:w-auto sm:flex-none'
+          variant='outline'
+          onClick={onClose}
+        >
           Cancel
         </Button>
-        <Button disabled={loading} variant='destructive' onClick={onConfirm}>
+        <Button
+          disabled={loading}
+          className='flex-1 sm:w-auto sm:flex-none'
+          variant='destructive'
+          onClick={onConfirm}
+        >
           Continue
         </Button>
       </div>

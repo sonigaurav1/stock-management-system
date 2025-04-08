@@ -93,10 +93,10 @@ export const navItems: NavItem[] = [
     ]
   },
   {
-    title: 'About',
-    url: '/about',
-    icon: 'about',
-    shortcut: ['i', 'i'],
+    title: 'Help Center',
+    url: '/help-center',
+    icon: 'help',
+    shortcut: ['h', 'h'],
     isActive: false,
     items: [] // No child items
   }

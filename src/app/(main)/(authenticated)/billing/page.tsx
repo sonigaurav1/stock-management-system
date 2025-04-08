@@ -5,7 +5,7 @@ import { useState, useMemo, useReducer, useEffect } from 'react';
 import { Form } from '@/components/ui/form';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { type z } from 'zod';
+import type { z } from 'zod';
 import { formSchema } from '@/features/billing/schema/invoice.schema';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -36,6 +36,7 @@ import {
 } from '@/features/billing/utils/handlers';
 import {
   BuyerAddressField,
+  BuyerCreditAmountField,
   // BuyerCreditAmountField,
   BuyerNameField,
   BuyerPanField,
@@ -45,11 +46,11 @@ import {
 } from '@/features/billing/components/FormFields';
 import ProductList from '@/features/billing/components/ProductList';
 import ProductItem from '@/features/billing/components/ProductItem';
-import {
+import type {
   InvoiceItem,
   InvoiceProps
 } from '@/features/billing/interfaces/IBilling';
-import { Id } from 'convex/_generated/dataModel';
+import type { Id } from 'convex/_generated/dataModel';
 import { useMutation, useQuery } from 'convex/react';
 import { api } from '@/../convex/_generated/api';
 import { useCustomerManagement } from '@/features/billing/hooks/useCustomerManagement';
@@ -59,6 +60,7 @@ import InvoiceDocument from '@/features/billing/components/InvoiceDocument';
 import AlertModal from '@/features/billing/components/BillingAction';
 import PageContainer from '@/components/layout/PageContainer';
 import { useUser } from '@clerk/clerk-react';
+import SharePDFButton from '@/features/billing/components/ShareButtons';
 
 // Lazy load the PDF viewer component
 const PDFViewerNoSSR = dynamic(
@@ -73,6 +75,8 @@ const ProductBilling = () => {
   const [state, dispatch] = useReducer(reducer, initialState);
   const [processedInvoiceData, setProcessedInvoiceData] =
     useState<FormValues | null>(null);
+
+  const [isMobile, setIsMobile] = useState(false);
 
   const { user } = useUser();
 
@@ -115,6 +119,23 @@ const ProductBilling = () => {
     });
     return () => subscription.unsubscribe();
   }, [form, state.isGenerating]);
+
+  // Check if device is mobile
+  useEffect(() => {
+    const checkIfMobile = () => {
+      const userAgent = navigator.userAgent.toLowerCase();
+      const mobileRegex =
+        /android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini/i;
+      setIsMobile(mobileRegex.test(userAgent) || window.innerWidth < 768);
+    };
+
+    checkIfMobile();
+    window.addEventListener('resize', checkIfMobile);
+
+    return () => {
+      window.removeEventListener('resize', checkIfMobile);
+    };
+  }, []);
 
   // Use debounced search to reduce API calls
   const debouncedSetSearchTerm = useDebouncedSetSearchTerm(dispatch);
@@ -188,6 +209,9 @@ const ProductBilling = () => {
 
   // Form submission
   function onSubmit(values: z.infer<typeof formSchema>) {
+    // eslint-disable-next-line no-console
+    console.debug(values);
+
     // Convert selected products to the format expected by the form schema
     const items: (InvoiceItem & { productId: string })[] =
       state.selectedProducts.map((product, index) => ({
@@ -340,11 +364,24 @@ const ProductBilling = () => {
     }
   }
 
+  // const sharePdfUrl = processedInvoiceData
+  //   ? URL.createObjectURL(
+  //       new Blob([JSON.stringify(processedInvoiceData)], {
+  //         type: 'application/pdf'
+  //       })
+  //     )
+  //   : '';
+  // console.log(sharePdfUrl);
+  // const sharePdfFileName = `Invoice_${processedInvoiceData?.buyerName}_${processedInvoiceData?.invoiceNumber}.pdf`;
+  // const sharePdfTitle = `Invoice #${processedInvoiceData?.invoiceNumber} - ${processedInvoiceData?.buyerName}`;
+
   // Render component
   return (
     <PageContainer scrollable>
-      <section className='flex h-[calc(100dvh-92px)] w-full flex-col justify-between md:flex-row'>
-        <div className='w-full overflow-y-auto pr-0 md:w-1/2 md:pr-4'>
+      <section className='flex h-[calc(100dvh-90px)] w-full flex-col justify-between gap-6 lg:flex-row'>
+        {/* Left Section */}
+        {/* Product Selection and Invoice Form */}
+        <div className='w-full lg:w-1/2 lg:pr-4'>
           <h2 className='mb-4 text-xl font-semibold'>Add Product</h2>
 
           <div className='mb-6'>
@@ -416,6 +453,7 @@ const ProductBilling = () => {
                   }
                   handleRateChange={handleRateChange(dispatch)}
                   handleRemoveProduct={handleRemoveProduct(dispatch)}
+                  className='flex flex-col sm:flex-row'
                 />
               ))
             )}
@@ -424,22 +462,22 @@ const ProductBilling = () => {
           <h3 className='mb-2 font-medium'>Invoice Details</h3>
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className='space-y-4'>
-              <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
+              <div className='grid grid-cols-1 gap-4 sm:grid-cols-2'>
                 <InvoiceNumberField control={form.control} />
                 <PaymentModeField control={form.control} />
                 <BuyerNameField control={form.control} />
-                {/* {form.getValues('paymentMode') === 'CREDIT' && (
+                {form.getValues('paymentMode') === 'CREDIT' && (
                   <BuyerCreditAmountField control={form.control} />
-                )} */}
+                )}
                 <BuyerAddressField control={form.control} />
                 <BuyerPhoneField control={form.control} />
                 <BuyerPanField control={form.control} />
               </div>
 
-              <div className='flex w-full flex-col items-center justify-center space-y-4 md:flex-row md:items-center md:justify-between md:gap-4 md:space-y-0'>
+              <div className='s flex w-full items-center justify-between gap-4'>
                 <Button
                   type='submit'
-                  className='w-1/3'
+                  className='w-full py-5 sm:w-auto'
                   disabled={state.selectedProducts.length === 0}
                 >
                   Generate Invoice
@@ -449,7 +487,10 @@ const ProductBilling = () => {
                 {state.isGenerating && processedInvoiceData && (
                   <>
                     {/* Download PDF Button */}
-                    <Button asChild className='w-1/3'>
+                    <Button
+                      asChild
+                      className='w-full py-5 text-center sm:w-auto'
+                    >
                       <PDFDownloadLink
                         document={
                           <InvoiceDocument
@@ -468,7 +509,7 @@ const ProductBilling = () => {
 
                     {/* Print Button */}
                     <Button
-                      className='w-1/3'
+                      className='w-full py-5 sm:w-auto'
                       onClick={async () => {
                         try {
                           // Show loading state
@@ -515,34 +556,117 @@ const ProductBilling = () => {
                   </>
                 )}
               </div>
+
+              {isMobile && (
+                <div className='mt-4 flex flex-col space-y-2 sm:flex-row sm:items-center sm:justify-between sm:space-y-0'>
+                  <p className='text-sm text-gray-500'>
+                    <span className='font-medium'>Total Amount:</span>{' '}
+                    {totalValue.toFixed(2)}
+                  </p>
+                  <p className='text-sm text-gray-500'>
+                    <span className='font-medium'>VAT:</span>{' '}
+                    {(totalValue * VAT_PERCENTAGE).toFixed(2)}
+                  </p>
+                  <p className='text-sm text-gray-500'>
+                    <span className='font-medium'>NET TOTAL:</span>{' '}
+                    {(totalValue * 1.13).toFixed(2)}
+                  </p>
+                  <p className='text-sm text-gray-500'>
+                    <span className='font-medium'>Amount in Words:</span>{' '}
+                    {amountToWords(totalValue * 1.13)}
+                  </p>
+                </div>
+              )}
             </form>
+            {state.isGenerating && processedInvoiceData && (
+              <div className='mt-4 flex w-full items-center justify-between gap-4'>
+                {/* Share PDF Button */}
+                {/* <SharePdfButton
+                      pdfUrl={async () => {
+                        const { pdf } = await import('@react-pdf/renderer');
+                        const blob = await pdf(
+                          <InvoiceDocument
+                            invoiceData={
+                              processedInvoiceData as InvoiceProps['invoiceData']
+                            }
+                          />
+                        ).toBlob();
+
+                        return URL.createObjectURL(blob);
+                      }}
+                      title={sharePdfTitle}
+                      fileName={sharePdfFileName}
+                    /> */}
+                <SharePDFButton
+                  invoiceData={
+                    processedInvoiceData as InvoiceProps['invoiceData']
+                  }
+                />
+              </div>
+            )}
           </Form>
         </div>
-        <div className='w-full border-t pl-0 pt-4 md:w-1/2 md:border-l md:border-t-0 md:pl-4 md:pt-0'>
+
+        {/* Right Section */}
+        {/* PDF Viewer */}
+        <div className='h-full w-full border-t pb-24 pt-4 md:pb-0 lg:w-1/2 lg:border-l lg:border-t-0 lg:pl-4 lg:pt-0'>
           {state.isGenerating && processedInvoiceData ? (
-            <PDFViewerNoSSR
-              invoiceData={processedInvoiceData as InvoiceProps['invoiceData']}
-            />
+            isMobile ? (
+              <div className='flex flex-col items-center justify-center space-y-4 p-4'>
+                <p className='text-center text-gray-600'>
+                  PDF preview is not available on mobile devices. You can
+                  download the invoice instead.
+                </p>
+
+                <PDFDownloadLink
+                  document={
+                    <InvoiceDocument
+                      invoiceData={
+                        processedInvoiceData as InvoiceProps['invoiceData']
+                      }
+                    />
+                  }
+                  fileName={`Invoice_${processedInvoiceData.buyerName}_${processedInvoiceData.invoiceNumber}.pdf`}
+                  className='w-full'
+                >
+                  {({ loading }) => (
+                    <Button className='w-full' disabled={loading}>
+                      {loading
+                        ? 'Preparing document...'
+                        : 'Download Invoice PDF'}
+                    </Button>
+                  )}
+                </PDFDownloadLink>
+              </div>
+            ) : (
+              <div className='h-full'>
+                <PDFViewerNoSSR
+                  invoiceData={
+                    processedInvoiceData as InvoiceProps['invoiceData']
+                  }
+                />
+              </div>
+            )
           ) : (
-            <div className='flex h-full items-center justify-center rounded-md bg-gray-200'>
+            <div className='flex h-[400px] items-center justify-center rounded-md bg-gray-200 sm:h-[500px] md:h-[600px] lg:h-full'>
               <p className='text-gray-500'>No invoice generated</p>
             </div>
           )}
         </div>
-
         {/* Alert Modal */}
-        <AlertModal
-          isOpen={isModalOpen}
-          onConfirm={isProcessing ? () => {} : handleConfirmActions} // Disable confirm button while processing
-          onCancel={() => !isProcessing && setIsModalOpen(false)} // Prevent cancel during processing
-          title='Confirm Invoice Actions'
-          description={
-            isProcessing
-              ? 'Processing actions, please wait...'
-              : 'Are you sure you want to manage customers, sales, and stock for this invoice?'
-          }
-        />
       </section>
+
+      <AlertModal
+        isOpen={isModalOpen}
+        onConfirm={isProcessing ? () => {} : handleConfirmActions} // Disable confirm button while processing
+        onCancel={() => !isProcessing && setIsModalOpen(false)} // Prevent cancel during processing
+        title='Confirm Invoice Actions'
+        description={
+          isProcessing
+            ? 'Processing actions, please wait...'
+            : 'Are you sure you want to manage customers, sales, and stock for this invoice?'
+        }
+      />
     </PageContainer>
   );
 };

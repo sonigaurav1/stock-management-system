@@ -33,7 +33,7 @@ export default function SupplierListingPage() {
   }, [filters]);
 
   return (
-    <div className='space-y-4'>
+    <div className='w-full space-y-4 overflow-hidden lg:px-4'>
       <SupplierFilters filters={filters} onFilterChange={setFilters} />
 
       <SupplierDataTable

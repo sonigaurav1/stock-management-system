@@ -31,7 +31,7 @@ export default function ProductListingPage() {
   }, [filters]);
 
   return (
-    <div className='space-y-4 max-sm:max-w-[90vh] md:w-full'>
+    <div className='w-full space-y-4 overflow-hidden lg:px-4'>
       <ProductTableAction
         filters={filters}
         setFilters={setFilters}

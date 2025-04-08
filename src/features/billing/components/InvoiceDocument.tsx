@@ -33,38 +33,42 @@ function InvoiceDocument({ invoiceData }: InvoiceProps) {
               <Text style={styles.invoiceTitle}>TAX INVOICE</Text>
             )}
             <Text style={styles.companyName}>
-              {invoiceData?.companyName?.toUpperCase()}
+              {invoiceData?.companyName?.toUpperCase() ?? ''}
             </Text>
             <Text style={styles.companyAddress}>
-              {invoiceData.companyAddress}
+              {invoiceData?.companyAddress ?? ''}
             </Text>
             <Text style={[styles.companyPhone, { fontWeight: 600 }]}>
-              PHONE: {invoiceData.phone}
+              PHONE: {invoiceData?.phone ?? ''}
             </Text>
-            <Text style={styles.companyEmail}>e-mail: {invoiceData.email}</Text>
+            <Text style={styles.companyEmail}>
+              e-mail: {invoiceData?.email ?? ''}
+            </Text>
             <View style={styles.vatSection}>
               <Text style={styles.vatText}>VAT NO: </Text>
               <View style={styles.vatNumber}>
-                {// Display VAT number digit by digit
-                invoiceData.vatNumber
-                  ?.split('')
-                  .map((digit: string | number, index: number) => (
-                    <Text
-                      key={index}
-                      style={[
-                        styles.vatLabel,
-                        index !==
-                        (invoiceData.buyerPan?.toString()?.length ?? 0) - 1
-                          ? {
-                              borderRightWidth: 0.5,
-                              borderRightColor: '#D3D3D3'
-                            }
-                          : {}
-                      ]}
-                    >
-                      {digit}
-                    </Text>
-                  ))}
+                {
+                  // Display VAT number digit by digit
+                  invoiceData?.vatNumber
+                    ?.split('')
+                    .map((digit: string | number, index: number) => (
+                      <Text
+                        key={index}
+                        style={[
+                          styles.vatLabel,
+                          index !==
+                          (invoiceData.buyerPan?.toString()?.length ?? 0) - 1
+                            ? {
+                                borderRightWidth: 0.5,
+                                borderRightColor: '#D3D3D3'
+                              }
+                            : {}
+                        ]}
+                      >
+                        {digit}
+                      </Text>
+                    )) ?? null
+                }
               </View>
             </View>
           </View>

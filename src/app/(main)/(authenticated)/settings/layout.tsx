@@ -44,9 +44,9 @@ export default function SettingsLayout({ children }: SettingsLayoutProps) {
   return (
     <div className='flex h-screen w-full'>
       <div className='flex w-full flex-col'>
-        <div className='px-4 py-6'>
-          <div className='space-y-6'>
-            <div>
+        <div className='px-4 pb-2 md:pb-0'>
+          <div className='md:space-y-6'>
+            <div className='pb-2 md:py-4 md:pb-0'>
               <h1 className='text-3xl font-bold tracking-tight'>Settings</h1>
               <p className='text-muted-foreground'>
                 Manage your account settings and set e-mail preferences.

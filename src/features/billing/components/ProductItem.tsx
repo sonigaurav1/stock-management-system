@@ -24,51 +24,58 @@ const ProductItem = ({
         alt={product.name}
         className='rounded object-cover'
       />
-      <div className='min-w-0 flex-1'>
-        <p className='truncate font-medium'>{product.name}</p>
-      </div>
-      <div className='flex items-center space-x-1'>
-        <Button
-          type='button'
-          size='icon'
-          variant='outline'
-          onClick={() => handleQuantityChange(product.id, product.quantity - 1)}
-        >
-          <Minus className='h-4 w-4' />
-        </Button>
-        <Input
-          type='number'
-          value={product.quantity || 0} // Default to 0 if quantity is null or undefined
-          onChange={(e) => {
-            const newQuantity = Number.parseInt(e.target.value, 10);
-            if (!isNaN(newQuantity)) {
-              handleQuantityChange(product.id, newQuantity);
+      <div className='min-w-0 flex-1 space-y-2 md:flex md:items-center'>
+        <p className='truncate font-medium md:flex-1'>{product.name}</p>
+        <div className='flex items-center gap-4 md:gap-4'>
+          <div className='flex items-center space-x-1'>
+            <Button
+              type='button'
+              size='icon'
+              variant='outline'
+              onClick={() =>
+                handleQuantityChange(product.id, product.quantity - 1)
+              }
+            >
+              <Minus className='h-4 w-4' />
+            </Button>
+            <Input
+              type='number'
+              value={product.quantity || 0} // Default to 0 if quantity is null or undefined
+              onChange={(e) => {
+                const newQuantity = Number.parseInt(e.target.value, 10);
+                if (!isNaN(newQuantity)) {
+                  handleQuantityChange(product.id, newQuantity);
+                }
+              }}
+              className='no-spinner w-16 text-center'
+              min='1'
+              max={product.stockLevel} // Ensure quantity does not exceed stockLevel
+              onClick={(e) => (e.target as HTMLInputElement).select()}
+            />
+            <Button
+              type='button'
+              size='icon'
+              variant='outline'
+              onClick={() =>
+                handleQuantityChange(product.id, product.quantity + 1)
+              }
+            >
+              <Plus className='h-4 w-4' />
+            </Button>
+          </div>
+          <Input
+            type='text'
+            value={product.rate}
+            onChange={(e) =>
+              handleRateChange(index, Number.parseFloat(e.target.value) || 0)
             }
-          }}
-          className='no-spinner w-16 text-center'
-          min='1'
-          max={product.stockLevel} // Ensure quantity does not exceed stockLevel
-          onClick={(e) => (e.target as HTMLInputElement).select()}
-        />
-        <Button
-          type='button'
-          size='icon'
-          variant='outline'
-          onClick={() => handleQuantityChange(product.id, product.quantity + 1)}
-        >
-          <Plus className='h-4 w-4' />
-        </Button>
+            className='w-20'
+            min='0'
+            onClick={(e) => (e.target as HTMLInputElement).select()}
+          />
+        </div>
       </div>
-      <Input
-        type='text'
-        value={product.rate}
-        onChange={(e) =>
-          handleRateChange(index, Number.parseFloat(e.target.value) || 0)
-        }
-        className='w-20'
-        min='0'
-        onClick={(e) => (e.target as HTMLInputElement).select()}
-      />
+
       <Button
         type='button'
         size='icon'

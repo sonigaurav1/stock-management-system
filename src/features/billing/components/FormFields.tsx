@@ -38,19 +38,27 @@ export const BuyerNameField = ({ control }: { control: any }) => (
   />
 );
 
-export const BuyerCreditAmountField = ({ control }: { control: any }) => (
-  <CustomInput
-    name='buyerCreditAmount'
-    label='Buyer Credit Amount'
-    placeHolder='Enter Buyer Credit Amount'
-    required
-    onChange={(e) => {
-      // Allow only numeric characters and limit to 9 digits
-      const filteredValue = e.target.value.replace(/[^0-9]/g, '').slice(0, 9);
-      control.setValue('buyerCreditAmount', filteredValue);
-    }}
-  />
-);
+export const BuyerCreditAmountField = ({ control }: { control: any }) => {
+  const { field } = useController({
+    name: 'buyerCreditAmount',
+    control,
+    defaultValue: '' // Set a default value if needed
+  });
+
+  return (
+    <CustomInput
+      name='buyerCreditAmount'
+      label='Buyer Credit Amount'
+      placeHolder='Enter Buyer Credit Amount'
+      required
+      onChange={(e) => {
+        // Allow only numeric characters and limit to 9 digits
+        const filteredValue = e.target.value.replace(/[^0-9]/g, '').slice(0, 9);
+        field.onChange(filteredValue);
+      }}
+    />
+  );
+};
 
 export const BuyerAddressField = ({ control }: { control: any }) => (
   <CustomInput

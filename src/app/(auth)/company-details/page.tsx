@@ -305,7 +305,7 @@ export default function CompanyDetailsForm() {
                           handlePhoneChange(index, e.target.value)
                         }
                         className='w-full'
-                        placeholder='9876543210'
+                        placeholder=''
                         required={index === 0}
                       />
                       {index === formData.phone.length - 1 && (

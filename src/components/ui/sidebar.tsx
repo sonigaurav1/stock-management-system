@@ -67,8 +67,8 @@ const SidebarProvider = React.forwardRef<
     },
     ref
   ) => {
-    const isMobile = useIsMobile();
     const [openMobile, setOpenMobile] = React.useState(false);
+    const isMobile = useIsMobile();
 
     // This is the internal state of the sidebar.
     // We use openProp and setOpenProp for control from outside the component.
@@ -213,7 +213,7 @@ const Sidebar = React.forwardRef<
     }
 
     return (
-      <div
+      <main
         ref={ref}
         className='group peer hidden md:block'
         data-state={state}
@@ -253,7 +253,7 @@ const Sidebar = React.forwardRef<
             {children}
           </div>
         </div>
-      </div>
+      </main>
     );
   }
 );

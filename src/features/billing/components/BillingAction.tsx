@@ -29,11 +29,17 @@ const AlertModal: React.FC<AlertModalProps> = ({
           <DialogTitle>{title}</DialogTitle>
         </DialogHeader>
         <p>{description}</p>
-        <DialogFooter>
-          <Button variant='secondary' onClick={onCancel}>
+        <DialogFooter className='flex flex-col gap-4 sm:flex-row sm:justify-end'>
+          <Button
+            variant='secondary'
+            onClick={onCancel}
+            className='w-full sm:w-auto'
+          >
             Cancel
           </Button>
-          <Button onClick={onConfirm}>Confirm</Button>
+          <Button onClick={onConfirm} className='w-full sm:w-auto'>
+            Confirm
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

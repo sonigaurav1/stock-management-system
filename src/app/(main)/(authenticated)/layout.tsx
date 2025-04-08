@@ -3,6 +3,7 @@
 import { PATH } from '@/constants/PATH';
 import { Spinner } from '@/components/Spinner';
 import { useAuthRedirect } from '@/features/auth/hooks/useAuthRedirect';
+import MobileNavigation from '@/components/MobileNavigation';
 
 export default function AuthenticatedLayout({
   children
@@ -23,5 +24,10 @@ export default function AuthenticatedLayout({
     return null; // Redirects handled in hooks
   }
 
-  return <>{children}</>;
+  return (
+    <>
+      {children}
+      <MobileNavigation />
+    </>
+  );
 }

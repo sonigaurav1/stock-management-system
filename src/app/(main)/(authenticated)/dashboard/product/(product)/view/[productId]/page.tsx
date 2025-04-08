@@ -14,7 +14,7 @@ export default async function Page(props: PageProps) {
   return (
     <PageContainer scrollable>
       <div className='flex-1 space-y-4'>
-        <SingleProductViewPage productId={params.productId} />;
+        <SingleProductViewPage productId={params.productId} />
       </div>
     </PageContainer>
   );
