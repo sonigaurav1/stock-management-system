@@ -37,7 +37,6 @@ import {
 import {
   BuyerAddressField,
   // BuyerCreditAmountField,
-  // BuyerCreditAmountField,
   BuyerNameField,
   BuyerPanField,
   BuyerPhoneField,
@@ -141,7 +140,7 @@ const ProductBilling = () => {
   const debouncedSetSearchTerm = useDebouncedSetSearchTerm(dispatch);
 
   const { products, isFetching } = useProductQuery(
-    { page: 1, pageSize: 10 },
+    { page: 1, pageSize: 4 },
     { searchTerm: state.searchTerm }
   );
 

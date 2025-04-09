@@ -65,11 +65,18 @@ const ProductList = ({
               <span className='font-medium text-gray-800 dark:text-white'>
                 {product.name}
               </span>
-              {(product as any).sellingPrice && (
-                <span className='text-sm text-gray-500'>
-                  NPR {(product as any).sellingPrice.toFixed(2)}
-                </span>
-              )}
+              <div className='flex gap-2'>
+                {(product as any).sellingPrice && (
+                  <span className='text-sm text-gray-500'>
+                    NPR {(product as any).sellingPrice.toFixed(2)}
+                  </span>
+                )}
+                {(product as any).stockLevel && (
+                  <span className='text-sm text-gray-500'>
+                    StockLevel {(product as any).stockLevel}
+                  </span>
+                )}
+              </div>
             </div>
           </CommandItem>
         ))}
