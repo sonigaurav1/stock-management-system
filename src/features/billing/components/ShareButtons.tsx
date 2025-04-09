@@ -2,6 +2,7 @@ import { useState } from 'react';
 import InvoiceDocument from './InvoiceDocument';
 import { Button } from '@/components/ui/button';
 import { Share2, Download, Mail, Copy } from 'lucide-react';
+import { capitalizeWords } from '@/lib/utils';
 
 const SharePDFButton = ({ invoiceData }: any) => {
   const [isSharing, setIsSharing] = useState(false);
@@ -17,7 +18,7 @@ const SharePDFButton = ({ invoiceData }: any) => {
         <InvoiceDocument invoiceData={invoiceData} />
       ).toBlob();
 
-      const fileName = `Invoice_${invoiceData.buyerName}_${invoiceData.invoiceNumber}.pdf`;
+      const fileName = `Invoice_${capitalizeWords(invoiceData.buyerName.split(' ').join('_'))}_${invoiceData.invoiceNumber}.pdf`;
 
       switch (option) {
         case 'download':

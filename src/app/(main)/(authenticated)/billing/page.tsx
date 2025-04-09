@@ -36,7 +36,7 @@ import {
 } from '@/features/billing/utils/handlers';
 import {
   BuyerAddressField,
-  BuyerCreditAmountField,
+  // BuyerCreditAmountField,
   // BuyerCreditAmountField,
   BuyerNameField,
   BuyerPanField,
@@ -466,9 +466,9 @@ const ProductBilling = () => {
                 <InvoiceNumberField control={form.control} />
                 <PaymentModeField control={form.control} />
                 <BuyerNameField control={form.control} />
-                {form.getValues('paymentMode') === 'CREDIT' && (
+                {/* {form.getValues('paymentMode') === 'CREDIT' && (
                   <BuyerCreditAmountField control={form.control} />
-                )}
+                )} */}
                 <BuyerAddressField control={form.control} />
                 <BuyerPhoneField control={form.control} />
                 <BuyerPanField control={form.control} />
