@@ -54,9 +54,9 @@ export const metadata: Metadata = {
         rel: 'mask-icon',
         url: '/favicon/safari-pinned-tab.svg',
         color: '#000000'
-      }
+      },
       // Add manifest when ready
-      // { rel: 'manifest', url: '/site.webmanifest' }
+      { rel: 'manifest', url: '/manifest.json' }
     ]
   },
   authors: [{ name: 'Gaurav Soni' }],
