@@ -128,10 +128,19 @@ export function DataTable<TData extends { _id: string }, TValue>({
                   >
                     {row.getVisibleCells().map((cell) => (
                       <TableCell key={cell.id}>
-                        {flexRender(
-                          cell.column.columnDef.cell,
-                          cell.getContext()
-                        )}
+                        {/* Add try-catch to prevent rendering errors */}
+                        {(() => {
+                          try {
+                            return flexRender(
+                              cell.column.columnDef.cell,
+                              cell.getContext()
+                            );
+                          } catch (e) {
+                            // eslint-disable-next-line no-console
+                            console.error('Error rendering cell:', e);
+                            return 'Error';
+                          }
+                        })()}
                       </TableCell>
                     ))}
                   </TableRow>
