@@ -57,6 +57,7 @@ export const getFilteredProducts = query({
         q.eq('userId', userId).eq('isDeleted', false)
       );
 
+    // eslint-disable-next-line no-console
     console.log('filters', filters);
     if (filters?.category && typeof filters.category === 'string') {
       productsQuery = productsQuery.filter((q) =>

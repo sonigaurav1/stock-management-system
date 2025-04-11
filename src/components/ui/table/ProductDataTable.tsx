@@ -175,9 +175,9 @@ export function DataTable<TData extends { _id: string }, TValue>({
               value={`${paginationState.pageSize}`}
               onValueChange={(value) => {
                 const newPageSize = Number(value);
-                table.setPageIndex(0);
                 table.setPageSize(newPageSize);
-                onPageChange(1);
+                table.setPageIndex(0);
+                // onPageChange(1);
                 onPageSizeChange(newPageSize);
               }}
             >
