@@ -57,9 +57,10 @@ export const getFilteredProducts = query({
         q.eq('userId', userId).eq('isDeleted', false)
       );
 
-    if (filters?.category) {
+    console.log('filters', filters);
+    if (filters?.category && typeof filters.category === 'string') {
       productsQuery = productsQuery.filter((q) =>
-        q.eq(q.field('categoryId'), filters.category?.toLowerCase())
+        q.eq(q.field('categoryId'), filters.category?.toLowerCase() ?? '')
       );
     }
 

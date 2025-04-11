@@ -1,6 +1,6 @@
 import { SkeletonProduct } from '../types/product.types';
 
-export const productSkeletonData: SkeletonProduct[] = Array(10).fill({
+export const productSkeletonData: SkeletonProduct[] = Array(5).fill({
   _id: '',
   _creationTime: '',
   name: '',

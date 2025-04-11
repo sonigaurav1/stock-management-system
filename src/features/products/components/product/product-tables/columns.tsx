@@ -98,12 +98,13 @@ export const columns: ColumnDef<Product>[] = [
     cell: ({ row }) => {
       const supplierName = row.getValue('supplierName') as string;
       return (
-        <div className='max-w-64'>
+        <div className='max-w-48 md:max-w-40'>
           <CustomTooltip
-            triggerElement={truncate(supplierName, { maxLength: 20 })}
+            triggerElement={supplierName}
             tooltipContent={supplierName}
             delayDuration={0}
-            triggerClassName='max-w-64 truncate'
+            contentClassName=''
+            triggerClassName='md:max-w-40 max-w-48 truncate'
           />
         </div>
       );
@@ -115,13 +116,12 @@ export const columns: ColumnDef<Product>[] = [
     cell: ({ row }) => {
       const description = row.getValue('description') as string;
       return (
-        <div className='max-w-64'>
+        <div className='max-w-48 md:max-w-40'>
           <CustomTooltip
             triggerElement={description}
             tooltipContent={description}
-            contentClassName='max-w-96'
             delayDuration={0}
-            triggerClassName='max-w-64 truncate'
+            triggerClassName='md:max-w-40 max-w-48 truncate'
           />
         </div>
       );

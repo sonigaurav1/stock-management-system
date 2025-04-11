@@ -16,6 +16,7 @@ import {
   TableHeader,
   TableRow
 } from '@/components/ui/table';
+import { cn } from '@/lib/utils';
 
 import {
   DoubleArrowLeftIcon,
@@ -30,6 +31,7 @@ import {
   useReactTable
 } from '@tanstack/react-table';
 import { ChevronLeftIcon, ChevronRightIcon } from 'lucide-react';
+import { useSidebar } from '../sidebar';
 
 interface DataTableProps<TData extends { _id: string }, TValue> {
   columns: ColumnDef<TData, TValue>[];
@@ -54,6 +56,11 @@ export function DataTable<TData extends { _id: string }, TValue>({
 }: DataTableProps<TData, TValue>) {
   const { page, pageSize, totalPages, onPageChange, onPageSizeChange } =
     pagination;
+
+  const { state } = useSidebar();
+
+  // eslint-disable-next-line no-console
+  console.log('state', state);
 
   const paginationState = {
     pageIndex: page - 1,
@@ -88,10 +95,15 @@ export function DataTable<TData extends { _id: string }, TValue>({
   });
 
   return (
-    <div className='flex max-w-[95vw] flex-col space-y-4 sm:max-w-[96vw] md:max-w-[89vw] md:flex-1 lg:max-w-full'>
+    <div
+      className={cn(
+        'flex max-w-[95vw] flex-col space-y-4 sm:max-w-[96vw] md:max-w-[89vw] md:flex-1',
+        state === 'collapsed' ? 'lg:max-w-full' : 'lg:max-w-[77vw]'
+      )}
+    >
       <div className='relative rounded-md border'>
         <div className='overflow-x-auto'>
-          <Table className='w-full'>
+          <Table className=''>
             <TableHeader>
               {table.getHeaderGroups().map((headerGroup) => (
                 <TableRow key={headerGroup.id}>
