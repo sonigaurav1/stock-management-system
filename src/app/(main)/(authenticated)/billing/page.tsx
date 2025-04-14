@@ -252,7 +252,9 @@ const ProductBilling = () => {
               ? 'partially_paid'
               : 'paid',
         paidAt: Date.now(),
-        dueDate: form.getValues('dueDate') || null
+        ...(form.getValues('dueDate')
+          ? { dueDate: form.getValues('dueDate') }
+          : {})
       }).catch((error) => {
         // eslint-disable-next-line no-console
         console.error('Error creating payment:', error);
