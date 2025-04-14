@@ -10,6 +10,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
+import { CalendarClock } from 'lucide-react';
 
 interface CustomDatePickerProps {
   name: string;
@@ -93,6 +94,7 @@ const CustomDatePicker: React.FC<CustomDatePickerProps> = ({
             ) : (
               'Select a date'
             )}
+            <CalendarClock className='ml-auto size-4' />
           </Button>
         </PopoverTrigger>
         <PopoverContent className='w-auto p-0'>
