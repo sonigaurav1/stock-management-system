@@ -5,7 +5,6 @@ export const formSchema = z.object({
   isInvoice: z.boolean().optional(),
   companyName: z.string().optional(),
   companyAddress: z.string().optional(),
-  buyerCreditAmount: z.string().optional(),
   phone: z.string().optional(),
   email: z.string().email().optional(),
   vatNumber: z.string().optional(),
@@ -58,7 +57,7 @@ export const formSchema = z.object({
       })
     )
     .optional(),
-  isAdmin: z.boolean().optional(),
+  isTestUser: z.boolean().optional(),
   value: z.number().nullable().optional(),
   discount: z.number().nullable().optional(),
   nonTaxable: z.number().nullable().optional(),
@@ -69,5 +68,8 @@ export const formSchema = z.object({
   printDate: z.string().optional(),
   printTime: z.string().optional(),
   vehicleNo: z.string().nullable().optional(),
-  remarks: z.string().nullable().optional()
+  remarks: z.string().nullable().optional(),
+  isCredit: z.boolean().optional(),
+  dueDate: z.number().optional(),
+  partiallyPaidAmount: z.string().optional()
 });

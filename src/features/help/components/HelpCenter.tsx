@@ -34,8 +34,8 @@ export default function HelpCenter() {
             Help Center
           </h1>
           <p className='mx-auto max-w-3xl text-muted-foreground'>
-            Welcome to the comprehensive guide for your Stock Management System.
-            Learn how to use all features to streamline your business
+            Welcome to the comprehensive guide for your Inventory Management
+            System. Learn how to use all features to streamline your business
             operations.
           </p>
         </div>

@@ -91,7 +91,6 @@ const SharePDFButton = ({ invoiceData }: any) => {
     } catch (error) {
       // eslint-disable-next-line no-console
       console.error('Error sharing PDF:', error);
-      alert('Failed to generate or share PDF. Please try again.');
     } finally {
       setIsSharing(false);
       setShowShareOptions(false);
@@ -103,7 +102,7 @@ const SharePDFButton = ({ invoiceData }: any) => {
       <Button
         type='button'
         className='flex w-full items-center gap-2 py-5 sm:w-auto'
-        onClick={() => setShowShareOptions(!showShareOptions)}
+        onClick={() => handleShare('native')}
         disabled={isSharing}
       >
         <Share2 size={16} />

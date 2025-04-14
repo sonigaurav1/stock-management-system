@@ -23,10 +23,6 @@ export default function ProductListingPage() {
     { page, pageSize },
     { ...filters, searchTerm: debouncedSearchTerm }
   );
-  // eslint-disable-next-line no-console
-  console.log('filters', filters);
-  // eslint-disable-next-line no-console
-  console.log('product', products);
 
   // Reset pagination when filters change
   useEffect(() => {

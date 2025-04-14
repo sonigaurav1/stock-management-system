@@ -1,34 +1,6 @@
 import { query, mutation } from './_generated/server';
 import { v } from 'convex/values';
 
-// Stock Management
-export const createSale = mutation({
-  args: {
-    productId: v.id('products'),
-    customerId: v.id('customers'),
-    customerName: v.string(),
-    customerPhone: v.array(v.string()),
-    quantitySold: v.number(),
-    sellingPrice: v.number(),
-    totalAmount: v.number(),
-    soldAt: v.number()
-  },
-  handler: async (ctx, args) => {
-    const identify = await ctx.auth.getUserIdentity();
-
-    if (!identify) {
-      throw new Error('Not authenticated');
-    }
-    const userId = identify.subject;
-
-    return await ctx.db.insert('sales', {
-      ...args,
-      userId,
-      isDeleted: false
-    });
-  }
-});
-
 export const getCustomerByPanOrPhone = mutation({
   args: {
     pan: v.optional(v.string()),

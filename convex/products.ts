@@ -57,8 +57,6 @@ export const getFilteredProducts = query({
         q.eq('userId', userId).eq('isDeleted', false)
       );
 
-    // eslint-disable-next-line no-console
-    console.log('filters', filters);
     if (filters?.category && typeof filters.category === 'string') {
       productsQuery = productsQuery.filter((q) =>
         q.eq(q.field('categoryId'), filters.category?.toLowerCase() ?? '')
@@ -79,7 +77,6 @@ export const getFilteredProducts = query({
     if (filters?.inStock !== undefined) {
       productsQuery = productsQuery.filter((q: any) =>
         q.and(
-          q.or(q.eq(q.field('inStock'), true), q.eq(q.field('inStock'), false)),
           q.or(
             q.eq(q.field('stockStatus'), 'low_stock'),
             q.eq(q.field('stockStatus'), 'out_of_stock')

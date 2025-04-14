@@ -59,9 +59,6 @@ export function DataTable<TData extends { _id: string }, TValue>({
 
   const { state } = useSidebar();
 
-  // eslint-disable-next-line no-console
-  console.log('state', state);
-
   const paginationState = {
     pageIndex: page - 1,
     pageSize: pageSize

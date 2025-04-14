@@ -53,7 +53,7 @@ export const navItems: NavItem[] = [
   {
     title: 'Restock',
     url: '/restock',
-    icon: 'ledger',
+    icon: 'packagePlus',
     shortcut: ['r', 'r'],
     isActive: false,
     items: [] // No child items

@@ -18,7 +18,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
 
-export default function StockManagementLanding() {
+export default function InventoryManagementLanding() {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [activeTab, setActiveTab] = useState('overview');
 
@@ -32,7 +32,7 @@ export default function StockManagementLanding() {
               <Box className='h-6 w-6 text-primary' />
             </div>
             <h1 className='mb-4 text-4xl font-bold tracking-tight md:text-5xl lg:text-6xl'>
-              Stock Management System
+              Inventory Management System
             </h1>
             <p className='mb-8 max-w-2xl text-xl text-slate-600 dark:text-slate-400'>
               Effortlessly manage your business inventory with our intuitive and
@@ -177,7 +177,7 @@ export default function StockManagementLanding() {
               <div className='mb-6 flex items-center md:mb-0'>
                 <Box className='mr-2 h-8 w-8' />
                 <span className='text-xl font-bold'>
-                  Stock Management System
+                  Inventory Management System
                 </span>
               </div>
               <div className='flex gap-6'>
@@ -197,8 +197,8 @@ export default function StockManagementLanding() {
             </div>
             <div className='mt-8 border-t border-slate-800 pt-8 text-center text-slate-400'>
               <p>
-                &copy; {new Date().getFullYear()} Stock Management System. All
-                rights reserved.
+                &copy; {new Date().getFullYear()} Inventory Management System.
+                All rights reserved.
               </p>
             </div>
           </div>

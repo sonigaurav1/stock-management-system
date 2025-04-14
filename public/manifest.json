@@ -1,6 +1,6 @@
 {
-  "name": "Stock Management System",
-  "short_name": "SMS",
+  "name": "Inventory Management System",
+  "short_name": "Ims",
   "description": "Effortlessly manage your business inventory with our intuitive and powerful tools",
   "start_url": "/",
   "display": "standalone",

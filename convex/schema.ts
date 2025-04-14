@@ -34,13 +34,6 @@ export default defineSchema({
     createdAt: v.number(),
     updatedAt: v.optional(v.number())
   })
-    // .index('by_category', ['categoryId'])
-    // .index('by_stockLevel', ['stockLevel'])
-    // .index('by_supplier', ['supplierId'])
-    // .index('by_purchasePrice', ['purchasePrice'])
-    // .index('by_inStock', ['inStock'])
-    // .index('by_stockStatus', ['stockStatus'])
-    // .index('by_isDeleted', ['isDeleted']) // Index for filtering active products
     .index('by_user', ['userId'])
     .index('by_user_and_isCategory', ['categoryId', 'isDeleted'])
     .index('by_user_and_isSupplier', ['supplierId', 'isDeleted'])
@@ -56,10 +49,7 @@ export default defineSchema({
 
     createdAt: v.number(),
     updatedAt: v.optional(v.number())
-  })
-    // .index('by_user', ['userId'])
-    // .index('by_isDeleted', ['isDeleted']) // Index for filtering active products
-    .index('by_user_and_isDeleted', ['userId', 'isDeleted']),
+  }).index('by_user_and_isDeleted', ['userId', 'isDeleted']),
 
   suppliers: defineTable({
     name: v.string(),
@@ -73,11 +63,7 @@ export default defineSchema({
 
     createdAt: v.number(),
     updatedAt: v.optional(v.number())
-  })
-    // .index('by_name', ['name'])
-    // .index('by_user', ['userId'])
-    // .index('by_isDeleted', ['isDeleted']) // Index for filtering active products
-    .index('by_user_and_isDeleted', ['userId', 'isDeleted']),
+  }).index('by_user_and_isDeleted', ['userId', 'isDeleted']),
 
   stockMovements: defineTable({
     productId: v.string(), // Which product's stock changed
@@ -90,51 +76,47 @@ export default defineSchema({
     isDeleted: v.boolean(), // Soft delete flag (false = active, true = deleted)
 
     createdAt: v.number() // Timestamp of the movement
-  })
-    // .index('by_user', ['userId'])
-    // .index('by_product', ['productId'])
-    // .index('by_type', ['type']),
-    .index('by_user_and_isDeleted', ['userId', 'isDeleted']),
+  }).index('by_user_and_isDeleted', ['userId', 'isDeleted']),
 
+  // Record sales made by selling product from billing page
   sales: defineTable({
     productId: v.string(),
     userId: v.string(),
     quantitySold: v.number(),
     sellingPrice: v.number(),
     totalAmount: v.number(), // quantitySold * sellingPrice
-    customerId: v.optional(v.string()), // Optional customer reference
-    customerName: v.string(), // Optional customer name
-    customerPhone: v.array(v.string()), // Optional customer phone
+    customerId: v.optional(v.string()), // Customer reference
+    customerName: v.string(), // Customer name
+    customerPhone: v.array(v.string()), // Customer phone
 
     paymentStatus: v.optional(v.string()), // "paid", "unpaid", "partially_paid"
 
     isDeleted: v.boolean(), // Soft delete flag (false = active, true = deleted)
-    soldAt: v.number() // Timestamp of sale
-  })
-    // .index('by_user', ['userId'])
-    // .index('by_customerId', ['customerId'])
-    // .index('by_product', ['productId'])
-    // .index('by_soldAt', ['soldAt'])
-    .index('by_user_and_isDeleted', ['userId', 'isDeleted']),
+    soldAt: v.number() // Timestamp of sale happened
+  }).index('by_user_and_isDeleted', ['userId', 'isDeleted']),
 
   payments: defineTable({
     userId: v.string(), // User who recorded the payment
-    saleId: v.string(), // Reference to the sale
+    saleIds: v.array(v.string()), // Reference to the sale
     customerId: v.optional(v.string()), // Reference to the customer
-    amount: v.number(), // Amount paid in this transaction
+    amountPaid: v.number(), // Amount paid in this transaction
+    outstandingBalance: v.optional(v.number()), // Remaining balance to pay after taking product in credit
     paymentMode: v.string(), // "cash", "credit", "debit", "bank_transfer", etc.
-    paymentDate: v.number(), // Timestamp of when payment was made
     paymentReference: v.optional(v.string()), // Reference number, check number, etc.
     notes: v.optional(v.string()), // Any additional information
+    paymentStatus: v.optional(v.string()), // "paid", "unpaid", "partially_paid"
+    invoiceNumber: v.string(), // Invoice number if applicable
+    dueDate: v.optional(v.number()), // Due date for payment
 
     isDeleted: v.boolean(),
-    createdAt: v.number(), // When the payment record was created
-    updatedAt: v.optional(v.number())
+
+    updatedAt: v.optional(v.number()),
+    paidAt: v.number() // Timestamp of when payment was made
   })
     .index('by_user_and_isDeleted', ['userId', 'isDeleted'])
-    .index('by_sale', ['saleId'])
+    .index('by_sale', ['saleIds'])
     .index('by_customer', ['customerId'])
-    .index('by_paymentDate', ['paymentDate']),
+    .index('by_paymentDate', ['paidAt']),
 
   customers: defineTable({
     name: v.string(),
@@ -149,20 +131,15 @@ export default defineSchema({
     isDeleted: v.boolean(), // Soft delete flag (false = active, true = deleted)
 
     createdAt: v.number()
-  })
-    // .index('by_user', ['userId'])
-    // .index('by_name', ['name'])
-    .index('by_user_and_isDeleted', ['userId', 'isDeleted']),
+  }).index('by_user_and_isDeleted', ['userId', 'isDeleted']),
 
   invoices: defineTable({
     userId: v.string(),
-    isDeleted: v.boolean(),
     transactionDate: v.string(),
     invoiceNumber: v.string(),
     date: v.string(),
-    miti: v.string(),
-    isAdmin: v.boolean(),
-    paymentMode: v.string(),
+    miti: v.string(), // nepali date
+    paymentMode: v.string(), // "cash", "credit", "debit", "bank_transfer", etc.
     buyerName: v.string(),
     buyerAddress: v.string(),
     buyerPhone: v.optional(v.string()),
@@ -189,14 +166,13 @@ export default defineSchema({
     printTime: v.string(),
     vehicleNo: v.optional(v.string()),
     remarks: v.optional(v.string()),
+    isAdmin: v.optional(v.boolean()), // true if the invoice is generated by admin
+
+    isDeleted: v.boolean(),
 
     createdAt: v.number(),
     updatedAt: v.optional(v.number())
   })
-    // .index('by_invoiceNumber', ['invoiceNumber'])
-    // .index('by_user', ['userId'])
-    // .index('by_isDeleted', ['isDeleted'])
-    // .index('by_transactionDate', ['transactionDate']),
     .index('by_user_and_invoiceNumber', ['userId', 'invoiceNumber'])
     .index('by_user_and_isDeleted', ['userId', 'isDeleted']),
 
@@ -209,12 +185,9 @@ export default defineSchema({
     createdAt: v.number(), // Timestamp when the firm was created
     updatedAt: v.optional(v.number()), // Timestamp when the firm was last updated
     isDeleted: v.boolean() // Soft delete flag
-  })
-    // .index('by_user', ['userId'])
-    // .index('by_owner', ['owner'])
-    // .index('by_isDeleted', ['isDeleted'])
-    .index('by_user_and_isDeleted', ['userId', 'isDeleted']),
+  }).index('by_user_and_isDeleted', ['userId', 'isDeleted']),
 
+  // Transaction with firm
   transactions: defineTable({
     userId: v.string(), // Reference to the user
     firmId: v.string(), // Reference to the firm
@@ -223,15 +196,12 @@ export default defineSchema({
     drAmount: v.optional(v.number()), // Debit amount
     crAmount: v.optional(v.number()), // Credit amount
     balance: v.number(), // Running balance after the transaction
+
+    isDeleted: v.boolean(), // Soft delete flag
+
     createdAt: v.number(), // Timestamp when the transaction was created
-    updatedAt: v.optional(v.number()), // Timestamp when the transaction was last updated
-    isDeleted: v.boolean() // Soft delete flag
-  })
-    // .index('by_user', ['userId'])
-    // .index('by_firmId', ['firmId'])
-    // .index('by_date', ['date'])
-    // .index('by_isDeleted', ['isDeleted'])
-    .index('by_user_firm_isDeleted', ['userId', 'firmId', 'isDeleted']),
+    updatedAt: v.optional(v.number()) // Timestamp when the transaction was last updated
+  }).index('by_user_firm_isDeleted', ['userId', 'firmId', 'isDeleted']),
 
   companyDetails: defineTable({
     userId: v.string(), // Reference to the user
@@ -249,8 +219,6 @@ export default defineSchema({
     createdAt: v.number(), // Timestamp for when the details were created
     updatedAt: v.optional(v.number()) // Optional timestamp for updates
   }).index('by_user_and_isDeleted', ['userId', 'isDeleted']),
-  // .index('by_companyName', ['companyName'])
-  // .index('by_vatNumber', ['vatNumber']),
 
   otpVerification: defineTable({
     userId: v.string(), // Reference to the user
@@ -260,13 +228,6 @@ export default defineSchema({
     updatedAt: v.optional(v.number()), // Optional timestamp for updates
     isDeleted: v.boolean() // Soft delete flag (false = active, true = deleted)
   }).index('by_userId', ['userId']),
-  // .index('by_otp', ['otp'])
-  // .index('by_expiresAt', ['expiresAt'])
-  // .index('by_userId_and_isDeleted', ['userId', 'isDeleted'])
-  // .index('by_otp_and_isDeleted', ['otp', 'isDeleted'])
-  // .index('by_expiresAt_and_isDeleted', ['expiresAt', 'isDeleted'])
-  // .index('by_userId_otp_expiresAt', ['userId', 'otp', 'expiresAt'])
-  // .index('by_userId_otp_expiresAt_isDeleted', ['userId', 'otp', 'expiresAt', 'isDeleted'])
 
   userSettings: defineTable({
     userId: v.string(),

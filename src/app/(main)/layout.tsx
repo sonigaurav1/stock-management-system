@@ -6,7 +6,7 @@ import type { Metadata } from 'next';
 import { cookies } from 'next/headers';
 
 export const metadata: Metadata = {
-  title: 'Stock Management System',
+  title: 'Inventory Management System',
   description:
     'Effortlessly manage your business inventory with our intuitive and powerful tools.'
 };

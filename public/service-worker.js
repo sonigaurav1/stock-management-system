@@ -1,4 +1,4 @@
-// This is the service worker for the Stock Management System
+// This is the service worker for the Inventory Management System
 
 const CACHE_NAME = 'sms-cache-v1';
 const urlsToCache = [

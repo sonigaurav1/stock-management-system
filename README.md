@@ -1,4 +1,4 @@
-# Stock Management System
+# Inventory Management System
 
 Effortlessly manage your business inventory with our intuitive and powerful tools.
 
@@ -11,13 +11,18 @@ Effortlessly manage your business inventory with our intuitive and powerful tool
 - **Sales Management**: Record and manage sales transactions with detailed information.
 - **Tax Invoice Bill**: Generate tax invoice bills to make your business go digital and keep records of sales transactions.
 - **Ledger Feature**: Maintain a record of financial transactions with suppliers and shopkeepers.
+- **Dashboard and Analytics**: Visual representations of sales data, inventory levels, and other key metrics.
+- **Toast Notifications**: Real-time feedback system for user actions.
+- **Responsive Design**: Fully responsive interface that works on desktop and mobile devices.
+- **Dark/Light Mode**: Switch between visual themes for comfortable viewing.
+- **Role-Based Access Control**: Different permission levels for administrators and staff.
 
 ## Technologies Used
 
 This project leverages the following technologies:
 
-- **Frontend**: React, Next.js, TypeScript
-- **Styling**: Tailwind CSS, Radix UI
+- **Frontend**: React, Next.js 15, TypeScript
+- **Styling**: Tailwind CSS, Radix UI, Shadcn UI
 - **State Management**: Zustand
 - **Backend**: Convex
 - **Database**: Convex Database
@@ -26,14 +31,16 @@ This project leverages the following technologies:
 - **Charts**: Recharts
 - **PDF Generation**: jsPDF, jsPDF-AutoTable
 - **Date Handling**: date-fns, Bikram Sambat JS
+- **UI Components**: Toast notifications, Tooltips, Dialog modals
+- **Icons**: Lucide React
 - **Other Tools**: ESLint, Prettier, Husky, Lint-Staged
 
 ## Installation
 
 1. Clone the repository:
     ```sh
-    git clone https://github.com/sonigaurav1/stock-management-system.git
-    cd stock-management-system
+    git clone https://github.com/sonigaurav1/inventory-management-system.git
+    cd inventory-management-system
     ```
 
 2. Install dependencies:
@@ -43,6 +50,7 @@ This project leverages the following technologies:
 
 3. Set up environment variables:
     - Copy `.env.example` to `.env` and update the values as needed.
+    - Configure Clerk and Convex credentials.
 
 4. Start the development server:
     ```sh
@@ -58,6 +66,7 @@ This project leverages the following technologies:
 - `pnpm run lint:fix`: Fix linting errors.
 - `pnpm run format`: Format the code using Prettier.
 - `pnpm run format:check`: Check the code formatting using Prettier.
+- `pnpm run convex`: Start the Convex development server.
 
 ## Folder Structure
 
@@ -65,9 +74,17 @@ This project leverages the following technologies:
 - `convex/`: Convex server functions and schema.
 - `public/`: Static assets.
 - `src/`: Source code.
+  - `app/`: Next.js App Router structure.
+    - `(main)/`: Main application routes.
+    - `(auth)/`: Authentication related routes.
   - `components/`: Reusable UI components.
-  - `features/`: Feature-specific code (e.g., products, suppliers).
+    - `ui/`: Basic UI components built with Shadcn/Radix.
+    - `layout/`: Layout components like containers and wrappers.
   - `lib/`: Utility functions and libraries.
-  - `pages/`: Next.js pages.
+  - `features/`: Feature-specific code (e.g., products, suppliers).
   - `styles/`: Global styles.
   - `types/`: TypeScript type definitions.
+
+## Environment Setup
+
+The application requires the following environment variables:

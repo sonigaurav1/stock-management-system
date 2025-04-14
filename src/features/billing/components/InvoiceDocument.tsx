@@ -363,9 +363,9 @@ function InvoiceDocument({ invoiceData }: InvoiceProps) {
         </View>
 
         {/* Watermark */}
-        {!invoiceData?.isAdmin && (
+        {invoiceData?.isTestUser && (
           <View style={styles.watermark}>
-            <Text style={styles.watermarkText}>GAURAV</Text>
+            <Text style={styles.watermarkText}>PAID</Text>
           </View>
         )}
       </Page>
@@ -374,19 +374,40 @@ function InvoiceDocument({ invoiceData }: InvoiceProps) {
 }
 
 const renderCompanyName = (companyName: string) => {
-  if (companyName?.length > 15) {
-    const midpoint = Math.floor(companyName?.length / 2);
-    const firstHalf = companyName.substring(0, midpoint);
-    const secondHalf = companyName.substring(midpoint);
+  if (!companyName) return null;
 
-    return (
-      <>
-        <Text style={styles.footerCompanyName}>{firstHalf}</Text>
-        <Text style={styles.footerCompanyName}>{secondHalf}</Text>
-      </>
-    );
+  const words = companyName.trim().split(' ');
+  if (words.length === 1 || companyName.length <= 15) {
+    return <Text style={styles.footerCompanyName}>{companyName}</Text>;
   }
-  return <Text style={styles.footerCompanyName}>{companyName}</Text>;
+
+  // Distribute words to two lines based on length balance
+  let line1 = '';
+  let line2 = '';
+  let line1Length = 0;
+  let line2Length = 0;
+
+  words.forEach((word) => {
+    const wordLengthWithSpace = word.length + 1;
+
+    if (
+      line1Length <= line2Length ||
+      line1Length + wordLengthWithSpace <= companyName.length / 2 + 2
+    ) {
+      line1 += (line1 ? ' ' : '') + word;
+      line1Length += wordLengthWithSpace;
+    } else {
+      line2 += (line2 ? ' ' : '') + word;
+      line2Length += wordLengthWithSpace;
+    }
+  });
+
+  return (
+    <>
+      <Text style={styles.footerCompanyName}>{line1}</Text>
+      <Text style={styles.footerCompanyName}>{line2}</Text>
+    </>
+  );
 };
 
 export default InvoiceDocument;

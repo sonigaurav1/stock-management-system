@@ -323,3 +323,51 @@ export function capitalizeWords(text: string): string {
     .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
     .join(' ');
 }
+
+/**
+ * Formats a number to a currency string in NPR format.
+ * @param amount The amount to format.
+ * @param showNPR Whether to prefix with "NPR".
+ * @returns The formatted currency string.
+ */
+export function formatCurrency(
+  amount: number,
+  showNPR: boolean = false
+): string {
+  // Convert to fixed decimal string
+  const fixedAmount = amount.toFixed(2);
+
+  // Split into integer and decimal parts
+  const [integerPart, decimalPart] = fixedAmount.split('.');
+
+  // Format integer part according to Nepali convention (first 3 digits, then groups of 2)
+  let formattedInt = '';
+  const digits = integerPart.length;
+
+  for (let i = 0; i < digits; i++) {
+    formattedInt += integerPart[i];
+
+    // Calculate position from right
+    const posFromRight = digits - i - 1;
+
+    // Add comma after first 3 digits from right, then every 2 digits
+    if (
+      posFromRight === 3 ||
+      (posFromRight > 3 && (posFromRight - 3) % 2 === 0)
+    ) {
+      if (i < digits - 1) {
+        formattedInt += ',';
+      }
+    }
+  }
+
+  // Check if decimal part is all zeros
+  const hasDecimalValue = decimalPart !== '00';
+
+  // Construct final result - include decimal part only if it's not all zeros
+  const result = hasDecimalValue
+    ? `${formattedInt}.${decimalPart}`
+    : formattedInt;
+
+  return showNPR ? `NPR ${result}` : result;
+}

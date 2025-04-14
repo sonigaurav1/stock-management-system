@@ -20,11 +20,12 @@ export const metadata: Metadata = {
   metadataBase: new URL(
     process.env.NEXT_PUBLIC_API_URL || 'https://gaurav-sms.vercel.app'
   ),
-  title: 'Stock Management System',
+  title: 'Inventory Management System',
   description:
     'Effortlessly manage your business inventory with our intuitive and powerful tools.',
   keywords: [
     'stock management',
+    'inventory management',
     'inventory control',
     'business tools',
     'stock tracking',
@@ -62,7 +63,7 @@ export const metadata: Metadata = {
   authors: [{ name: 'Gaurav Soni' }],
   creator: 'Gaurav Soni',
   publisher: 'Gaurav Soni',
-  applicationName: 'Stock Management System',
+  applicationName: 'Inventory Management System',
   generator: 'Next.js',
   referrer: 'origin-when-cross-origin',
   robots: {
@@ -80,16 +81,16 @@ export const metadata: Metadata = {
     type: 'website',
     locale: 'en_US',
     url: process.env.NEXT_PUBLIC_API_URL || 'https://gaurav-sms.vercel.app',
-    title: 'Stock Management System',
+    title: 'Inventory Management System',
     description:
       'Effortlessly manage your business inventory with our intuitive and powerful tools.',
-    siteName: 'Stock Management System',
+    siteName: 'Inventory Management System',
     images: [
       {
         url: 'public/assets/images/favicon.webp',
         width: 1200,
         height: 630,
-        alt: 'Stock Management System'
+        alt: 'Inventory Management System'
       }
     ]
   },
@@ -97,13 +98,13 @@ export const metadata: Metadata = {
     card: 'summary_large_image',
     site: '@sonigaurav_',
     creator: '@sonigaurav_',
-    title: 'Stock Management System',
+    title: 'Inventory Management System',
     description:
       'Effortlessly manage your business inventory with our intuitive and powerful tools.',
     images: ['/public/assets/images/favicon.webp']
   },
   appleWebApp: {
-    title: 'Stock Management System',
+    title: 'Inventory Management System',
     statusBarStyle: 'black-translucent',
     capable: true
   },
@@ -143,7 +144,7 @@ export const metadata: Metadata = {
     'article:modified_time': '2025-04-01T00:00:00Z',
     'article:author': 'Gaurav Soni',
     'article:section': 'Business',
-    'article:tag': 'stock management'
+    'article:tag': 'inventory management'
   }
 };
 

@@ -5,7 +5,8 @@ import React from 'react';
 import InvoiceDocument from './InvoiceDocument';
 import { useQuery } from 'convex/react';
 import { api } from '@/../convex/_generated/api';
-import { COMPANY_DETAILS, TEST_COMPANY_DETAILS } from '../constants';
+import { TEST_COMPANY_DETAILS } from '../constants';
+import { useUser } from '@clerk/clerk-react';
 
 type InvoiceViewType = 'invoice' | 'tax-invoice' | string;
 
@@ -21,28 +22,46 @@ const InvoiceViewer = ({
   if (invoiceType !== 'invoice' && invoiceType !== 'tax-invoice') {
     notFound();
   }
+  const { user } = useUser();
 
   const invoiceData = useQuery(api.billing.getInvoiceByInvoiceNumber, {
     invoiceNumber
+  });
+  const companyDetails = useQuery(api.companyDetails.getCompanyDetails, {
+    userId: user?.id as string
   });
 
   if (!invoiceData) {
     return <div>Loading or no data available...</div>;
   }
+
   const transformedInvoiceData = {
     ...invoiceData,
     isInvoice: invoiceType === 'invoice' ? true : false,
-    value: invoiceData.value ?? null, // Ensure value is null if undefined
-    discount: invoiceData.discount ?? null, // Ensure discount is null if undefined
+    value: invoiceData.value ?? null,
+    discount: invoiceData.discount ?? null,
     nonTaxable:
-      invoiceData.nonTaxable !== undefined ? invoiceData.nonTaxable : null, // Explicitly handle undefined
-    taxableAmount: invoiceData.taxableAmount ?? null, // Ensure taxableAmount is null if undefined
-    vatAmount: invoiceData.vatAmount ?? null, // Ensure vatAmount is null if undefined
-    totalAmount: invoiceData.totalAmount ?? null, // Ensure totalAmount is null if undefined
-    ...(invoiceData.isAdmin === true ? COMPANY_DETAILS : TEST_COMPANY_DETAILS), // Correct usage of spread operator
-    amountInWords: invoiceData.amountInWords ?? 'N/A', // Provide a default value if undefined
-    vehicleNo: invoiceData.vehicleNo ?? null, // Ensure vehicleNo is null if undefined
-    remarks: invoiceData.remarks ?? null // Ensure remarks is null if undefined
+      invoiceData.nonTaxable !== undefined ? invoiceData.nonTaxable : null,
+    taxableAmount: invoiceData.taxableAmount ?? null,
+    vatAmount: invoiceData.vatAmount ?? null,
+    totalAmount: invoiceData.totalAmount ?? null,
+    amountInWords: invoiceData.amountInWords ?? '',
+    vehicleNo: invoiceData.vehicleNo ?? null,
+    remarks: invoiceData.remarks ?? null,
+    companyName:
+      companyDetails?.companyName ?? TEST_COMPANY_DETAILS.companyName,
+    companyAddress:
+      companyDetails?.companyAddress ?? TEST_COMPANY_DETAILS.companyAddress,
+    phone: Array.isArray(companyDetails?.phone)
+      ? companyDetails.phone.join(', ')
+      : (companyDetails?.phone ?? TEST_COMPANY_DETAILS.phone),
+    email: companyDetails?.email ?? TEST_COMPANY_DETAILS.email,
+    vatNumber: companyDetails?.vatNumber ?? TEST_COMPANY_DETAILS.vatNumber,
+    transactionDate: invoiceData.transactionDate ?? new Date().toISOString(),
+    invoiceNumber: invoiceData.invoiceNumber ?? '',
+    date: invoiceData.date ?? new Date().toISOString(),
+    processedBy: companyDetails?.processedBy ?? 'Admin',
+    isTestUser: companyDetails ? false : true
   };
 
   return (

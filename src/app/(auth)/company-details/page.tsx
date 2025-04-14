@@ -162,7 +162,7 @@ export default function CompanyDetailsForm() {
           <div className='mx-auto mb-2 flex h-16 w-16 items-center justify-center rounded-full bg-primary/10'>
             <Package className='h-8 w-8 text-primary' />
           </div>
-          <h1 className='text-2xl font-bold'>Stock Management System</h1>
+          <h1 className='text-2xl font-bold'>Inventory Management System</h1>
           <p className='text-sm text-muted-foreground'>
             Effortlessly manage your business inventory
           </p>

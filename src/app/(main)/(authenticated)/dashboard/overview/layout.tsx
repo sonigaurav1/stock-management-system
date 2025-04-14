@@ -1,12 +1,13 @@
 'use client';
 import PageContainer from '@/components/layout/PageContainer';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { formatIndianCurrency } from '@/lib/utils';
+import { formatCurrency } from '@/lib/utils';
 import { useUser } from '@clerk/clerk-react';
 import { api } from '@/../convex/_generated/api';
 import { useQuery } from 'convex/react';
 import React, { useState } from 'react';
-import { Asterisk, Eye, EyeOff } from 'lucide-react';
+import { Eye, EyeOff } from 'lucide-react';
+import { useAuthenticatedQuery } from '@/features/auth/utils/auth';
 
 export default function OverViewLayout({
   sales,
@@ -45,6 +46,8 @@ export default function OverViewLayout({
     previousMonthCustomerCount: 0,
     customerPercentageChange: 0
   };
+  const outstandingBalance =
+    useAuthenticatedQuery(api.payments.getOutstandingBalance) ?? 0;
 
   const username = user?.username
     ? user.username.charAt(0).toUpperCase() + user.username.slice(1)
@@ -67,7 +70,7 @@ export default function OverViewLayout({
         </div> */}
         <div className='grid gap-4 md:grid-cols-2 lg:grid-cols-4'>
           {/* TODO: split code */}
-          <Card>
+          <Card className='flex flex-col'>
             <CardHeader className='flex flex-row items-center justify-between space-y-0 pb-2'>
               <CardTitle className='text-sm font-medium'>
                 Total Revenue
@@ -85,16 +88,36 @@ export default function OverViewLayout({
                 <path d='M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6' />
               </svg>
             </CardHeader>
-            <CardContent>
-              <div className='flex max-w-max select-none items-center gap-1 text-2xl font-bold transition-all duration-300'>
-                <p className='flex items-center'>
+            <CardContent className='flex flex-col items-start'>
+              <div className='flex w-full max-w-full select-none items-center gap-1 text-2xl font-bold transition-all duration-300'>
+                <p className='flex h-full items-center justify-center'>
                   Rs.{' '}
-                  <span className='flex max-w-[100px] items-center tracking-wider'>
-                    {showRevenue
-                      ? formatIndianCurrency(currentMonthRevenue)
-                      : Array.from({ length: 10 }, (_, index) => (
-                          <Asterisk key={index} className='size-6' />
+                  <span className='flex max-w-full items-center'>
+                    {showRevenue ? (
+                      formatCurrency(currentMonthRevenue)
+                    ) : (
+                      <span className='flex max-w-28 items-center'>
+                        {Array.from({ length: 7 }).map((_, index) => (
+                          <svg
+                            key={index}
+                            xmlns='http://www.w3.org/2000/svg'
+                            width='24'
+                            height='24'
+                            viewBox='0 0 24 24'
+                            fill='none'
+                            stroke='currentColor'
+                            strokeWidth='2'
+                            strokeLinecap='round'
+                            strokeLinejoin='round'
+                            className=''
+                          >
+                            <path d='M12 6v12' />
+                            <path d='M17.196 9 6.804 15' />
+                            <path d='m6.804 9 10.392 6' />
+                          </svg>
                         ))}
+                      </span>
+                    )}
                   </span>
                 </p>
                 <span
@@ -102,13 +125,13 @@ export default function OverViewLayout({
                   onClick={() => setShowRevenue((prev) => !prev)}
                 >
                   {showRevenue ? (
-                    <Eye className='size-6' />
+                    <Eye className='h-4 w-4' />
                   ) : (
-                    <EyeOff className='size-6' />
+                    <EyeOff className='h-4 w-4' />
                   )}
                 </span>
               </div>
-              <p className='text-xs text-muted-foreground'>
+              <p className='w-full text-left text-xs text-muted-foreground'>
                 {revenuePercentageChange?.toFixed(0) ?? 0}% from last month
               </p>
             </CardContent>
@@ -131,7 +154,7 @@ export default function OverViewLayout({
             </CardHeader>
             <CardContent>
               <div className='text-2xl font-bold'>
-                + {formatIndianCurrency(currentMonthCustomerCount)}
+                + {formatCurrency(currentMonthCustomerCount)}
               </div>
               <p className='text-xs text-muted-foreground'>
                 {customerPercentageChange?.toFixed(0) ?? 0}% since last month
@@ -157,7 +180,7 @@ export default function OverViewLayout({
             </CardHeader>
             <CardContent>
               <div className='text-2xl font-bold'>
-                + {formatIndianCurrency(currentMonthSalesCount)}
+                + {formatCurrency(currentMonthSalesCount)}
               </div>
               <p className='text-xs text-muted-foreground'>
                 {salesPercentageChange?.toFixed(0) ?? 0}% from last month
@@ -165,11 +188,9 @@ export default function OverViewLayout({
             </CardContent>
           </Card>
 
-          {/* <Card>
+          <Card>
             <CardHeader className='flex flex-row items-center justify-between space-y-0 pb-2'>
-              <CardTitle className='text-sm font-medium'>
-                Subscriptions
-              </CardTitle>
+              <CardTitle className='text-sm font-medium'>To Receive</CardTitle>
               <svg
                 xmlns='http://www.w3.org/2000/svg'
                 viewBox='0 0 24 24'
@@ -186,12 +207,14 @@ export default function OverViewLayout({
               </svg>
             </CardHeader>
             <CardContent>
-              <div className='text-2xl font-bold'>+2350</div>
+              <div className='text-2xl font-bold'>
+                +{formatCurrency(outstandingBalance)}
+              </div>
               <p className='text-xs text-muted-foreground'>
-                +180.1% from last month
+                Pending amount from customers.
               </p>
             </CardContent>
-          </Card> */}
+          </Card>
         </div>
         <div className='grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-7'>
           <div className='col-span-4'>{bar_stats}</div>

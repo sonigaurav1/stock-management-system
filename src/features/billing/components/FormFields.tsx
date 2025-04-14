@@ -4,6 +4,8 @@ import { PAYMENT_METHODS } from '../constants';
 import CustomInput from '@/components/form/CustomInput';
 import CustomSelect from '@/components/form/CustomSelect';
 import { useController } from 'react-hook-form';
+import CustomCheckbox from '@/components/form/CustomCheckbox';
+import CustomDatePicker from '@/components/form/CustomDatePicker';
 
 export const InvoiceNumberField = ({ control }: { control: any }) => (
   <CustomInput
@@ -38,19 +40,18 @@ export const BuyerNameField = ({ control }: { control: any }) => (
   />
 );
 
-export const BuyerCreditAmountField = ({ control }: { control: any }) => {
+export const BuyerPartialPaidAmountField = ({ control }: { control: any }) => {
   const { field } = useController({
-    name: 'buyerCreditAmount',
+    name: 'partiallyPaidAmount',
     control,
     defaultValue: '' // Set a default value if needed
   });
 
   return (
     <CustomInput
-      name='buyerCreditAmount'
-      label='Buyer Credit Amount'
-      placeHolder='Enter Buyer Credit Amount'
-      required
+      name='partiallyPaidAmount'
+      label='Partially Paid Amount'
+      placeHolder='Enter Partially Paid Amount'
       onChange={(e) => {
         // Allow only numeric characters and limit to 9 digits
         const filteredValue = e.target.value.replace(/[^0-9]/g, '').slice(0, 9);
@@ -113,4 +114,25 @@ export const BuyerPanField = ({ control }: { control: any }) => {
       }}
     />
   );
+};
+
+export const IsCreditField = ({ control }: { control: any }) => {
+  const { field } = useController({
+    name: 'isCredit',
+    control,
+    defaultValue: false // Default value for the checkbox
+  });
+
+  return (
+    <CustomCheckbox
+      name='isCredit'
+      label='Payment on Credit'
+      hint='Check if payment will be received later'
+      onCheckedChange={(checked) => field.onChange(checked)}
+    />
+  );
+};
+
+export const DueDateField = ({ control }: { control: any }) => {
+  return <CustomDatePicker name='dueDate' label='Due Date' required />;
 };

@@ -29,8 +29,8 @@ export default function SignUpViewPage() {
         <div className='relative z-20 mt-auto'>
           <blockquote className='space-y-2'>
             <p className='text-lg'>
-              &ldquo;Welcome to the Stock Management System. Effortlessly manage
-              your business inventory with our intuitive and powerful
+              &ldquo;Welcome to the Inventory Management System. Effortlessly
+              manage your business inventory with our intuitive and powerful
               tools.&rdquo;
             </p>
             <footer className='text-sm'>Gaurav Soni</footer>

@@ -317,7 +317,7 @@ export const styles = StyleSheet.create({
   },
   watermarkText: {
     color: '#000',
-    fontSize: 100,
+    fontSize: 150,
     fontFamily: 'Helvetica-Bold',
     textAlign: 'center'
   }
