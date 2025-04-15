@@ -127,7 +127,7 @@ export function QuickProductForm({
         });
     } else {
       // Generate a temporary unique ID for non-inventory products
-      const tempId = `temp_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+      const tempId = `temp_${Date.now()}_${Math.random().toString(36).substring(2, 9)}_${values.name.split(' ').join(',')}`;
       toast.success('Product added successfully');
       onAddProduct({
         id: tempId, // Use a unique temporary ID instead of null

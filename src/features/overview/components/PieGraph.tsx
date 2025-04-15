@@ -18,49 +18,68 @@ import {
   ChartTooltip,
   ChartTooltipContent
 } from '@/components/ui/chart';
-const chartData = [
-  { browser: 'chrome', visitors: 275, fill: 'var(--color-chrome)' },
-  { browser: 'safari', visitors: 200, fill: 'var(--color-safari)' },
-  { browser: 'firefox', visitors: 287, fill: 'var(--color-firefox)' },
-  { browser: 'edge', visitors: 173, fill: 'var(--color-edge)' },
-  { browser: 'other', visitors: 190, fill: 'var(--color-other)' }
+import { useQuery } from 'convex/react';
+import { api } from '@/../convex/_generated/api';
+
+// Define chart colors that will be used dynamically
+const chartColors = [
+  'hsl(var(--chart-1))',
+  'hsl(var(--chart-2))',
+  'hsl(var(--chart-3))',
+  'hsl(var(--chart-4))',
+  'hsl(var(--chart-5))'
 ];
 
-const chartConfig = {
-  visitors: {
-    label: 'Visitors'
-  },
-  chrome: {
-    label: 'Chrome',
-    color: 'hsl(var(--chart-1))'
-  },
-  safari: {
-    label: 'Safari',
-    color: 'hsl(var(--chart-2))'
-  },
-  firefox: {
-    label: 'Firefox',
-    color: 'hsl(var(--chart-3))'
-  },
-  edge: {
-    label: 'Edge',
-    color: 'hsl(var(--chart-4))'
-  },
-  other: {
-    label: 'Other',
-    color: 'hsl(var(--chart-5))'
+// Base chart config
+const baseChartConfig = {
+  totalSold: {
+    label: 'Total Sold'
   }
 } satisfies ChartConfig;
 
 export function PieGraph() {
-  const totalVisitors = React.useMemo(() => {
-    return chartData.reduce((acc, curr) => acc + curr.visitors, 0);
-  }, []);
+  const getTopSellingProducts = useQuery(api.dashboard.getTopSellingProducts);
+
+  // Dynamically create chart config based on available products
+  const chartConfig = React.useMemo(() => {
+    const config: Record<string, { label: string; color?: string }> = {
+      ...baseChartConfig
+    };
+
+    if (getTopSellingProducts) {
+      getTopSellingProducts.forEach((product, index) => {
+        const productName = product.name || 'Unknown Product';
+        config[productName] = {
+          label: productName,
+          color: chartColors[index % chartColors.length]
+        };
+      });
+    }
+
+    return config;
+  }, [getTopSellingProducts]);
+
+  const chartData = React.useMemo(() => {
+    if (!getTopSellingProducts) return [];
+
+    return getTopSellingProducts.map((product, index) => {
+      const productName = product.name || 'Unknown Product';
+      return {
+        name: productName,
+        totalSold: product.totalSold,
+        fill: chartColors[index % chartColors.length]
+      };
+    });
+  }, [getTopSellingProducts]);
+
+  const totalSold = React.useMemo(() => {
+    return chartData.reduce((acc, curr) => acc + curr.totalSold, 0);
+  }, [chartData]);
 
   return (
     <Card className='flex flex-col'>
       <CardHeader className='items-center pb-0'>
-        <CardTitle>Pie Chart - Donut with Text - Demo Data</CardTitle>
+        <CardTitle>Pie Chart - Top Selling Products</CardTitle>
         <CardDescription>January - June 2025</CardDescription>
       </CardHeader>
       <CardContent className='flex-1 pb-0'>
@@ -75,8 +94,8 @@ export function PieGraph() {
             />
             <Pie
               data={chartData}
-              dataKey='visitors'
-              nameKey='browser'
+              dataKey='totalSold'
+              nameKey='name'
               innerRadius={60}
               strokeWidth={5}
             >
@@ -95,14 +114,14 @@ export function PieGraph() {
                           y={viewBox.cy}
                           className='fill-foreground text-3xl font-bold'
                         >
-                          {totalVisitors.toLocaleString()}
+                          {totalSold.toLocaleString()}
                         </tspan>
                         <tspan
                           x={viewBox.cx}
                           y={(viewBox.cy || 0) + 24}
                           className='fill-muted-foreground'
                         >
-                          Visitors
+                          Total Sold
                         </tspan>
                       </text>
                     );
@@ -115,10 +134,11 @@ export function PieGraph() {
       </CardContent>
       <CardFooter className='flex-col gap-2 text-sm'>
         <div className='flex items-center gap-2 font-medium leading-none'>
-          Trending up by 5.2% this month <TrendingUp className='h-4 w-4' />
+          Trending up by % this month <TrendingUp className='h-4 w-4' />
         </div>
         <div className='leading-none text-muted-foreground'>
-          Showing total visitors for the last 6 months
+          Showing top-selling products
+          {/* for the last 6 months */}
         </div>
       </CardFooter>
     </Card>
