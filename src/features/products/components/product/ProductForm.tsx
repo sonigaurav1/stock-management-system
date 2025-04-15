@@ -148,8 +148,8 @@ export default function ProductForm({
       slug: generateSlug(values.name),
       sku: generateSKU(
         categories.find((cat) => cat._id === values.categoryId)?.name ?? '',
-        values.brand,
-        values.name
+        values.name,
+        values.brand
       ),
       barcode: values.barcode,
       categoryId: values.categoryId,

@@ -1,8 +1,6 @@
 import { v } from 'convex/values';
 import { mutation, query } from './_generated/server';
 import { CustomError } from '@/lib/utils';
-import { LogActivityContext, LogActivityData } from './types';
-import { Id } from './_generated/dataModel';
 
 // Get all products (excluding deleted ones)
 export const getAllProducts = query({
@@ -241,15 +239,15 @@ export const createProduct = mutation({
       });
 
       // Log activity for audit trail
-      await logActivity(
-        ctx as unknown as LogActivityContext,
-        'product_created',
-        {
-          productId: productId as Id<'products'>,
-          userId,
-          productName: args.name
-        }
-      );
+      // await logActivity(
+      //   ctx as unknown as LogActivityContext,
+      //   'product_created',
+      //   {
+      //     productId: productId as Id<'products'>,
+      //     userId,
+      //     productName: args.name
+      //   }
+      // );
 
       return productId;
     } catch (error) {
@@ -267,28 +265,28 @@ export const createProduct = mutation({
   }
 });
 
-/**
- * Logs activity for audit purposes
- * @param {Object} ctx - Database context
- * @param {string} action - Activity type
- * @param {Object} data - Activity data
- */
-async function logActivity(
-  ctx: LogActivityContext,
-  action: string,
-  data: LogActivityData
-): Promise<void> {
-  try {
-    await ctx.db.insert('activity_logs', {
-      action,
-      data,
-      timestamp: Date.now()
-    });
-  } catch (error) {
-    // eslint-disable-next-line no-console
-    console.warn('Failed to log activity:', error);
-  }
-}
+// /**
+//  * Logs activity for audit purposes
+//  * @param {Object} ctx - Database context
+//  * @param {string} action - Activity type
+//  * @param {Object} data - Activity data
+//  */
+// async function logActivity(
+//   ctx: LogActivityContext,
+//   action: string,
+//   data: LogActivityData
+// ): Promise<void> {
+//   try {
+//     await ctx.db.insert('activity_logs', {
+//       action,
+//       data,
+//       timestamp: Date.now()
+//     });
+//   } catch (error) {
+//     // eslint-disable-next-line no-console
+//     console.warn('Failed to log activity:', error);
+//   }
+// }
 
 // Update product by ID
 export const updateProduct = mutation({

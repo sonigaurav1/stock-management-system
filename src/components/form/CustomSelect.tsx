@@ -114,7 +114,7 @@ const CustomSelect: React.FC<Props> = ({
         <label
           htmlFor={uniqueId}
           className={cn(
-            'mb-2 text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70',
+            'mb-2 max-w-max text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70',
             required && "after:ml-0.5 after:text-[#EF4444] after:content-['*']",
             labelClassName
           )}

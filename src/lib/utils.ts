@@ -26,23 +26,136 @@ export function formatBytes(
 }
 
 /**
- * Generate a SKU from the category, brand, and name.
- * @param category The category of the product.
- * @param brand The brand of the product.
- * @param name The name of the product.
- * @returns The generated SKU.
+ * Generate a URL-friendly slug from a string.
+ * Handles special characters, accents, spaces, and ensures URL safety.
+ *
+ * @param text The string to generate a slug from.
+ * @param options Additional options for slug generation.
+ * @returns The generated slug.
  */
-export const generateSKU = (category: string, brand: string, name: string) => {
-  return `${category}-${brand}-${name}`.replace(/\s+/g, '').toUpperCase();
+export interface SlugOptions {
+  /** Maximum length of the generated slug (default: 100) */
+  maxLength?: number;
+  /** Character to use for word separation (default: '-') */
+  separator?: string;
+  /** Whether to remove language accents (default: true) */
+  removeAccents?: boolean;
+  /** Whether to include a unique hash at the end (default: false) */
+  makeUnique?: boolean;
+}
+
+export const generateSlug = (
+  text: string,
+  options: SlugOptions = {}
+): string => {
+  // Default options
+  const {
+    maxLength = 100,
+    separator = '-',
+    removeAccents = true,
+    makeUnique = false
+  } = options;
+
+  if (!text?.trim()) return '';
+
+  let slug = text.trim();
+
+  // Remove accents/diacritics if requested
+  if (removeAccents) {
+    slug = slug.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+  }
+
+  // Convert to lowercase and replace spaces and unwanted chars
+  slug = slug
+    .toLowerCase()
+    // Replace common separators with our separator
+    .replace(/[_\s.]+/g, separator)
+    // Remove non-alphanumeric characters except for the separator
+    .replace(new RegExp(`[^a-z0-9${separator}]`, 'g'), '')
+    // Replace multiple instances of separator with single instance
+    .replace(new RegExp(`${separator}+`, 'g'), separator)
+    // Remove leading and trailing separators
+    .replace(new RegExp(`^${separator}|${separator}$`, 'g'), '');
+
+  // Truncate to maxLength, making sure not to cut in the middle of a word
+  if (slug.length > maxLength) {
+    slug = slug.substring(0, maxLength);
+    // If the slug is cut mid-word (ends with the separator), remove trailing separator
+    if (slug.endsWith(separator)) {
+      slug = slug.substring(0, slug.lastIndexOf(separator));
+    }
+  }
+
+  // Add unique identifier if requested
+  if (makeUnique) {
+    const uniqueHash = Math.random().toString(36).substring(2, 6);
+    slug = `${slug}${separator}${uniqueHash}`;
+  }
+
+  return slug;
 };
 
 /**
- * Generate a slug from a string.
- * @param str The string to generate a slug from.
- * @returns The generated slug.
+ * Generate a unique SKU from the category, name, and optional brand.
+ * Creates a consistent, unique identifier with proper formatting and validation.
+ *
+ * @param category The category of the product.
+ * @param name The name of the product.
+ * @param brand The brand of the product (optional).
+ * @param options Additional options for SKU generation.
+ * @returns The generated SKU.
+ * @throws Error if required parameters are missing or invalid.
  */
-export const generateSlug = (str: string) => {
-  return str.toLowerCase().replace(/\s+/g, '-');
+export interface SKUOptions {
+  /** Include a timestamp for guaranteed uniqueness (default: true) */
+  includeTimestamp?: boolean;
+  /** Maximum length for each segment (default: 5) */
+  maxSegmentLength?: number;
+  /** Custom separator (default: '-') */
+  separator?: string;
+}
+
+export const generateSKU = (
+  category: string,
+  name: string,
+  brand?: string,
+  options: SKUOptions = {}
+): string => {
+  // Default options
+  const {
+    includeTimestamp = true,
+    maxSegmentLength = 5,
+    separator = '-'
+  } = options;
+
+  // Validate inputs
+  if (!category?.trim()) throw new Error('Category is required');
+  if (!name?.trim()) throw new Error('Name is required');
+
+  // Process each segment
+  const processSegment = (segment: string): string => {
+    return segment
+      .trim()
+      .replace(/[^\w\d]/g, '') // Remove special characters
+      .slice(0, maxSegmentLength)
+      .toUpperCase();
+  };
+
+  const catSegment = processSegment(category);
+  const nameSegment = processSegment(name);
+
+  // Process brand segment if provided
+  const brandSegment = brand?.trim()
+    ? `${separator}${processSegment(brand)}`
+    : '';
+
+  // Create unique timestamp code if needed
+  const timestampSegment = includeTimestamp
+    ? `${separator}${Date.now().toString(36).slice(-4).toUpperCase()}`
+    : '';
+
+  // Assemble SKU
+  return `${catSegment}${brandSegment}${separator}${nameSegment}${timestampSegment}`;
 };
 
 export class CustomError extends Error {
@@ -259,7 +372,7 @@ export function truncate(text: string, options: TruncateOptions = {}): string {
   const { maxLength = 100, ellipsis = '...', mode = 'end' } = options;
 
   // If text is shorter than max length, return as-is
-  if (text.length <= maxLength) {
+  if (text?.length <= maxLength) {
     return text;
   }
 
@@ -269,10 +382,10 @@ export function truncate(text: string, options: TruncateOptions = {}): string {
   // Truncate based on mode
   switch (mode) {
     case 'end':
-      return text.slice(0, availableLength) + ellipsis;
+      return text?.slice(0, availableLength) + ellipsis;
 
     case 'start':
-      return ellipsis + text.slice(-availableLength);
+      return ellipsis + text?.slice(-availableLength);
 
     case 'middle':
       const leftSideLength = Math.ceil(availableLength / 2);

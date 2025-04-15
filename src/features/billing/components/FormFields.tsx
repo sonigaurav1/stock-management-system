@@ -10,7 +10,7 @@ import CustomDatePicker from '@/components/form/CustomDatePicker';
 export const InvoiceNumberField = ({ control }: { control: any }) => (
   <CustomInput
     name='invoiceNumber'
-    label=' Invoice Number'
+    label='Invoice Number'
     placeHolder='Enter invoice number'
     required
   />
@@ -126,8 +126,7 @@ export const IsCreditField = ({ control }: { control: any }) => {
   return (
     <CustomCheckbox
       name='isCredit'
-      label='Payment on Credit'
-      hint='Check if payment will be received later'
+      label='Payment on Credit (Check if payment will be received later)'
       onCheckedChange={(checked) => field.onChange(checked)}
     />
   );

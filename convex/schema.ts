@@ -80,7 +80,7 @@ export default defineSchema({
 
   // Record sales made by selling product from billing page
   sales: defineTable({
-    productId: v.string(),
+    productId: v.optional(v.string()),
     userId: v.string(),
     quantitySold: v.number(),
     sellingPrice: v.number(),

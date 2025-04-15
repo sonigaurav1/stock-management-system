@@ -3,7 +3,7 @@ import { mutation } from './_generated/server';
 
 export const createSale = mutation({
   args: {
-    productId: v.id('products'),
+    productId: v.string(),
     customerId: v.id('customers'),
     customerName: v.string(),
     customerPhone: v.array(v.string()),

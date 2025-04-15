@@ -16,7 +16,7 @@ import {
   PopoverContent
 } from '@/components/ui/popover';
 import { Command, CommandList } from '@/components/ui/command';
-import { SearchIcon } from 'lucide-react';
+import { Info, SearchIcon } from 'lucide-react';
 
 import { amountToWords, formatDate, getCurrentTime } from '@/lib/utils';
 import { ADToBS } from 'bikram-sambat-js';
@@ -66,6 +66,8 @@ import { Separator } from '@/components/ui/separator';
 import { useAuthenticatedMutation } from '@/features/auth/utils/auth';
 import { generatePaymentNote } from '@/features/billing/utils/utils';
 import { toast } from 'sonner';
+import { QuickProductForm } from '@/features/billing/components/QuickAddProductForm';
+import CustomTooltip from '@/components/ui/custom/CustomTooltip';
 
 // Lazy load the PDF viewer component
 const PDFViewerNoSSR = dynamic(
@@ -88,6 +90,9 @@ const ProductBilling = () => {
   const createSale = useMutation(api.sales.createSale);
   const getProductById = useMutation(api.billing.getProductByIdBilling);
   const updateProductStock = useMutation(api.billing.updateProductStock);
+
+  // categories
+  const categories = useQuery(api.categories.getAllCategories);
 
   // Payments
   const createPayment = useAuthenticatedMutation(api.payments.createPayment);
@@ -186,7 +191,7 @@ const ProductBilling = () => {
     for (const item of items) {
       try {
         const sale = await createSale({
-          productId: item.productId as Id<'products'>,
+          productId: item.productId ?? '',
           customerId: customerId,
           customerName: customerDetails[0]?.customerName,
           customerPhone: customerDetails[0]?.customerPhone,
@@ -281,6 +286,15 @@ const ProductBilling = () => {
 
   async function handleStockManagement(items: InvoiceItem[]) {
     for (const item of items) {
+      // Skip if productId is null or starts with 'temp_' (our temporary ID format)
+      if (
+        !item.productId ||
+        (typeof item.productId === 'string' &&
+          item.productId.startsWith('temp_'))
+      ) {
+        continue; // Skip to the next item instead of returning
+      }
+
       const product = await getProductById({
         id: item.productId as Id<'products'>
       });
@@ -308,6 +322,21 @@ const ProductBilling = () => {
       }
     }
   }
+
+  const addProduct = (product: any) => {
+    const productHandler = handleProductSelect(
+      dispatch,
+      debouncedSetSearchTerm
+    );
+    productHandler({
+      id: product.id,
+      name: product.name,
+      imageUrl: product.imageUrl || '',
+      quantity: 1,
+      rate: (product as any).sellingPrice || 0,
+      stockLevel: product.stockLevel
+    });
+  };
 
   // Form submission
   function onSubmit(values: z.infer<typeof formSchema>) {
@@ -463,17 +492,6 @@ const ProductBilling = () => {
     }
   }
 
-  // const sharePdfUrl = processedInvoiceData
-  //   ? URL.createObjectURL(
-  //       new Blob([JSON.stringify(processedInvoiceData)], {
-  //         type: 'application/pdf'
-  //       })
-  //     )
-  //   : '';
-  // console.log(sharePdfUrl);
-  // const sharePdfFileName = `Invoice_${processedInvoiceData?.buyerName}_${processedInvoiceData?.invoiceNumber}.pdf`;
-  // const sharePdfTitle = `Invoice #${processedInvoiceData?.invoiceNumber} - ${processedInvoiceData?.buyerName}`;
-
   return (
     <>
       <PageContainer scrollable>
@@ -490,8 +508,29 @@ const ProductBilling = () => {
                 <Separator />
               </div>
 
-              <p className='mt-4 text-lg'>Add Product</p>
-
+              <div className='mb-2 mt-4 flex items-center justify-between'>
+                <p className='-mb-4 text-lg'>Add Product</p>
+                <div className='flex items-center space-x-2'>
+                  <QuickProductForm
+                    categories={
+                      categories?.map((category) => ({
+                        _id: category._id,
+                        name: category.name
+                      })) || []
+                    }
+                    onAddProduct={addProduct}
+                  />
+                  <CustomTooltip
+                    triggerElement={<Info className='size-4' />}
+                    tooltipContent={
+                      'The Quick Product Form lets you add new inventory items without leaving the billing page, making it convenient to create products on the fly during checkout for a seamless workflow.'
+                    }
+                    delayDuration={0}
+                    triggerClassName='max-w-64 truncate'
+                    contentClassName='max-w-96'
+                  />
+                </div>
+              </div>
               <div className='mb-6'>
                 <Popover>
                   <PopoverTrigger asChild>
