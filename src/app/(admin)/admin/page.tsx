@@ -45,7 +45,7 @@ export default function AdminPage() {
   const { user } = useUser();
   const [isAdmin, setIsAdmin] = useState(false);
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const [companyDetails, setCompanyDetails] = useState(mockCompanyDetails);
+  const [companyDetails] = useState(mockCompanyDetails);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {

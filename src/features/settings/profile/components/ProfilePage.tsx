@@ -132,7 +132,7 @@ export default function ProfilePage() {
 
   return (
     <ScrollArea className='h-[calc(100dvh-175px)] flex-1'>
-      <div className='md: flex-1 px-4 py-2 pb-16 md:px-6 md:pb-0 lg:px-8 lg:py-4'>
+      <div className='md: flex-1 px-4 py-2 pb-28 md:px-6 md:pb-0 lg:px-8 lg:py-4'>
         <div className='max-w-3xl'>
           <div className='mb-6 flex items-center justify-between'>
             <div>

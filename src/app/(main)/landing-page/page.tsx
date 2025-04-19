@@ -1,6 +1,5 @@
 'use client';
 
-import { useState } from 'react';
 import {
   BarChart3,
   Box,
@@ -19,8 +18,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
 
 export default function InventoryManagementLanding() {
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const [activeTab, setActiveTab] = useState('overview');
+  // const [activeTab, setActiveTab] = useState('overview');
 
   return (
     <ScrollArea className='h-screen w-full'>

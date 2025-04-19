@@ -28,7 +28,7 @@ export function RecentSales() {
       </CardHeader>
       <CardContent>
         <div className='space-y-8'>
-          {recentSales.map((sale: any, index: number) => (
+          {recentSales.map((sale: any) => (
             <div key={sale._id} className='flex items-center'>
               <Avatar className='h-9 w-9'>
                 <AvatarImage src={placeholderImageUrl} alt='Avatar' />

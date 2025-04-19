@@ -96,8 +96,8 @@ export default function OverViewLayout({
                     {showRevenue ? (
                       formatCurrency(currentMonthRevenue)
                     ) : (
-                      <span className='flex max-w-28 items-center'>
-                        {Array.from({ length: 7 }).map((_, index) => (
+                      <span className='flex max-w-24 items-center'>
+                        {Array.from({ length: 6 }).map((_, index) => (
                           <svg
                             key={index}
                             xmlns='http://www.w3.org/2000/svg'

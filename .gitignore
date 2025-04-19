@@ -38,6 +38,7 @@ next-env.d.ts
 
 # local file
 TODO.md
+MARKETING.md
 # Sentry Config File
 .env.sentry-build-plugin
 

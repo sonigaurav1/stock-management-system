@@ -10,7 +10,7 @@ import { Switch } from '@/components/ui/switch';
 export default function AccountPage() {
   return (
     <ScrollArea className='h-[calc(100dvh-175px)] flex-1'>
-      <div className='md: flex-1 px-4 py-2 pb-16 md:px-6 md:pb-0 lg:px-8 lg:py-4'>
+      <div className='md: flex-1 px-4 py-2 pb-28 md:px-6 md:pb-0 lg:px-8 lg:py-4'>
         <div className='max-w-3xl'>
           <div>
             <h2 className='text-xl font-bold'>Account</h2>

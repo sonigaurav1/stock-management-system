@@ -54,7 +54,8 @@ export enum RoutePattern {
 // Define URL destinations to prevent typos
 export enum RedirectDestination {
   SIGN_IN = '/sign-in',
-  DASHBOARD = '/dashboard/overview',
+  DASHBOARD = '/dashboard',
+  OVERVIEW = '/dashboard/overview',
   VERIFY = '/verify',
   COMPANY_DETAILS = '/company-details'
 }

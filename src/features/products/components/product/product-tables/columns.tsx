@@ -29,6 +29,8 @@ export const columns: ColumnDef<Product>[] = [
             fill
             sizes='100%'
             className='rounded-lg'
+            priority={false}
+            loading='lazy'
           />
         </div>
       );

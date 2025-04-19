@@ -11,10 +11,34 @@ import {
 const isPublicRoute = createRouteMatcher(PUBLIC_ROUTES);
 const isProtectedRoute = createRouteMatcher(PROTECTED_ROUTES);
 const isHomeRoute = createRouteMatcher([RoutePattern.HOME]);
+const isSignInRoute = createRouteMatcher([RoutePattern.SIGN_IN]);
+const isDashboardRoute = createRouteMatcher([RoutePattern.DASHBOARD]);
 
 export default clerkMiddleware(async (auth, request) => {
   try {
     const { userId, getToken } = await auth();
+
+    // Consolidate redirect conditions for cleaner code
+    if (
+      userId &&
+      (isHomeRoute(request) ||
+        isSignInRoute(request) ||
+        isDashboardRoute(request))
+    ) {
+      // Only redirect dashboard route if it's exactly '/dashboard' to prevent loops
+      if (
+        isDashboardRoute(request) &&
+        request.nextUrl.pathname === '/dashboard'
+      ) {
+        return NextResponse.redirect(
+          new URL(RedirectDestination.OVERVIEW, request.url)
+        );
+      } else if (!isDashboardRoute(request)) {
+        return NextResponse.redirect(
+          new URL(RedirectDestination.OVERVIEW, request.url)
+        );
+      }
+    }
 
     // Allow public routes to proceed without authentication
     if (isPublicRoute(request)) {
@@ -26,15 +50,6 @@ export default clerkMiddleware(async (auth, request) => {
       return NextResponse.redirect(
         new URL(RedirectDestination.SIGN_IN, request.url)
       );
-    }
-
-    if (userId) {
-      // Redirect authenticated users to the dashboard if they access public routes
-      if (isHomeRoute(request)) {
-        return NextResponse.redirect(
-          new URL(RedirectDestination.DASHBOARD, request.url)
-        );
-      }
     }
 
     // Fetch the token and parse claims for protected routes
