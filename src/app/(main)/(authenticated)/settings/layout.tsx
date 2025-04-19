@@ -53,7 +53,7 @@ export default function SettingsLayout({ children }: SettingsLayoutProps) {
               </p>
             </div>
             <Separator />
-            <nav className='no-scrollbar flex w-[calc(100vw-32px)] space-x-1 overflow-x-auto whitespace-nowrap'>
+            <nav className='no-scrollbar flex w-[calc(100vw-32px)] space-x-1 overflow-x-auto whitespace-nowrap md:hidden'>
               {settingsNavItems.map((item) => (
                 <Link
                   key={item.href}
