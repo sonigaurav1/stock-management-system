@@ -1,3 +1,4 @@
+/* eslint-disable import/no-unresolved */
 'use client';
 import PageContainer from '@/components/layout/PageContainer';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
