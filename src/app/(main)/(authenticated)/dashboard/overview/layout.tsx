@@ -1,5 +1,5 @@
 import { Metadata } from 'next';
-import OverviewPage from '../../../../../features/overview/components/Overview';
+import OverviewPage from '@/features/overview/components/Overview';
 
 export const metadata: Metadata = {
   title: 'Dashboard: Overview',
