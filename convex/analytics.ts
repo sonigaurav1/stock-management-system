@@ -1,3 +1,4 @@
+import { v } from 'convex/values';
 import { query } from './_generated/server';
 
 // Dashboard
@@ -291,9 +292,13 @@ export const getTotalCustomersWithComparison = query({
   }
 });
 
-//  Get 5 recent sales and total sales count for this month
+//  Get recent sales and total sales count for this month
 export const getRecentSalesAndMonthlyTotal = query({
-  handler: async (ctx) => {
+  args: {
+    page: v.optional(v.number()),
+    pageSize: v.optional(v.number())
+  },
+  handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
 
     if (!identity) {
@@ -317,8 +322,11 @@ export const getRecentSalesAndMonthlyTotal = query({
       59
     ).getTime();
 
-    // Get sales for the current month
-    const currentMonthSales = await ctx.db
+    const page = args.page ?? 0;
+    const pageSize = args.pageSize ?? 5;
+
+    // Get paginated sales for the current month using offset pagination
+    const recentSales = await ctx.db
       .query('sales')
       .withIndex('by_user_and_isDeleted', (q) =>
         q.eq('userId', userId).eq('isDeleted', false)
@@ -330,32 +338,25 @@ export const getRecentSalesAndMonthlyTotal = query({
         )
       )
       .order('desc')
-      .take(5);
-
-    // Get the count of all sales for the current month
-    const totalMonthlySales = await ctx.db
-      .query('sales')
-      .withIndex('by_user_and_isDeleted', (q) =>
-        q.eq('userId', userId).eq('isDeleted', false)
-      )
-      .filter((q) =>
-        q.and(
-          q.gte(q.field('soldAt'), currentMonthStart),
-          q.lte(q.field('soldAt'), currentMonthEnd)
-        )
-      )
       .collect();
 
-    const totalMonthlySalesCount = totalMonthlySales.length;
+    // Calculate offset pagination manually
+    const startIdx = page * pageSize;
+    const endIdx = startIdx + pageSize;
+    const paginatedSales = recentSales.slice(startIdx, endIdx);
+
+    // Check if there are more results
+    const hasMore = endIdx < recentSales.length;
 
     return {
-      recentSales: currentMonthSales,
-      totalMonthlySales: totalMonthlySalesCount
+      recentSales: paginatedSales,
+      hasMore,
+      totalMonthlySales: recentSales.length
     };
   }
 });
 
-// Get all sales
+// // Get all sales
 export const getAllSales = query({
   handler: async (ctx) => {
     const identity = await ctx.auth.getUserIdentity();
@@ -375,3 +376,61 @@ export const getAllSales = query({
     return sales;
   }
 });
+
+// // Get all sales (updated for organization access)
+// export const getAllSales = query({
+//   handler: async (ctx) => {
+//     const identity = await ctx.auth.getUserIdentity();
+
+//     if (!identity) {
+//       throw new Error('Not authenticated');
+//     }
+//     const userId = identity.subject;
+
+//     // First, find all organizations this user belongs to
+//     const memberships = await ctx.db
+//       .query("organizationMembers")
+//       .withIndex("by_user", q => q.eq("userId", userId))
+//       .collect();
+
+//     // If user doesn't belong to any org, just show their own sales
+//     if (memberships.length === 0) {
+//       const sales = await ctx.db
+//         .query('sales')
+//         .withIndex('by_user_and_isDeleted', (q) =>
+//           q.eq('userId', userId).eq('isDeleted', false)
+//         )
+//         .collect();
+//       return sales;
+//     }
+
+//     // Get all sales from organizations the user belongs to
+//     type Sale = {
+//       userId: string;
+//       totalAmount: number;
+//       soldAt: number;
+//       isDeleted: boolean;
+//     };
+//     let allSales: Array<Sale> = [];
+//     for (const membership of memberships) {
+//       // Get the organization
+//       const organization = await ctx.db.get(membership.organizationId);
+
+//       if (!organization) {
+//         continue; // Skip this membership if the organization is null
+//       }
+
+//       // Get sales for the organization owner (replace userId with ownerId)
+//       const orgSales = await ctx.db
+//         .query('sales')
+//         .withIndex('by_user_and_isDeleted', (q) =>
+//           q.eq('userId', organization.ownerId).eq('isDeleted', false)
+//         )
+//         .collect();
+
+//       allSales = [...allSales, ...orgSales];
+//     }
+
+//     return allSales;
+//   }
+// });

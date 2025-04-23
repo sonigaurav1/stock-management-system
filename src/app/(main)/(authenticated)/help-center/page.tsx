@@ -3,7 +3,8 @@ import HelpCenter from '@/features/help/components/HelpCenter';
 import React from 'react';
 
 export const metadata = {
-  title: 'Dashboard : Help Center'
+  title: 'Help Center',
+  description: 'Get help and support for your account and services.'
 };
 
 const HelpCenterPage = () => {

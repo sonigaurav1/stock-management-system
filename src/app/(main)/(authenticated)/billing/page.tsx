@@ -26,6 +26,7 @@ import InvoiceForm from '@/features/billing/components/InvoiceForm';
 import { PDFActionButtons } from '@/features/billing/components/PDFActionButtons';
 import PDFPreviewContainer from '@/features/billing/components/PDFPreviewContainer';
 import { useInvoiceProcessing } from '@/features/billing/hooks/useInvoiceProcessing';
+import { useDebounce } from '@/hooks/useDebounce';
 
 const ProductBilling = () => {
   const [state, dispatch] = useReducer(reducer, initialState);
@@ -64,8 +65,14 @@ const ProductBilling = () => {
 
   const { products, isFetching } = useProductQuery(
     { page: 1, pageSize: 4 },
-    { searchTerm: state.searchTerm }
+    { searchTerm: useDebounce(state.searchTerm, 300) }
   );
+
+  const { products: memoizedProducts } = useMemo(() => {
+    return {
+      products: products
+    };
+  }, [products]);
 
   // Memoize calculations for selected products
   const totalValue = useMemo(
@@ -140,7 +147,7 @@ const ProductBilling = () => {
               <ProductSearch
                 searchTerm={state.searchTerm}
                 dispatch={dispatch}
-                products={products}
+                products={memoizedProducts}
                 isFetching={isFetching}
                 handleProductSelect={handleProductSelect(
                   dispatch,

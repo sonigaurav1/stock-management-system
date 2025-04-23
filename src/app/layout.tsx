@@ -19,7 +19,7 @@ export const metadata: Metadata = {
   metadataBase: new URL(
     process.env.NEXT_PUBLIC_API_URL || 'https://gaurav-sms.vercel.app'
   ),
-  title: 'Inventory Management System',
+  title: 'Digital Dukan',
   description:
     'Effortlessly manage your business inventory with our intuitive and powerful tools.',
   keywords: [
@@ -62,7 +62,7 @@ export const metadata: Metadata = {
   authors: [{ name: 'Gaurav Soni' }],
   creator: 'Gaurav Soni',
   publisher: 'Gaurav Soni',
-  applicationName: 'Inventory Management System',
+  applicationName: 'Digital Dukan',
   generator: 'Next.js',
   referrer: 'origin-when-cross-origin',
   robots: {
@@ -80,16 +80,16 @@ export const metadata: Metadata = {
     type: 'website',
     locale: 'en_US',
     url: process.env.NEXT_PUBLIC_API_URL || 'https://gaurav-sms.vercel.app',
-    title: 'Inventory Management System',
+    title: 'Digital Dukan',
     description:
       'Effortlessly manage your business inventory with our intuitive and powerful tools.',
-    siteName: 'Inventory Management System',
+    siteName: 'Digital Dukan',
     images: [
       {
         url: 'public/assets/images/favicon.webp',
         width: 1200,
         height: 630,
-        alt: 'Inventory Management System'
+        alt: 'Digital Dukan'
       }
     ]
   },
@@ -97,13 +97,13 @@ export const metadata: Metadata = {
     card: 'summary_large_image',
     site: '@sonigaurav_',
     creator: '@sonigaurav_',
-    title: 'Inventory Management System',
+    title: 'Digital Dukan',
     description:
       'Effortlessly manage your business inventory with our intuitive and powerful tools.',
     images: ['/public/assets/images/favicon.webp']
   },
   appleWebApp: {
-    title: 'Inventory Management System',
+    title: 'Digital Dukan',
     statusBarStyle: 'black-translucent',
     capable: true
   },

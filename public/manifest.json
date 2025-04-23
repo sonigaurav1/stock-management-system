@@ -33,5 +33,18 @@
       "sizes": "512x512",
       "type": "image/png"
     }
+  ],
+  "categories": [
+    "business",
+    "productivity",
+    "utilities",
+    "ecommerce",
+    "inventory",
+    "management",
+    "dashboard",
+    "analytics",
+    "reporting",
+    "sales",
+    "stock"
   ]
 }

@@ -244,5 +244,22 @@ export default defineSchema({
 
     createdAt: v.number(),
     updatedAt: v.optional(v.number())
-  }).index('by_user_and_isDeleted', ['userId', 'isDeleted'])
+  }).index('by_user_and_isDeleted', ['userId', 'isDeleted']),
+
+  organizations: defineTable({
+    name: v.string(),
+    ownerId: v.string(), // User ID of the owner
+    createdAt: v.number(),
+    updatedAt: v.number()
+  }).index('by_owner', ['ownerId']),
+
+  organizationMembers: defineTable({
+    organizationId: v.id('organizations'),
+    userId: v.string(),
+    role: v.string(), // "admin", "staff", "sales_operator", etc.
+    joinedAt: v.number()
+  })
+    .index('by_organization', ['organizationId'])
+    .index('by_user', ['userId'])
+    .index('by_org_and_user', ['organizationId', 'userId'])
 });

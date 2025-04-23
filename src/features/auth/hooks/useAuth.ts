@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { useClerk, useSignIn } from '@clerk/clerk-react';
+import { useClerk, useSignIn, useSignUp } from '@clerk/clerk-react';
 import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
 
@@ -11,6 +11,7 @@ export const useAuth = () => {
 
   const { signIn, setActive } = useSignIn();
   const { signOut } = useClerk();
+  const { signUp } = useSignUp();
 
   const handleSignIn = async (
     email: string,
@@ -45,6 +46,55 @@ export const useAuth = () => {
     }
   };
 
+  const handleSignUp = async (
+    email: string,
+    password: string,
+    firstName: string,
+    lastName: string,
+    defaultRole: string = 'User'
+  ) => {
+    if (!signUp) {
+      toast.error('Sign-up is not available.');
+      return;
+    }
+    setLoading(true);
+
+    try {
+      const signUpAttempt = await signUp.create({
+        emailAddress: email,
+        password,
+        firstName,
+        lastName
+      });
+
+      if (signUpAttempt.status === 'complete') {
+        // Set default role in metadata
+        await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/roles`, {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            userId: signUpAttempt.createdUserId,
+            role: defaultRole
+          })
+        });
+
+        toast.success('Account created successfully!');
+        if (setActive) {
+          await setActive({ session: signUpAttempt.createdSessionId });
+        } else {
+          toast.error('Unable to set active session.');
+        }
+        router.push('/dashboard/overview');
+      }
+    } catch (error: any) {
+      toast.error(error?.message || 'An error occurred during sign-up');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleSignOut = async () => {
     setLoading(true);
     try {
@@ -60,6 +110,7 @@ export const useAuth = () => {
   return {
     loading,
     handleSignIn,
+    handleSignUp,
     handleSignOut
   };
 };

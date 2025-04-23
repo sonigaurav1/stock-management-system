@@ -17,7 +17,6 @@ const isDashboardRoute = createRouteMatcher([RoutePattern.DASHBOARD]);
 export default clerkMiddleware(async (auth, request) => {
   try {
     const { userId, getToken } = await auth();
-
     // Consolidate redirect conditions for cleaner code
     if (
       userId &&
