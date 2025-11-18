@@ -7,17 +7,22 @@ const es = initEdgeStore.create();
  * This is the main router for the Edge Store buckets.
  */
 const edgeStoreRouter = es.router({
-  publicFiles: es.fileBucket()
-    .beforeDelete(() => {
-      return true;
-    })
+  publicFiles: es.fileBucket().beforeDelete(() => {
+    return true;
+  })
 });
 
-const handler = createEdgeStoreNextHandler({
+// Enable verbose logging in development so server-side errors from the
+// Edge Store provider are easier to debug (will log to the Next.js server
+// console). Keep default level in production.
+const logLevel = process.env.NODE_ENV === 'development' ? 'debug' : undefined;
+
+const debugHandler = createEdgeStoreNextHandler({
   router: edgeStoreRouter,
+  ...(logLevel ? { logLevel } : {})
 });
 
-export { handler as GET, handler as POST };
+export { debugHandler as GET, debugHandler as POST };
 
 /**
  * This type is used to create the type-safe client for the frontend.

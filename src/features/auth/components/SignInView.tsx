@@ -1,8 +1,12 @@
+'use client';
+
 import { buttonVariants } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { Metadata } from 'next';
 import Link from 'next/link';
 import UserAuthForm from './UserAuthForm';
+import { Github, Instagram } from 'lucide-react';
+import { FaWhatsapp } from 'react-icons/fa6';
 
 export const metadata: Metadata = {
   title: 'Authentication',
@@ -23,8 +27,15 @@ export default function SignInViewPage() {
       </Link>
       <div className='relative hidden h-full flex-col bg-muted p-10 text-white dark:border-r lg:flex'>
         <div className='absolute inset-0 bg-zinc-900' />
+        {/* <Image
+          src='/signin/signin-2.webp'
+          alt='Sign In Image'
+          className='absolute inset-0 h-full w-full object-cover'
+          width={500}
+          height={500}
+        /> */}
         <div className='relative z-20 flex items-center text-4xl font-bold'>
-          SMS
+          Digital Dukan
         </div>
         <div className='relative z-20 mt-auto'>
           <blockquote className='space-y-2'>
@@ -33,7 +44,30 @@ export default function SignInViewPage() {
               Effortlessly manage your business inventory with our intuitive and
               powerful tools.&rdquo;
             </p>
-            <footer className='text-sm'>Gaurav Soni</footer>
+            <footer className='flex gap-2 text-sm'>
+              - Gaurav Soni
+              <span className='flex gap-2'>
+                <Github
+                  className='cursor-pointer'
+                  onClick={() =>
+                    window.open('https://github.com/sonigaurav1', '_blank')
+                  }
+                />
+                <Instagram
+                  className='cursor-pointer'
+                  onClick={() =>
+                    window.open('https://instagram.com/notgauravlol', '_blank')
+                  }
+                />
+                <FaWhatsapp
+                  size={27}
+                  className='cursor-pointer'
+                  onClick={() =>
+                    window.open('https://wa.me/+9779746887763', '_blank')
+                  }
+                />
+              </span>
+            </footer>
           </blockquote>
         </div>
       </div>
