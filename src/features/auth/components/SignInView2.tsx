@@ -2,7 +2,6 @@
 
 import { useState } from 'react';
 import { Eye, EyeOff } from 'lucide-react';
-import Image from 'next/image';
 
 export default function SignIn() {
   const [showPassword, setShowPassword] = useState(false);
