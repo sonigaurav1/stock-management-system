@@ -163,6 +163,12 @@ export default function RootLayout({
 }) {
   return (
     <html lang='en' className={lato.className} suppressHydrationWarning>
+      <head>
+        <meta
+          name='google-site-verification'
+          content='LJ6M-Ic3gnXPFzAS56WJyrcC3V7SgYtJiZUtVF2h3Wo'
+        />
+      </head>
       <body className='overflow-hidden bg-background text-foreground antialiased'>
         <ConvexClientProvider>
           <ThemeProvider attribute='class' defaultTheme='light' enableSystem>
