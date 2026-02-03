@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from 'next';
+import AppHead from '@/components/AppHead';
 import { Lato } from 'next/font/google';
 import NextTopLoader from 'nextjs-toploader';
 import './globals.css';
@@ -168,6 +169,7 @@ export default function RootLayout({
           name='google-site-verification'
           content='LJ6M-Ic3gnXPFzAS56WJyrcC3V7SgYtJiZUtVF2h3Wo'
         />
+        <AppHead />
       </head>
       <body className='overflow-hidden bg-background text-foreground antialiased'>
         <ConvexClientProvider>
