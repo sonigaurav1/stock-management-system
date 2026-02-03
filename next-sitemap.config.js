@@ -6,5 +6,5 @@ module.exports = {
   priority: 0.7,
   sitemapSize: 5000, // split large sitemaps like Vercel does (sitemap-0.xml etc)
   outDir: './public'
-  // If you need to add dynamic routes, see notes below
+  // To add dynamic routes, see https://github.com/sonigaurav1/next-sitemap#dynamic-routes
 };
