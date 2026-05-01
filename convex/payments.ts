@@ -1,10 +1,18 @@
 import { v } from 'convex/values';
 import { mutation, query } from './_generated/server';
+import {
+  resolveCallerContext,
+  requirePermission,
+  getDataScopeUserId
+} from './lib/authHelper';
+import { PERMISSIONS } from './lib/permissions';
 
 export const createPayment = mutation({
   args: {
     saleIds: v.array(v.string()),
     customerId: v.id('customers'),
+    supplierId: v.optional(v.id('suppliers')),
+    isPaymentToSupplier: v.boolean(),
     amountPaid: v.number(),
     outstandingBalance: v.optional(v.number()),
     paymentMode: v.string(),
@@ -16,12 +24,9 @@ export const createPayment = mutation({
     dueDate: v.optional(v.number())
   },
   handler: async (ctx, args) => {
-    const identify = await ctx.auth.getUserIdentity();
-
-    if (!identify) {
-      throw new Error('Not authenticated');
-    }
-    const userId = identify.subject;
+    const caller = await resolveCallerContext(ctx);
+    requirePermission(caller, PERMISSIONS.CREATE_TRANSACTION);
+    const userId = getDataScopeUserId(caller);
 
     return await ctx.db.insert('payments', {
       ...args,
@@ -49,12 +54,9 @@ export const updatePayment = mutation({
     dueDate: v.optional(v.number())
   },
   handler: async (ctx, args) => {
-    const identify = await ctx.auth.getUserIdentity();
-
-    if (!identify) {
-      throw new Error('Not authenticated');
-    }
-    const userId = identify.subject;
+    const caller = await resolveCallerContext(ctx);
+    requirePermission(caller, PERMISSIONS.EDIT_TRANSACTION);
+    const userId = getDataScopeUserId(caller);
 
     return await ctx.db.patch(args.paymentId, {
       ...args,
@@ -69,12 +71,9 @@ export const deletePayment = mutation({
     paymentId: v.id('payments')
   },
   handler: async (ctx, args) => {
-    const identify = await ctx.auth.getUserIdentity();
-
-    if (!identify) {
-      throw new Error('Not authenticated');
-    }
-    // const userId = identify.subject;
+    const caller = await resolveCallerContext(ctx);
+    requirePermission(caller, PERMISSIONS.DELETE_TRANSACTION);
+    const userId = getDataScopeUserId(caller);
 
     return await ctx.db.patch(args.paymentId, {
       isDeleted: true,
@@ -88,12 +87,9 @@ export const getPayments = mutation({
     userId: v.string()
   },
   handler: async (ctx, args) => {
-    const identify = await ctx.auth.getUserIdentity();
-
-    if (!identify) {
-      throw new Error('Not authenticated');
-    }
-    const userId = identify.subject;
+    const caller = await resolveCallerContext(ctx);
+    requirePermission(caller, PERMISSIONS.VIEW_REPORTS);
+    const userId = getDataScopeUserId(caller);
 
     return await ctx.db
       .query('payments')
@@ -105,12 +101,9 @@ export const getPayments = mutation({
 export const getOutstandingBalance = query({
   args: {},
   handler: async (ctx, _) => {
-    const identify = await ctx.auth.getUserIdentity();
-
-    if (!identify) {
-      throw new Error('Not authenticated');
-    }
-    const userId = identify.subject;
+    const caller = await resolveCallerContext(ctx);
+    requirePermission(caller, PERMISSIONS.VIEW_REPORTS);
+    const userId = getDataScopeUserId(caller);
 
     const payments = await ctx.db
       .query('payments')

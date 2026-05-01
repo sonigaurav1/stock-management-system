@@ -1,8 +1,9 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useFormContext } from 'react-hook-form';
-import { Eye, EyeOff } from 'lucide-react';
+import { Eye, EyeOff, Info } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Input } from '../ui/input';
+import CustomTooltip from '../ui/custom/CustomTooltip';
 
 interface Props {
   defaultValue?: string;
@@ -31,6 +32,8 @@ interface Props {
   onFocus?: (e: React.FocusEvent<HTMLInputElement>) => void;
   onBlur?: (e: React.FocusEvent<HTMLInputElement>) => void;
   onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  tooltipContent?: string;
+  showTooltip?: boolean;
 }
 
 const CustomInput: React.FC<Props> = ({
@@ -57,6 +60,8 @@ const CustomInput: React.FC<Props> = ({
   onIconClick,
   disabled = false,
   ref,
+  tooltipContent,
+  showTooltip = true,
   ...props
 }) => {
   const {
@@ -129,19 +134,26 @@ const CustomInput: React.FC<Props> = ({
         containerClassName
       )}
     >
-      {label && (
-        <label
-          htmlFor={uniqueId}
-          onClick={handleLabelClick}
-          className={cn(
-            'mb-2 text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70',
-            required && "after:ml-0.5 after:text-[#EF4444] after:content-['*']",
-            labelClassName
-          )}
-        >
-          {label}
-        </label>
-      )}
+      <div className='flex items-center gap-1'>
+        {label && (
+          <label
+            htmlFor={uniqueId}
+            onClick={handleLabelClick}
+            className={cn(
+              'mb-2 text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70',
+              labelClassName
+            )}
+          >
+            {label}
+            {required && <span className='ml-0.5 text-[#EF4444]'>*</span>}
+          </label>
+        )}
+        {showTooltip && tooltipContent && (
+          <CustomTooltip tooltipContent={tooltipContent} side='right'>
+            <Info className='mb-2 ml-1 h-4 w-4 cursor-help text-muted-foreground' />
+          </CustomTooltip>
+        )}
+      </div>
 
       <div className='relative'>
         {icon && iconPosition === 'left' && (

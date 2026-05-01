@@ -23,20 +23,23 @@ import CustomImageUpload from '../CustomImageUpload';
 import { useEffect, useState } from 'react';
 import { Supplier } from '../../types/supplier.types';
 import { formSchema } from '../../schema/supplier-schema';
-import { useUser } from '@clerk/clerk-react';
+import { useUser } from '@clerk/nextjs';
 import { restrictedUser } from '../../constants/restrictedUserData';
 import { Progress } from '@/components/ui/progress';
 import { maxSizeInMB } from '../../constants';
 import useCompressUploadedImage from '../../hooks/useCompressUploadedImage';
 import { useRouter } from 'next/navigation';
 import CustomInput from '@/components/form/CustomInput';
+import { cn } from '@/lib/utils';
 
 export default function SupplierForm({
   initialData,
-  pageTitle
+  pageTitle,
+  onSuccess
 }: {
   initialData: Supplier | null;
   pageTitle: string;
+  onSuccess?: () => void;
 }) {
   const { user } = useUser();
   const router = useRouter();
@@ -143,15 +146,21 @@ export default function SupplierForm({
     });
 
     await promise.then(() => {
-      router.push('/dashboard/product/supplier');
+      if (onSuccess) {
+        onSuccess();
+      } else {
+        router.push('/dashboard/product/supplier');
+      }
     });
 
     setProgress(0);
     setIsLoading(false);
   }
 
+  const cardClassName = cn('w-full', !onSuccess && 'mx-auto');
+
   return (
-    <Card className='mx-auto w-full'>
+    <Card className={cardClassName}>
       <CardHeader>
         <CardTitle className='text-left text-2xl font-bold'>
           {pageTitle}

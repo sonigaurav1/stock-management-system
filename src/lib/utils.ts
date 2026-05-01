@@ -1,5 +1,6 @@
 import { type ClassValue, clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
+import { formatMoney, getPreferredCurrencyCode } from './currency';
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -438,49 +439,56 @@ export function capitalizeWords(text: string): string {
 }
 
 /**
- * Formats a number to a currency string in NPR format.
- * @param amount The amount to format.
- * @param showNPR Whether to prefix with "NPR".
- * @returns The formatted currency string.
+ * Formats a number as a currency string using the preferred currency saved in the browser.
+ * Falls back to USD on the server or when no preference has been stored yet.
  */
-export function formatCurrency(
-  amount: number,
-  showNPR: boolean = false
-): string {
-  // Convert to fixed decimal string
-  const fixedAmount = amount.toFixed(2);
+export function formatCurrency(amount: number): string {
+  return formatMoney(amount, {
+    currencyCode: getPreferredCurrencyCode('USD')
+  });
+}
 
-  // Split into integer and decimal parts
-  const [integerPart, decimalPart] = fixedAmount.split('.');
+/**
+ * STEP 2.1: Decode a cost code string to numeric value (frontend version)
+ * Uses the mapping from org settings to convert letter codes back to digits
+ * Example: "HIAAB" with mapping {digit:"1",codes:["HI"]},{digit:"0",codes:["A","AB"]} -> "1100"
+ */
+export function decodeCostCode(
+  encodedCost: string,
+  costCodeMapping: Array<{ digit: string; codes: string[] }>
+): number {
+  if (!costCodeMapping || costCodeMapping.length === 0) {
+    const parsed = parseFloat(encodedCost);
+    return isNaN(parsed) ? 0 : parsed;
+  }
 
-  // Format integer part according to Nepali convention (first 3 digits, then groups of 2)
-  let formattedInt = '';
-  const digits = integerPart.length;
+  const digitChars: string[] = [];
+  let remaining = encodedCost.toUpperCase();
 
-  for (let i = 0; i < digits; i++) {
-    formattedInt += integerPart[i];
-
-    // Calculate position from right
-    const posFromRight = digits - i - 1;
-
-    // Add comma after first 3 digits from right, then every 2 digits
-    if (
-      posFromRight === 3 ||
-      (posFromRight > 3 && (posFromRight - 3) % 2 === 0)
-    ) {
-      if (i < digits - 1) {
-        formattedInt += ',';
+  while (remaining.length > 0) {
+    let matched = false;
+    for (let len = remaining.length; len >= 1; len--) {
+      const substr = remaining.substring(0, len);
+      // Find mapping entry where codes include this substring
+      const entry = costCodeMapping.find((e) =>
+        e.codes.some((c) => c.toUpperCase() === substr)
+      );
+      if (entry) {
+        digitChars.push(entry.digit);
+        remaining = remaining.substring(len);
+        matched = true;
+        break;
       }
+    }
+    if (!matched) {
+      remaining = remaining.substring(1);
     }
   }
 
-  // Check if decimal part is all zeros
-  const hasDecimalValue = decimalPart !== '00';
+  if (digitChars.length === 0) {
+    const parsed = parseFloat(encodedCost);
+    return isNaN(parsed) ? 0 : parsed;
+  }
 
-  // Construct final result - include decimal part only if it's not all zeros
-  const result = hasDecimalValue
-    ? `${formattedInt}.${decimalPart}`
-    : formattedInt;
-
-  return showNPR ? `NPR ${result}` : result;
+  return parseFloat(digitChars.join('')) || 0;
 }

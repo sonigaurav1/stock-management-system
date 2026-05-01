@@ -1,12 +1,12 @@
 'use client';
 import { ColumnDef } from '@tanstack/react-table';
-import Image from 'next/image';
 import { CellAction } from './CellAction';
 import {
   SkeletonSupplier,
   Supplier
 } from '@/features/products/types/supplier.types';
 import { Skeleton } from '@/components/ui/skeleton';
+import ImagePreview from '../../common/ImagePreview';
 
 const placeholderImageUrl = '/assets/images/user-placeholder.webp';
 
@@ -17,15 +17,11 @@ export const columns: ColumnDef<Supplier>[] = [
     cell: ({ row }) => {
       const imageUrl = row.getValue('imageUrl') as string | undefined;
       return (
-        <div className='relative aspect-square max-h-16'>
-          <Image
-            src={imageUrl || placeholderImageUrl}
-            alt={row.getValue('name')}
-            fill
-            sizes='100%'
-            className='rounded-lg'
-          />
-        </div>
+        <ImagePreview
+          src={imageUrl}
+          alt={row.getValue('name') as string}
+          fallbackSrc={placeholderImageUrl}
+        />
       );
     }
   },

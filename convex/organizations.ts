@@ -1,5 +1,11 @@
 import { mutation, query } from './_generated/server';
 import { v } from 'convex/values';
+import {
+  resolveCallerContext,
+  requirePermission,
+  getDataScopeUserId
+} from './lib/authHelper';
+import { PERMISSIONS } from './lib/permissions';
 
 // Create a new organization
 export const createOrganization = mutation({
@@ -7,16 +13,14 @@ export const createOrganization = mutation({
     name: v.string()
   },
   handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) {
-      throw new Error('Not authenticated');
-    }
-
-    const ownerId = identity.subject;
+    const caller = await resolveCallerContext(ctx);
+    requirePermission(caller, PERMISSIONS.MANAGE_ORGANIZATION);
+    const userId = getDataScopeUserId(caller);
 
     const organizationId = await ctx.db.insert('organizations', {
       name: args.name,
-      ownerId,
+      ownerId: userId,
+      status: 'active',
       createdAt: Date.now(),
       updatedAt: Date.now()
     });
@@ -24,7 +28,7 @@ export const createOrganization = mutation({
     // Add owner as admin to the organization
     await ctx.db.insert('organizationMembers', {
       organizationId,
-      userId: ownerId,
+      userId: userId,
       role: 'admin',
       joinedAt: Date.now()
     });
@@ -41,12 +45,9 @@ export const inviteUserToOrganization = mutation({
     role: v.string()
   },
   handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) {
-      throw new Error('Not authenticated');
-    }
-
-    const userId = identity.subject;
+    const caller = await resolveCallerContext(ctx);
+    requirePermission(caller, PERMISSIONS.MANAGE_USERS);
+    const userId = getDataScopeUserId(caller);
 
     // Check if user is admin of the organization
     const membership = await ctx.db
@@ -93,12 +94,9 @@ export const inviteUserToOrganization = mutation({
 // Get organizations a user belongs to
 export const getUserOrganizations = query({
   handler: async (ctx) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) {
-      throw new Error('Not authenticated');
-    }
-
-    const userId = identity.subject;
+    const caller = await resolveCallerContext(ctx);
+    requirePermission(caller, PERMISSIONS.VIEW_ORGANIZATION);
+    const userId = getDataScopeUserId(caller);
 
     // Get all memberships
     const memberships = await ctx.db
@@ -118,5 +116,95 @@ export const getUserOrganizations = query({
     );
 
     return orgs;
+  }
+});
+
+// Upsert organization settings (create or update)
+export const upsertOrganizationSettings = mutation({
+  args: {
+    userId: v.string(),
+    companyName: v.string(),
+    businessType: v.string(),
+    taxNumber: v.string(),
+    address: v.string(),
+    city: v.string(),
+    state: v.string(),
+    postalCode: v.optional(v.string()),
+    country: v.string(),
+    phone: v.optional(v.string()),
+    email: v.string(),
+    website: v.optional(v.string()),
+    description: v.optional(v.string()),
+    logo: v.optional(v.string())
+  },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error('Not authenticated');
+    }
+
+    if (identity.subject !== args.userId) {
+      throw new Error('Can only update your own settings');
+    }
+
+    // Check if settings already exist for this user
+    const existing = await ctx.db
+      .query('organizationSettings')
+      .withIndex('by_user', (q) => q.eq('userId', args.userId))
+      .first();
+
+    if (existing) {
+      // Update existing
+      await ctx.db.patch(existing._id, {
+        companyName: args.companyName,
+        businessType: args.businessType,
+        taxNumber: args.taxNumber,
+        address: args.address,
+        city: args.city,
+        state: args.state,
+        postalCode: args.postalCode,
+        country: args.country,
+        phone: args.phone,
+        email: args.email,
+        website: args.website,
+        description: args.description,
+        logo: args.logo,
+        updatedAt: Date.now()
+      });
+      return existing._id;
+    } else {
+      // Create new
+      return await ctx.db.insert('organizationSettings', {
+        userId: args.userId,
+        companyName: args.companyName,
+        businessType: args.businessType,
+        taxNumber: args.taxNumber,
+        address: args.address,
+        city: args.city,
+        state: args.state,
+        postalCode: args.postalCode,
+        country: args.country,
+        phone: args.phone,
+        email: args.email,
+        website: args.website,
+        description: args.description,
+        logo: args.logo,
+        createdAt: Date.now(),
+        updatedAt: Date.now()
+      });
+    }
+  }
+});
+
+// Get organization settings for a user
+export const getOrganizationSettings = query({
+  args: {
+    userId: v.string()
+  },
+  handler: async (ctx, args) => {
+    return await ctx.db
+      .query('organizationSettings')
+      .withIndex('by_user', (q) => q.eq('userId', args.userId))
+      .first();
   }
 });

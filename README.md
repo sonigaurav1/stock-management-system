@@ -16,6 +16,7 @@ Effortlessly manage your business inventory with our intuitive and powerful tool
 - **Responsive Design**: Fully responsive interface that works on desktop and mobile devices.
 - **Dark/Light Mode**: Switch between visual themes for comfortable viewing.
 - **Role-Based Access Control**: Different permission levels for administrators and staff.
+  - See [Documentation/rbac/](./Documentation/rbac/) for detailed RBAC documentation
 
 ## Technologies Used
 

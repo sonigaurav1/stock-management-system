@@ -1,31 +1,35 @@
+'use client';
+
+import { useRef } from 'react';
 import PageContainer from '@/components/layout/PageContainer';
-import { buttonVariants } from '@/components/ui/button';
 import { Heading } from '@/components/ui/heading';
 import { Separator } from '@/components/ui/separator';
 import ProductListingPage from '@/features/products/components/product/ProductListing';
-import { cn } from '@/lib/utils';
-import { Plus } from 'lucide-react';
-import Link from 'next/link';
+import ProductFormDialog from '@/features/products/components/product/ProductFormDialog';
+import BulkProductFormDialog from '@/features/products/components/product/BulkProductFormDialog';
+import ProductExportDialog from '@/features/products/components/product/ProductExportDialog';
 
-export const metadata = {
-  title: 'Dashboard: Products'
-};
+export default function Page() {
+  const productListingRef = useRef<{ refetch: () => void }>(null);
 
-export default async function Page() {
+  const handleProductAdded = () => {
+    // Optionally refetch the product list
+    productListingRef.current?.refetch?.();
+  };
+
   return (
     <PageContainer scrollable>
-      <div className='mb-10 flex flex-1 flex-col space-y-4'>
+      <div className='mb-10 flex flex-1 flex-col space-y-2'>
         <div className='flex items-start justify-between'>
           <Heading
             title='Products'
             description='Manage products and inventory here.'
           />
-          <Link
-            href='/dashboard/product/new'
-            className={cn(buttonVariants(), 'text-xs md:text-sm')}
-          >
-            <Plus className='mr-2 h-4 w-4' /> Add New Product
-          </Link>
+          <div className='flex items-center gap-2'>
+            <ProductExportDialog />
+            <BulkProductFormDialog onProductsAdded={handleProductAdded} />
+            <ProductFormDialog onProductAdded={handleProductAdded} />
+          </div>
         </div>
         <Separator />
         <ProductListingPage />

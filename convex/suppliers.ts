@@ -1,6 +1,12 @@
 import { query, mutation } from './_generated/server';
 import { v } from 'convex/values';
 import { CustomError } from '@/lib/utils';
+import {
+  resolveCallerContext,
+  requirePermission,
+  getDataScopeUserId
+} from './lib/authHelper';
+import { PERMISSIONS } from './lib/permissions';
 
 export type SupplierFilters = {
   searchTerm?: string;
@@ -16,11 +22,9 @@ export const createSupplier = mutation({
     imageUrl: v.optional(v.string())
   },
   handler: async (ctx, args) => {
-    const identify = await ctx.auth.getUserIdentity();
-    if (!identify) {
-      throw new Error('Not authenticated');
-    }
-    const userId = identify.subject;
+    const caller = await resolveCallerContext(ctx);
+    requirePermission(caller, PERMISSIONS.MANAGE_SUPPLIERS);
+    const userId = getDataScopeUserId(caller);
 
     try {
       return await ctx.db.insert('suppliers', {
@@ -51,11 +55,9 @@ export const updateSupplier = mutation({
     })
   },
   handler: async (ctx, args) => {
-    const identify = await ctx.auth.getUserIdentity();
-    if (!identify) {
-      throw new Error('Not authenticated');
-    }
-    const userId = identify.subject;
+    const caller = await resolveCallerContext(ctx);
+    requirePermission(caller, PERMISSIONS.MANAGE_SUPPLIERS);
+    const userId = getDataScopeUserId(caller);
 
     const existingSupplier = await ctx.db.get(args.id);
     if (!existingSupplier || existingSupplier.userId !== userId) {
@@ -96,11 +98,9 @@ export const updateSupplier = mutation({
 export const deleteSupplier = mutation({
   args: { id: v.id('suppliers') },
   handler: async (ctx, args) => {
-    const identify = await ctx.auth.getUserIdentity();
-    if (!identify) {
-      throw new Error('Not authenticated');
-    }
-    const userId = identify.subject;
+    const caller = await resolveCallerContext(ctx);
+    requirePermission(caller, PERMISSIONS.MANAGE_SUPPLIERS);
+    const userId = getDataScopeUserId(caller);
 
     const existingSupplier = await ctx.db.get(args.id);
     if (!existingSupplier || existingSupplier.userId !== userId) {
@@ -132,11 +132,9 @@ export const deleteSupplier = mutation({
 export const restoreSupplier = mutation({
   args: { id: v.id('suppliers') },
   handler: async (ctx, args) => {
-    const identify = await ctx.auth.getUserIdentity();
-    if (!identify) {
-      throw new Error('Not authenticated');
-    }
-    const userId = identify.subject;
+    const caller = await resolveCallerContext(ctx);
+    requirePermission(caller, PERMISSIONS.MANAGE_SUPPLIERS);
+    const userId = getDataScopeUserId(caller);
 
     const existingSupplier = await ctx.db.get(args.id);
     if (!existingSupplier || existingSupplier.userId !== userId) {
@@ -153,11 +151,9 @@ export const restoreSupplier = mutation({
 // Get all suppliers
 export const getAllSuppliers = query({
   handler: async (ctx) => {
-    const identify = await ctx.auth.getUserIdentity();
-    if (!identify) {
-      throw new Error('Not authenticated');
-    }
-    const userId = identify.subject;
+    const caller = await resolveCallerContext(ctx);
+    requirePermission(caller, PERMISSIONS.VIEW_INVENTORY);
+    const userId = getDataScopeUserId(caller);
 
     const suppliers = await ctx.db
       .query('suppliers')
@@ -173,11 +169,9 @@ export const getAllSuppliers = query({
 export const getSupplierById = query({
   args: { id: v.id('suppliers') },
   handler: async (ctx, args) => {
-    const identify = await ctx.auth.getUserIdentity();
-    if (!identify) {
-      throw new Error('Not authenticated');
-    }
-    const userId = identify.subject;
+    const caller = await resolveCallerContext(ctx);
+    requirePermission(caller, PERMISSIONS.VIEW_INVENTORY);
+    const userId = getDataScopeUserId(caller);
 
     const supplier = await ctx.db.get(args.id);
     return supplier?.isDeleted || supplier?.userId !== userId ? null : supplier; // Return null if deleted or not owned by user
@@ -198,11 +192,9 @@ export const getFilteredSupplier = query({
     )
   },
   handler: async (ctx, args) => {
-    const identify = await ctx.auth.getUserIdentity();
-    if (!identify) {
-      throw new Error('Not authenticated');
-    }
-    const userId = identify.subject;
+    const caller = await resolveCallerContext(ctx);
+    requirePermission(caller, PERMISSIONS.VIEW_INVENTORY);
+    const userId = getDataScopeUserId(caller);
 
     const { page, pageSize } = args.paginationOptions;
     const { filters } = args;
@@ -238,5 +230,141 @@ export const getFilteredSupplier = query({
       currentPage: page,
       totalItems: totalCount
     };
+  }
+});
+
+// Get supplier metrics for dashboard
+export const getSupplierMetrics = query({
+  handler: async (ctx) => {
+    const caller = await resolveCallerContext(ctx);
+    requirePermission(caller, PERMISSIONS.VIEW_REPORTS);
+    const userId = getDataScopeUserId(caller);
+
+    const suppliers = await ctx.db
+      .query('suppliers')
+      .withIndex('by_user_and_isDeleted', (q) =>
+        q.eq('userId', userId).eq('isDeleted', false)
+      )
+      .collect();
+
+    // Get all products to calculate supplier usage
+    const products = await ctx.db
+      .query('products')
+      .withIndex('by_user_and_isDeleted', (q) =>
+        q.eq('userId', userId).eq('isDeleted', false)
+      )
+      .collect();
+
+    // Count products per supplier
+    const supplierProductCount = new Map<string, number>();
+    products.forEach((product) => {
+      if (product.supplierId) {
+        supplierProductCount.set(
+          product.supplierId,
+          (supplierProductCount.get(product.supplierId) ?? 0) + 1
+        );
+      }
+    });
+
+    // Calculate active suppliers (those with products)
+    const activeSuppliersCount = Array.from(
+      supplierProductCount.values()
+    ).filter((count) => count > 0).length;
+
+    // Get suppliers sorted by usage
+    const suppliersByUsage = suppliers
+      .map((supplier) => ({
+        ...supplier,
+        productCount: supplierProductCount.get(supplier._id) ?? 0
+      }))
+      .sort((a, b) => b.productCount - a.productCount);
+
+    // Top suppliers
+    const topSuppliers = suppliersByUsage.slice(0, 3);
+
+    return {
+      totalSuppliers: suppliers.length,
+      activeSuppliers: activeSuppliersCount,
+      topSuppliers,
+      suppliersByUsage
+    };
+  }
+});
+
+// STEP 8.3: Get Supplier Performance Metrics
+export const getSupplierPerformance = query({
+  args: { supplierId: v.id('suppliers') },
+  handler: async (ctx, { supplierId }) => {
+    const caller = await resolveCallerContext(ctx);
+    requirePermission(caller, PERMISSIONS.VIEW_REPORTS);
+    const userId = getDataScopeUserId(caller);
+
+    const supplier = await ctx.db.get(supplierId);
+    if (!supplier || supplier.userId !== userId) {
+      throw new Error('Supplier not found');
+    }
+
+    const totalOrders = supplier.totalOrders || 0;
+    const onTimeDeliveries = supplier.onTimeDeliveries || 0;
+    const lateDeliveries = supplier.lateDeliveries || 0;
+
+    // Calculate on-time delivery percentage
+    let onTimePercent = 0;
+    if (totalOrders > 0) {
+      onTimePercent = Math.round((onTimeDeliveries / totalOrders) * 100);
+    }
+
+    return {
+      supplierId,
+      supplierName: supplier.name,
+      totalOrders,
+      onTimeDeliveries,
+      lateDeliveries,
+      onTimePercent,
+      averageLeadTimeDays: supplier.averageLeadTimeDays || 0,
+      lastOrderDate: supplier.lastOrderDate
+    };
+  }
+});
+
+// Update supplier performance metrics after purchase order delivery
+export const updateSupplierPerformance = mutation({
+  args: {
+    supplierId: v.id('suppliers'),
+    wasOnTime: v.boolean(),
+    leadTimeDays: v.number()
+  },
+  handler: async (ctx, { supplierId, wasOnTime, leadTimeDays }) => {
+    const caller = await resolveCallerContext(ctx);
+    requirePermission(caller, PERMISSIONS.MANAGE_SUPPLIERS);
+    const userId = getDataScopeUserId(caller);
+
+    const supplier = await ctx.db.get(supplierId);
+    if (!supplier || supplier.userId !== userId) {
+      throw new Error('Supplier not found');
+    }
+    const currentTotalOrders = supplier.totalOrders || 0;
+    const currentOnTime = supplier.onTimeDeliveries || 0;
+    const currentLate = supplier.lateDeliveries || 0;
+    const currentAvgLeadTime = supplier.averageLeadTimeDays || 0;
+
+    // Update metrics
+    const newTotalOrders = currentTotalOrders + 1;
+    const newOnTime = wasOnTime ? currentOnTime + 1 : currentOnTime;
+    const newLate = wasOnTime ? currentLate : currentLate + 1;
+
+    // Recalculate average lead time
+    const newAvgLeadTime = Math.round(
+      (currentAvgLeadTime * currentTotalOrders + leadTimeDays) / newTotalOrders
+    );
+
+    await ctx.db.patch(supplierId, {
+      totalOrders: newTotalOrders,
+      onTimeDeliveries: newOnTime,
+      lateDeliveries: newLate,
+      averageLeadTimeDays: newAvgLeadTime,
+      lastOrderDate: Date.now(),
+      updatedAt: Date.now()
+    });
   }
 });

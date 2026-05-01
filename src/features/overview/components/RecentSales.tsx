@@ -8,7 +8,7 @@ import {
   CardDescription,
   CardFooter
 } from '@/components/ui/card';
-import { formatIndianCurrency } from '@/lib/utils';
+import { formatCurrency } from '@/lib/utils';
 import { api } from '@/../convex/_generated/api';
 import { useQuery } from 'convex/react';
 import { Button } from '@/components/ui/button';
@@ -82,8 +82,7 @@ export function RecentSales() {
                   </p>
                 </div>
                 <div className='ml-auto text-xs font-medium sm:text-sm'>
-                  + Rs.{' '}
-                  {formatIndianCurrency(sale.sellingPrice * sale.quantitySold)}
+                  {formatCurrency(sale.sellingPrice * sale.quantitySold)}
                 </div>
               </div>
             ))}

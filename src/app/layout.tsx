@@ -4,10 +4,12 @@ import { Lato } from 'next/font/google';
 import NextTopLoader from 'nextjs-toploader';
 import './globals.css';
 import { ConvexClientProvider } from '@/features/auth/providers/ConvexProvider';
+import { OnboardingStateProvider } from '@/features/auth/providers/OnboardingStateProvider';
 import { SpeedInsights } from '@vercel/speed-insights/next';
 import { Analytics } from '@vercel/analytics/react';
 import { Toaster } from '@/components/ui/sonner';
 import ThemeProvider from '@/components/layout/ThemeToggle/theme-provider';
+import { CookieConsentBanner } from '@/components/cookies/CookieConsentBanner';
 
 const lato = Lato({
   subsets: ['latin'],
@@ -18,7 +20,7 @@ const lato = Lato({
 // Metadata for SEO and social sharing
 export const metadata: Metadata = {
   metadataBase: new URL(
-    process.env.NEXT_PUBLIC_API_URL || 'https://gaurav-sms.vercel.app'
+    process.env.NEXT_PUBLIC_API_URL || 'https://digitaldukan.vercel.app'
   ),
   title: 'Digital Dukan',
   description:
@@ -80,7 +82,7 @@ export const metadata: Metadata = {
   openGraph: {
     type: 'website',
     locale: 'en_US',
-    url: process.env.NEXT_PUBLIC_API_URL || 'https://gaurav-sms.vercel.app',
+    url: process.env.NEXT_PUBLIC_API_URL || 'https://digitaldukan.vercel.app',
     title: 'Digital Dukan',
     description:
       'Effortlessly manage your business inventory with our intuitive and powerful tools.',
@@ -115,20 +117,20 @@ export const metadata: Metadata = {
   },
   appLinks: {
     web: {
-      url: process.env.NEXT_PUBLIC_API_URL || 'https://gaurav-sms.vercel.app',
+      url: process.env.NEXT_PUBLIC_API_URL || 'https://digitaldukan.vercel.app',
       should_fallback: true
     }
   },
   archives: [
-    process.env.NEXT_PUBLIC_API_URL || 'https://gaurav-sms.vercel.app',
+    process.env.NEXT_PUBLIC_API_URL || 'https://digitaldukan.vercel.app',
     'archives'
   ],
   assets: [
-    process.env.NEXT_PUBLIC_API_URL || 'https://gaurav-sms.vercel.app',
+    process.env.NEXT_PUBLIC_API_URL || 'https://digitaldukan.vercel.app',
     'assets'
   ],
   bookmarks: [
-    process.env.NEXT_PUBLIC_API_URL || 'https://gaurav-sms.vercel.app',
+    process.env.NEXT_PUBLIC_API_URL || 'https://digitaldukan.vercel.app',
     'bookmarks'
   ],
   category: 'Business',
@@ -171,15 +173,18 @@ export default function RootLayout({
         />
         <AppHead />
       </head>
-      <body className='overflow-hidden bg-background text-foreground antialiased'>
+      <body className='bg-background text-foreground antialiased'>
         <ConvexClientProvider>
-          <ThemeProvider attribute='class' defaultTheme='light' enableSystem>
-            <SpeedInsights />
-            <Analytics />
-            <NextTopLoader showSpinner={false} />
-            <Toaster richColors />
-            {children}
-          </ThemeProvider>
+          <OnboardingStateProvider>
+            <ThemeProvider attribute='class' defaultTheme='light' enableSystem>
+              <SpeedInsights />
+              <Analytics />
+              <NextTopLoader showSpinner={false} />
+              <Toaster richColors />
+              <CookieConsentBanner />
+              {children}
+            </ThemeProvider>
+          </OnboardingStateProvider>
         </ConvexClientProvider>
       </body>
     </html>

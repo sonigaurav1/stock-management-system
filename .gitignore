@@ -37,11 +37,14 @@ next-env.d.ts
 .idea/
 
 # local file
-TODO.md
-MARKETING.md
-Robust-Features-Doc.md
-Robust-Features.md
+# TODO.md
+# MARKETING.md
+# Robust-Features-Doc.md
+# Robust-Features.md
+
 # Sentry Config File
 .env.sentry-build-plugin
 
 certificates
+# Added by code-review-graph
+.code-review-graph/

@@ -35,10 +35,10 @@ export const generateOtp = mutation({
       userId,
       otp: parseInt(otp, 10),
       expiresAt,
-      createdAt: Date.now(),
-      isDeleted: false
+      createdAt: Date.now()
     });
 
+    // We are not implementing otp verification feature
     // In a real-world application, you would send this OTP to the user's email
     // using an external service or an action function
     // eslint-disable-next-line no-console

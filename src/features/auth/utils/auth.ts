@@ -1,5 +1,5 @@
 // utils/auth.ts
-import { useUser } from '@clerk/clerk-react';
+import { useUser } from '@clerk/nextjs';
 import { useMutation, useQuery } from 'convex/react';
 
 export function useAuthenticatedQuery(queryFunction: any, ...args: any[]) {

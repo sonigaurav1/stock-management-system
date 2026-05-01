@@ -12,31 +12,24 @@ const isPublicRoute = createRouteMatcher(PUBLIC_ROUTES);
 const isProtectedRoute = createRouteMatcher(PROTECTED_ROUTES);
 const isHomeRoute = createRouteMatcher([RoutePattern.HOME]);
 const isSignInRoute = createRouteMatcher([RoutePattern.SIGN_IN]);
+const isSignUpRoute = createRouteMatcher([RoutePattern.SIGN_UP]);
 const isDashboardRoute = createRouteMatcher([RoutePattern.DASHBOARD]);
+const isCompanyRegistrationRoute = createRouteMatcher([
+  RoutePattern.COMPANY_REGISTRATION
+]);
 
 export default clerkMiddleware(async (auth, request) => {
   try {
     const { userId, getToken } = await auth();
-    // Consolidate redirect conditions for cleaner code
+
+    // Redirect authenticated users from home, sign-in, and sign-up to dashboard
     if (
       userId &&
-      (isHomeRoute(request) ||
-        isSignInRoute(request) ||
-        isDashboardRoute(request))
+      (isHomeRoute(request) || isSignInRoute(request) || isSignUpRoute(request))
     ) {
-      // Only redirect dashboard route if it's exactly '/dashboard' to prevent loops
-      if (
-        isDashboardRoute(request) &&
-        request.nextUrl.pathname === '/dashboard'
-      ) {
-        return NextResponse.redirect(
-          new URL(RedirectDestination.OVERVIEW, request.url)
-        );
-      } else if (!isDashboardRoute(request)) {
-        return NextResponse.redirect(
-          new URL(RedirectDestination.OVERVIEW, request.url)
-        );
-      }
+      return NextResponse.redirect(
+        new URL(RedirectDestination.OVERVIEW, request.url)
+      );
     }
 
     // Allow public routes to proceed without authentication
@@ -63,6 +56,15 @@ export default clerkMiddleware(async (auth, request) => {
       const claims = JSON.parse(atob(token.split('.')[1]));
       const currentTime = Math.floor(Date.now() / 1000);
 
+      // Debug: Log claims structure
+      console.log('[PROXY DEBUG] JWT Claims Structure:', {
+        sub: claims.sub,
+        metadata: claims.metadata,
+        publicMetadata: claims.publicMetadata,
+        hasMetadata: !!claims.metadata,
+        hasPublicMetadata: !!claims.publicMetadata
+      });
+
       // Redirect if the token has expired
       if (claims.exp < currentTime) {
         return NextResponse.redirect(
@@ -70,15 +72,17 @@ export default clerkMiddleware(async (auth, request) => {
         );
       }
 
-      // Redirect based on the `isVerified` claim
-      if (claims.isVerified === null || claims.isVerified === undefined) {
-        if (!request.url.includes(RedirectDestination.COMPANY_DETAILS)) {
-          return NextResponse.redirect(
-            new URL(RedirectDestination.COMPANY_DETAILS, request.url)
-          );
-        }
-      }
+      // NOTE: publicMetadata is NOT included in the convex JWT template by default
+      // The client-side guards (BusinessProfileGuard, AccountStatusGuard) will verify:
+      // 1. accountStatus in Convex (via checkUserAccess)
+      // 2. organizationSettings in Convex (via isBusinessProfileComplete)
+      // 3. Clerk publicMetadata.companyDetailsSubmitted
+      // So we skip the check here and let client-side guards handle it
+      console.log(
+        '[PROXY DEBUG] Skipping company details check in middleware (handled by client-side guards)'
+      );
 
+      // Redirect based on the legacy `isVerified` claim if present
       if (claims.isVerified === false || claims.isVerified === 'false') {
         if (!request.url.includes(RedirectDestination.VERIFY)) {
           return NextResponse.redirect(

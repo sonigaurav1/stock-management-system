@@ -20,6 +20,8 @@ export interface Product {
   lastRestockedAt?: number; // Timestamp of last restock
   imageUrl?: string; // Image URL
   isDeleted: boolean; // Soft delete flag (false = active, true = deleted)
+  marginPercent?: number; // Profit margin percentage
+  daysInStock?: number; // Number of days product has been in stock
 }
 
 export interface SkeletonProduct {
@@ -44,4 +46,6 @@ export interface SkeletonProduct {
   lastRestockedAt?: number; // Timestamp of last restock
   imageUrl?: string; // Image URL
   isDeleted?: boolean; // Soft delete flag (false = active, true = deleted)
+  marginPercent?: number; // Profit margin percentage
+  daysInStock?: number; // Number of days product has been in stock
 }

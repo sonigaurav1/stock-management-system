@@ -1,5 +1,11 @@
 import { query, mutation } from './_generated/server';
 import { v } from 'convex/values';
+import {
+  resolveCallerContext,
+  requirePermission,
+  getDataScopeUserId
+} from './lib/authHelper';
+import { PERMISSIONS } from './lib/permissions';
 
 export const getCustomerByPanOrPhone = mutation({
   args: {
@@ -7,12 +13,9 @@ export const getCustomerByPanOrPhone = mutation({
     phones: v.optional(v.array(v.string())) // Accept an array of phone numbers
   },
   handler: async (ctx, args) => {
-    const identify = await ctx.auth.getUserIdentity();
-
-    if (!identify) {
-      throw new Error('Not authenticated');
-    }
-    const userId = identify.subject;
+    const caller = await resolveCallerContext(ctx);
+    requirePermission(caller, PERMISSIONS.VIEW_ORGANIZATION);
+    const userId = getDataScopeUserId(caller);
 
     const customers = await ctx.db
       .query('customers')
@@ -41,12 +44,9 @@ export const createCustomer = mutation({
     createdAt: v.number()
   },
   handler: async (ctx, args) => {
-    const identify = await ctx.auth.getUserIdentity();
-
-    if (!identify) {
-      throw new Error('Not authenticated');
-    }
-    const userId = identify.subject;
+    const caller = await resolveCallerContext(ctx);
+    requirePermission(caller, PERMISSIONS.CREATE_TRANSACTION);
+    const userId = getDataScopeUserId(caller);
 
     return await ctx.db.insert('customers', {
       ...args,
@@ -69,10 +69,14 @@ export const updateProductStock = mutation({
     })
   },
   handler: async (ctx, args) => {
+    const caller = await resolveCallerContext(ctx);
+    requirePermission(caller, PERMISSIONS.EDIT_TRANSACTION);
+    const userId = getDataScopeUserId(caller);
+
     const product = await ctx.db.get(args.id);
 
-    if (!product) {
-      throw new Error('Product not found');
+    if (!product || product.userId !== userId) {
+      throw new Error('Product not found or access denied');
     }
 
     return await ctx.db.patch(args.id, {
@@ -85,11 +89,9 @@ export const updateProductStock = mutation({
 export const getProductByIdBilling = mutation({
   args: { id: v.id('products') },
   handler: async (ctx, args) => {
-    const identify = await ctx.auth.getUserIdentity();
-    if (!identify) {
-      throw new Error('Not authenticated');
-    }
-    const userId = identify.subject;
+    const caller = await resolveCallerContext(ctx);
+    requirePermission(caller, PERMISSIONS.VIEW_ORGANIZATION);
+    const userId = getDataScopeUserId(caller);
 
     const product = await ctx.db.get(args.id);
     return product?.isDeleted || product?.userId !== userId ? null : product; // Return null if deleted or not owned by user
@@ -136,12 +138,9 @@ export const createInvoice = mutation({
     })
   },
   handler: async (ctx, args) => {
-    const identify = await ctx.auth.getUserIdentity();
-
-    if (!identify) {
-      throw new Error('Not authenticated');
-    }
-    const userId = identify.subject;
+    const caller = await resolveCallerContext(ctx);
+    requirePermission(caller, PERMISSIONS.CREATE_TRANSACTION);
+    const userId = getDataScopeUserId(caller);
 
     return await ctx.db.insert('invoices', {
       ...args.invoiceData,
@@ -152,15 +151,29 @@ export const createInvoice = mutation({
   }
 });
 
+export const getAllInvoices = query({
+  handler: async (ctx) => {
+    const caller = await resolveCallerContext(ctx);
+    requirePermission(caller, PERMISSIONS.VIEW_REPORTS);
+    const userId = getDataScopeUserId(caller);
+
+    const invoices = await ctx.db
+      .query('invoices')
+      .withIndex('by_user_and_isDeleted', (q) =>
+        q.eq('userId', userId).eq('isDeleted', false)
+      )
+      .collect();
+
+    return invoices.sort((a, b) => b.createdAt - a.createdAt);
+  }
+});
+
 export const getInvoiceByInvoiceNumber = query({
   args: { invoiceNumber: v.string() },
   handler: async (ctx, args) => {
-    const identify = await ctx.auth.getUserIdentity();
-
-    if (!identify) {
-      throw new Error('Not authenticated');
-    }
-    const userId = identify.subject;
+    const caller = await resolveCallerContext(ctx);
+    requirePermission(caller, PERMISSIONS.VIEW_REPORTS);
+    const userId = getDataScopeUserId(caller);
 
     const invoices = await ctx.db
       .query('invoices')

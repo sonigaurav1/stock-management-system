@@ -3,7 +3,15 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Search, Menu, X, Plus, Trash } from 'lucide-react';
+import {
+  Search,
+  Menu,
+  X,
+  Plus,
+  Trash,
+  ChevronRight,
+  ChevronLeft
+} from 'lucide-react';
 import { cn, truncate } from '@/lib/utils';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { AddFirmDialog } from './AddFirmDialog';
@@ -97,7 +105,7 @@ export default function FirmSidebar({
   const filteredFirms = (getAllFirms ?? []).filter(
     (firm) =>
       firm.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      firm.owner.toLowerCase().includes(searchQuery.toLowerCase())
+      (firm.owner ?? '').toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   // Close sidebar on mobile when a firm is selected
@@ -121,13 +129,21 @@ export default function FirmSidebar({
       <Button
         variant='outline'
         size='icon'
-        className='fixed left-3 top-16 z-40 mt-1 bg-background text-foreground md:hidden'
+        className={cn(
+          'fixed bottom-20 left-4 z-40 border-2 bg-background shadow-lg transition-all duration-300',
+          'h-11 w-11 rounded-full md:hidden',
+          isSidebarOpen
+            ? 'border-blue-500 bg-blue-50 dark:bg-blue-950'
+            : 'border-gray-300 hover:border-blue-500 hover:shadow-xl'
+        )}
         onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+        aria-label={isSidebarOpen ? 'Close sidebar' : 'Open sidebar'}
+        aria-expanded={isSidebarOpen}
       >
         {isSidebarOpen ? (
-          <X className='h-5 w-5' />
+          <ChevronLeft className='h-5 w-5 text-blue-600 transition-transform duration-300' />
         ) : (
-          <Menu className='h-5 w-5' />
+          <ChevronRight className='h-5 w-5 text-gray-600 transition-transform duration-300 hover:scale-110' />
         )}
       </Button>
 
@@ -142,7 +158,7 @@ export default function FirmSidebar({
         <div className='flex h-full flex-col'>
           {/* Sidebar header */}
           <div className='border-b p-4'>
-            <div className='flex w-full items-center justify-between'>
+            <div className='flex w-full items-start justify-between'>
               <h2 className='mb-4 text-xl font-bold'>Firms</h2>
               <button
                 className='block md:hidden'
@@ -150,6 +166,14 @@ export default function FirmSidebar({
               >
                 <X className='h-5 w-5' />
               </button>
+              {/* Add new firm button */}
+              <Button
+                onClick={() => setIsAddFirmDialogOpen(true)}
+                size='sm'
+                className='hidden md:block'
+              >
+                <Plus className='size-4' />
+              </Button>
             </div>
             <div className='relative'>
               <Search className='absolute left-2.5 top-2.5 h-4 w-4 text-gray-400' />
@@ -187,7 +211,7 @@ export default function FirmSidebar({
                             {truncate(firm.name, { maxLength: 20 })}
                           </div>
                           <div className='text-xs text-gray-500'>
-                            {truncate(firm.owner, { maxLength: 25 })}
+                            {truncate(firm.owner ?? '', { maxLength: 25 })}
                           </div>
                         </div>
                         <Trash
@@ -206,7 +230,7 @@ export default function FirmSidebar({
             </div>
           </ScrollArea>
           {/* Add new firm button */}
-          <div className='border-t p-4'>
+          {/* <div className='border-t p-4'>
             <Button
               onClick={() => setIsAddFirmDialogOpen(true)}
               className='flex w-full items-center gap-2'
@@ -214,7 +238,7 @@ export default function FirmSidebar({
               <Plus className='h-4 w-4' />
               Add New Firm
             </Button>
-          </div>
+          </div> */}
         </div>
       </div>
 

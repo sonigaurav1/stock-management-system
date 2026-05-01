@@ -1,8 +1,16 @@
 'use client';
 
 import * as React from 'react';
-import { Bar, BarChart, CartesianGrid, XAxis } from 'recharts';
-
+import {
+  Bar,
+  BarChart,
+  CartesianGrid,
+  XAxis,
+  YAxis,
+  Tooltip,
+  Legend,
+  ResponsiveContainer
+} from 'recharts';
 import {
   Card,
   CardContent,
@@ -17,225 +25,169 @@ import {
   ChartTooltipContent
 } from '@/components/ui/chart';
 
-export const description = 'An interactive bar chart';
+interface BarGraphProps {
+  data?: { date: string; sales: number; orders: number }[];
+}
 
-const chartData = [
-  { date: '2025-04-01', desktop: 222, mobile: 150 },
-  { date: '2025-04-02', desktop: 97, mobile: 180 },
-  { date: '2025-04-03', desktop: 167, mobile: 120 },
-  { date: '2025-04-04', desktop: 242, mobile: 260 },
-  { date: '2025-04-05', desktop: 373, mobile: 290 },
-  { date: '2025-04-06', desktop: 301, mobile: 340 },
-  { date: '2025-04-07', desktop: 245, mobile: 180 },
-  { date: '2025-04-08', desktop: 409, mobile: 320 },
-  { date: '2025-04-09', desktop: 59, mobile: 110 },
-  { date: '2025-04-10', desktop: 261, mobile: 190 },
-  { date: '2025-04-11', desktop: 327, mobile: 350 },
-  { date: '2025-04-12', desktop: 292, mobile: 210 },
-  { date: '2025-04-13', desktop: 342, mobile: 380 },
-  { date: '2025-04-14', desktop: 137, mobile: 220 },
-  { date: '2025-04-15', desktop: 120, mobile: 170 },
-  { date: '2025-04-16', desktop: 138, mobile: 190 },
-  { date: '2025-04-17', desktop: 446, mobile: 360 },
-  { date: '2025-04-18', desktop: 364, mobile: 410 },
-  { date: '2025-04-19', desktop: 243, mobile: 180 },
-  { date: '2025-04-20', desktop: 89, mobile: 150 },
-  { date: '2025-04-21', desktop: 137, mobile: 200 },
-  { date: '2025-04-22', desktop: 224, mobile: 170 },
-  { date: '2025-04-23', desktop: 138, mobile: 230 },
-  { date: '2025-04-24', desktop: 387, mobile: 290 },
-  { date: '2025-04-25', desktop: 215, mobile: 250 },
-  { date: '2025-04-26', desktop: 75, mobile: 130 },
-  { date: '2025-04-27', desktop: 383, mobile: 420 },
-  { date: '2025-04-28', desktop: 122, mobile: 180 },
-  { date: '2025-04-29', desktop: 315, mobile: 240 },
-  { date: '2025-04-30', desktop: 454, mobile: 380 },
-  { date: '2025-05-01', desktop: 165, mobile: 220 },
-  { date: '2025-05-02', desktop: 293, mobile: 310 },
-  { date: '2025-05-03', desktop: 247, mobile: 190 },
-  { date: '2025-05-04', desktop: 385, mobile: 420 },
-  { date: '2025-05-05', desktop: 481, mobile: 390 },
-  { date: '2025-05-06', desktop: 498, mobile: 520 },
-  { date: '2025-05-07', desktop: 388, mobile: 300 },
-  { date: '2025-05-08', desktop: 149, mobile: 210 },
-  { date: '2025-05-09', desktop: 227, mobile: 180 },
-  { date: '2025-05-10', desktop: 293, mobile: 330 },
-  { date: '2025-05-11', desktop: 335, mobile: 270 },
-  { date: '2025-05-12', desktop: 197, mobile: 240 },
-  { date: '2025-05-13', desktop: 197, mobile: 160 },
-  { date: '2025-05-14', desktop: 448, mobile: 490 },
-  { date: '2025-05-15', desktop: 473, mobile: 380 },
-  { date: '2025-05-16', desktop: 338, mobile: 400 },
-  { date: '2025-05-17', desktop: 499, mobile: 420 },
-  { date: '2025-05-18', desktop: 315, mobile: 350 },
-  { date: '2025-05-19', desktop: 235, mobile: 180 },
-  { date: '2025-05-20', desktop: 177, mobile: 230 },
-  { date: '2025-05-21', desktop: 82, mobile: 140 },
-  { date: '2025-05-22', desktop: 81, mobile: 120 },
-  { date: '2025-05-23', desktop: 252, mobile: 290 },
-  { date: '2025-05-24', desktop: 294, mobile: 220 },
-  { date: '2025-05-25', desktop: 201, mobile: 250 },
-  { date: '2025-05-26', desktop: 213, mobile: 170 },
-  { date: '2025-05-27', desktop: 420, mobile: 460 },
-  { date: '2025-05-28', desktop: 233, mobile: 190 },
-  { date: '2025-05-29', desktop: 78, mobile: 130 },
-  { date: '2025-05-30', desktop: 340, mobile: 280 },
-  { date: '2025-05-31', desktop: 178, mobile: 230 },
-  { date: '2025-06-01', desktop: 178, mobile: 200 },
-  { date: '2025-06-02', desktop: 470, mobile: 410 },
-  { date: '2025-06-03', desktop: 103, mobile: 160 },
-  { date: '2025-06-04', desktop: 439, mobile: 380 },
-  { date: '2025-06-05', desktop: 88, mobile: 140 },
-  { date: '2025-06-06', desktop: 294, mobile: 250 },
-  { date: '2025-06-07', desktop: 323, mobile: 370 },
-  { date: '2025-06-08', desktop: 385, mobile: 320 },
-  { date: '2025-06-09', desktop: 438, mobile: 480 },
-  { date: '2025-06-10', desktop: 155, mobile: 200 },
-  { date: '2025-06-11', desktop: 92, mobile: 150 },
-  { date: '2025-06-12', desktop: 492, mobile: 420 },
-  { date: '2025-06-13', desktop: 81, mobile: 130 },
-  { date: '2025-06-14', desktop: 426, mobile: 380 },
-  { date: '2025-06-15', desktop: 307, mobile: 350 },
-  { date: '2025-06-16', desktop: 371, mobile: 310 },
-  { date: '2025-06-17', desktop: 475, mobile: 520 },
-  { date: '2025-06-18', desktop: 107, mobile: 170 },
-  { date: '2025-06-19', desktop: 341, mobile: 290 },
-  { date: '2025-06-20', desktop: 408, mobile: 450 },
-  { date: '2025-06-21', desktop: 169, mobile: 210 },
-  { date: '2025-06-22', desktop: 317, mobile: 270 },
-  { date: '2025-06-23', desktop: 480, mobile: 530 },
-  { date: '2025-06-24', desktop: 132, mobile: 180 },
-  { date: '2025-06-25', desktop: 141, mobile: 190 },
-  { date: '2025-06-26', desktop: 434, mobile: 380 },
-  { date: '2025-06-27', desktop: 448, mobile: 490 },
-  { date: '2025-06-28', desktop: 149, mobile: 200 },
-  { date: '2025-06-29', desktop: 103, mobile: 160 },
-  { date: '2025-06-30', desktop: 446, mobile: 400 }
-];
+export function BarGraph({ data }: BarGraphProps) {
+  // Default to generated data if none provided
+  const chartData =
+    data ||
+    Array.from({ length: 30 }, (_, i) => {
+      const date = new Date(2025, 3, i + 1);
+      return {
+        date: date.toLocaleDateString('en-US', {
+          month: 'short',
+          day: 'numeric'
+        }),
+        sales: Math.floor(Math.random() * 50000) + 10000,
+        orders: Math.floor(Math.random() * 150) + 30
+      };
+    });
 
-const chartConfig = {
-  views: {
-    label: 'Page Views'
-  },
-  desktop: {
-    label: 'Desktop',
-    color: 'hsl(var(--chart-1))'
-  },
-  mobile: {
-    label: 'Mobile',
-    color: 'hsl(var(--chart-2))'
-  },
-  error: {
-    label: 'Error',
-    color: 'hsl(var(--chart-2))'
-  }
-} satisfies ChartConfig;
-
-export function BarGraph() {
-  const [activeChart, setActiveChart] =
-    React.useState<keyof typeof chartConfig>('desktop');
-
-  const total = React.useMemo(
-    () => ({
-      desktop: chartData.reduce((acc, curr) => acc + curr.desktop, 0),
-      mobile: chartData.reduce((acc, curr) => acc + curr.mobile, 0)
-    }),
-    []
-  );
-
-  const [isClient, setIsClient] = React.useState(false);
-
-  React.useEffect(() => {
-    setIsClient(true);
-  }, []);
-
-  React.useEffect(() => {
-    if (activeChart === 'error') {
-      throw new Error('Mocking Error');
+  const chartConfig = {
+    sales: {
+      label: 'Sales (Rs)',
+      color: '#3b82f6'
+    },
+    orders: {
+      label: 'Orders',
+      color: '#10b981'
     }
-  }, [activeChart]);
+  } satisfies ChartConfig;
 
-  if (!isClient) {
-    return null;
-  }
+  const totalSales = chartData.reduce((sum, item) => sum + item.sales, 0);
+  const totalOrders = chartData.reduce((sum, item) => sum + item.orders, 0);
+  const avgSales = Math.round(totalSales / chartData.length);
+
+  const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
+  const chartHeight =
+    typeof window !== 'undefined'
+      ? window.innerWidth < 480
+        ? 250
+        : window.innerWidth < 768
+          ? 280
+          : 300
+      : 300;
 
   return (
-    <Card>
-      <CardHeader className='flex flex-col items-stretch space-y-0 border-b p-0 sm:flex-row'>
-        <div className='flex flex-1 flex-col justify-center gap-1 px-6 py-5 sm:py-6'>
-          <CardTitle>Bar Chart - Interactive - Demo Data</CardTitle>
-          <CardDescription>
-            Showing total visitors for the last 3 months
-          </CardDescription>
-        </div>
-        <div className='flex'>
-          {['desktop', 'mobile', 'error'].map((key) => {
-            const chart = key as keyof typeof chartConfig;
-            if (!chart || total[key as keyof typeof total] === 0) return null;
-            return (
-              <button
-                key={chart}
-                data-active={activeChart === chart}
-                className='relative flex flex-1 flex-col justify-center gap-1 border-t px-6 py-4 text-left even:border-l data-[active=true]:bg-muted/50 sm:border-l sm:border-t-0 sm:px-8 sm:py-6'
-                onClick={() => setActiveChart(chart)}
-              >
-                <span className='text-xs text-muted-foreground'>
-                  {chartConfig[chart].label}
-                </span>
-                <span className='text-lg font-bold leading-none sm:text-3xl'>
-                  {total[key as keyof typeof total]?.toLocaleString()}
-                </span>
-              </button>
-            );
-          })}
-        </div>
+    <Card className='w-full'>
+      <CardHeader className='pb-3 sm:pb-4'>
+        <CardTitle className='text-lg sm:text-xl'>Sales Performance</CardTitle>
+        <CardDescription className='text-xs sm:text-sm'>
+          Daily sales volume and order count
+        </CardDescription>
       </CardHeader>
-      <CardContent className='px-2 sm:p-6'>
-        <ChartContainer
-          config={chartConfig}
-          className='aspect-auto h-[320px] w-full'
-        >
-          <BarChart
-            accessibilityLayer
-            data={chartData}
-            margin={{
-              left: 12,
-              right: 12
-            }}
-          >
-            <CartesianGrid vertical={false} />
-            <XAxis
-              dataKey='date'
-              tickLine={false}
-              axisLine={false}
-              tickMargin={8}
-              minTickGap={32}
-              tickFormatter={(value) => {
-                const date = new Date(value);
-                return date.toLocaleDateString('en-US', {
-                  month: 'short',
-                  day: 'numeric'
-                });
-              }}
-            />
-            <ChartTooltip
-              content={
-                <ChartTooltipContent
-                  className='w-[150px]'
-                  nameKey='views'
-                  labelFormatter={(value) => {
-                    return new Date(value).toLocaleDateString('en-US', {
-                      month: 'short',
-                      day: 'numeric',
-                      year: 'numeric'
-                    });
+      <CardContent className='space-y-3 sm:space-y-4'>
+        <div className='mb-3 grid grid-cols-3 gap-2 sm:mb-4 sm:gap-3'>
+          <div className='rounded-lg bg-blue-50 p-2 sm:p-3'>
+            <p className='text-xs text-muted-foreground sm:text-xs'>
+              Total Sales
+            </p>
+            <p className='text-sm font-bold text-blue-600 sm:text-xl'>
+              Rs. {(totalSales / 100000).toFixed(1)}L
+            </p>
+          </div>
+          <div className='rounded-lg bg-green-50 p-2 sm:p-3'>
+            <p className='text-xs text-muted-foreground sm:text-xs'>
+              Total Orders
+            </p>
+            <p className='text-sm font-bold text-green-600 sm:text-xl'>
+              {totalOrders}
+            </p>
+          </div>
+          <div className='rounded-lg bg-purple-50 p-2 sm:p-3'>
+            <p className='text-xs text-muted-foreground sm:text-xs'>
+              Avg Daily
+            </p>
+            <p className='text-sm font-bold text-purple-600 sm:text-xl'>
+              Rs. {(avgSales / 1000).toFixed(1)}k
+            </p>
+          </div>
+        </div>
+
+        <div className='-mx-4 w-full overflow-x-auto px-2 sm:mx-0 sm:px-0'>
+          <ChartContainer config={chartConfig}>
+            <ResponsiveContainer
+              width='100%'
+              height={chartHeight}
+              minWidth={300}
+            >
+              <BarChart data={chartData}>
+                <CartesianGrid strokeDasharray='3 3' />
+                <XAxis
+                  dataKey='date'
+                  tick={{ fontSize: window.innerWidth < 480 ? 10 : 12 }}
+                  angle={window.innerWidth < 480 ? -60 : -45}
+                  textAnchor='end'
+                  height={
+                    window.innerWidth < 480
+                      ? 60
+                      : window.innerWidth < 768
+                        ? 70
+                        : 80
+                  }
+                  interval={
+                    window.innerWidth < 480
+                      ? 2
+                      : window.innerWidth < 768
+                        ? 1
+                        : 0
+                  }
+                />
+                <YAxis
+                  yAxisId='left'
+                  label={{
+                    value: 'Sales (Rs)',
+                    angle: -90,
+                    position: 'insideLeft'
+                  }}
+                  tick={{ fontSize: window.innerWidth < 480 ? 10 : 12 }}
+                />
+                <YAxis
+                  yAxisId='right'
+                  orientation='right'
+                  label={{
+                    value: 'Orders',
+                    angle: 90,
+                    position: 'insideRight'
+                  }}
+                  tick={{ fontSize: window.innerWidth < 480 ? 10 : 12 }}
+                />
+                <Tooltip
+                  formatter={(value) => {
+                    if (typeof value === 'number') {
+                      return value > 1000
+                        ? `Rs. ${(value / 1000).toFixed(1)}k`
+                        : `${value}`;
+                    }
+                    return value;
+                  }}
+                  contentStyle={{
+                    fontSize: window.innerWidth < 480 ? '11px' : '12px'
                   }}
                 />
-              }
-            />
-            <Bar dataKey={activeChart} fill={`var(--color-${activeChart})`} />
-          </BarChart>
-        </ChartContainer>
+                <Legend
+                  wrapperStyle={{
+                    fontSize: window.innerWidth < 480 ? '11px' : '12px'
+                  }}
+                />
+                <Bar
+                  yAxisId='left'
+                  dataKey='sales'
+                  fill='#3b82f6'
+                  name='Sales (Rs)'
+                />
+                <Bar
+                  yAxisId='right'
+                  dataKey='orders'
+                  fill='#10b981'
+                  name='Orders'
+                />
+              </BarChart>
+            </ResponsiveContainer>
+          </ChartContainer>
+        </div>
       </CardContent>
     </Card>
   );

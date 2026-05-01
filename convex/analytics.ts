@@ -1,6 +1,39 @@
 import { v } from 'convex/values';
 import { query } from './_generated/server';
 
+/**
+ * Resolve effective userId for team members.
+ * If user is a team member without their own company, returns owner's userId.
+ */
+async function resolveEffectiveUserId(
+  ctx: any,
+  userId: string
+): Promise<string> {
+  // First check if user has their own company
+  const company = await ctx.db
+    .query('companies')
+    .withIndex('by_user_and_isDeleted', (q: any) =>
+      q.eq('userId', userId).eq('isDeleted', false)
+    )
+    .first();
+
+  if (company) {
+    return userId;
+  }
+
+  // User doesn't have their own company - check if they're a team member
+  const teamMembership = await ctx.db
+    .query('teamMembers')
+    .withIndex('by_user', (q: any) => q.eq('userId', userId))
+    .first();
+
+  if (teamMembership) {
+    return teamMembership.userId;
+  }
+
+  return userId;
+}
+
 // Dashboard
 
 // Get total revenue
@@ -13,6 +46,9 @@ export const getTotalRevenueWithComparison = query({
         throw new Error('Not authenticated');
       }
       const userId = identity.subject;
+
+      // Resolve effective userId for team members
+      const effectiveUserId = await resolveEffectiveUserId(ctx, userId);
 
       // Calculate date ranges as timestamps
       const now = new Date();
@@ -48,7 +84,7 @@ export const getTotalRevenueWithComparison = query({
       const currentMonthSales = await ctx.db
         .query('sales')
         .withIndex('by_user_and_isDeleted', (q) =>
-          q.eq('userId', userId).eq('isDeleted', false)
+          q.eq('userId', effectiveUserId).eq('isDeleted', false)
         )
         .filter((q) =>
           q.and(
@@ -62,7 +98,7 @@ export const getTotalRevenueWithComparison = query({
       const previousMonthSales = await ctx.db
         .query('sales')
         .withIndex('by_user_and_isDeleted', (q) =>
-          q.eq('userId', userId).eq('isDeleted', false)
+          q.eq('userId', effectiveUserId).eq('isDeleted', false)
         )
         .filter((q) =>
           q.and(
@@ -115,6 +151,9 @@ export const getTotalSalesWithComparison = query({
       }
       const userId = identity.subject;
 
+      // Resolve effective userId for team members
+      const effectiveUserId = await resolveEffectiveUserId(ctx, userId);
+
       // Calculate date ranges as timestamps
       const now = new Date();
       const currentMonthStart = new Date(
@@ -149,7 +188,7 @@ export const getTotalSalesWithComparison = query({
       const currentMonthSales = await ctx.db
         .query('sales')
         .withIndex('by_user_and_isDeleted', (q) =>
-          q.eq('userId', userId).eq('isDeleted', false)
+          q.eq('userId', effectiveUserId).eq('isDeleted', false)
         )
         .filter((q) =>
           q.and(
@@ -163,7 +202,7 @@ export const getTotalSalesWithComparison = query({
       const previousMonthSales = await ctx.db
         .query('sales')
         .withIndex('by_user_and_isDeleted', (q) =>
-          q.eq('userId', userId).eq('isDeleted', false)
+          q.eq('userId', effectiveUserId).eq('isDeleted', false)
         )
         .filter((q) =>
           q.and(
@@ -209,6 +248,9 @@ export const getTotalCustomersWithComparison = query({
       }
       const userId = identity.subject;
 
+      // Resolve effective userId for team members
+      const effectiveUserId = await resolveEffectiveUserId(ctx, userId);
+
       // Calculate date ranges as timestamps
       const now = new Date();
       const currentMonthStart = new Date(
@@ -243,7 +285,7 @@ export const getTotalCustomersWithComparison = query({
       const currentMonthCustomers = await ctx.db
         .query('customers')
         .withIndex('by_user_and_isDeleted', (q) =>
-          q.eq('userId', userId).eq('isDeleted', false)
+          q.eq('userId', effectiveUserId).eq('isDeleted', false)
         )
         .filter((q) =>
           q.and(
@@ -257,7 +299,7 @@ export const getTotalCustomersWithComparison = query({
       const previousMonthCustomers = await ctx.db
         .query('customers')
         .withIndex('by_user_and_isDeleted', (q) =>
-          q.eq('userId', userId).eq('isDeleted', false)
+          q.eq('userId', effectiveUserId).eq('isDeleted', false)
         )
         .filter((q) =>
           q.and(
@@ -306,6 +348,9 @@ export const getRecentSalesAndMonthlyTotal = query({
     }
     const userId = identity.subject;
 
+    // Resolve effective userId for team members
+    const effectiveUserId = await resolveEffectiveUserId(ctx, userId);
+
     // Calculate date range for the current month
     const now = new Date();
     const currentMonthStart = new Date(
@@ -329,7 +374,7 @@ export const getRecentSalesAndMonthlyTotal = query({
     const recentSales = await ctx.db
       .query('sales')
       .withIndex('by_user_and_isDeleted', (q) =>
-        q.eq('userId', userId).eq('isDeleted', false)
+        q.eq('userId', effectiveUserId).eq('isDeleted', false)
       )
       .filter((q) =>
         q.and(
@@ -366,10 +411,13 @@ export const getAllSales = query({
     }
     const userId = identity.subject;
 
+    // Resolve effective userId for team members
+    const effectiveUserId = await resolveEffectiveUserId(ctx, userId);
+
     const sales = await ctx.db
       .query('sales')
       .withIndex('by_user_and_isDeleted', (q) =>
-        q.eq('userId', userId).eq('isDeleted', false)
+        q.eq('userId', effectiveUserId).eq('isDeleted', false)
       )
       .collect();
 
@@ -398,7 +446,7 @@ export const getAllSales = query({
 //       const sales = await ctx.db
 //         .query('sales')
 //         .withIndex('by_user_and_isDeleted', (q) =>
-//           q.eq('userId', userId).eq('isDeleted', false)
+//           q.eq('userId', effectiveUserId).eq('isDeleted', false)
 //         )
 //         .collect();
 //       return sales;

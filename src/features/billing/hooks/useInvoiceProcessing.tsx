@@ -27,12 +27,14 @@ export const useInvoiceProcessing = (user: any) => {
   } | null>(null);
 
   const createSale = useMutation(api.sales.createSale);
-  const getProductById = useMutation(api.billing.getProductByIdBilling);
-  const updateProductStock = useMutation(api.billing.updateProductStock);
+  const applySaleStockDeduction = useMutation(
+    api.locations.applySaleStockDeduction
+  );
+  const defaultLocation = useQuery(api.locations.getDefaultLocation);
   const createPayment = useAuthenticatedMutation(api.payments.createPayment);
   const createInvoice = useMutation(api.billing.createInvoice);
 
-  const companyDetails = useQuery(api.companyDetails.getCompanyDetails, {
+  const company = useQuery(api.companies.getCompany, {
     userId: user?.id as string
   });
 
@@ -69,14 +71,14 @@ export const useInvoiceProcessing = (user: any) => {
 
       ...(user?.id === restrictedUser.id
         ? { ...TEST_COMPANY_DETAILS }
-        : companyDetails
+        : company
           ? {
-              companyName: companyDetails?.companyName,
-              companyAddress: companyDetails?.companyAddress,
-              phone: (companyDetails?.phone as string[])?.join(', '),
-              email: companyDetails?.email,
-              vatNumber: companyDetails?.vatNumber,
-              processedBy: companyDetails?.processedBy
+              companyName: company?.name,
+              companyAddress: company?.address,
+              phone: (company?.phone as string[])?.join(', '),
+              email: company?.email,
+              vatNumber: company?.taxNumber,
+              processedBy: company?.processedBy
             }
           : { ...TEST_COMPANY_DETAILS }),
       isTestUser: user?.id === restrictedUser.id,
@@ -130,7 +132,8 @@ export const useInvoiceProcessing = (user: any) => {
           quantitySold: item.quantity,
           sellingPrice: item.rate * 1.13,
           totalAmount: item.amount * 1.13,
-          soldAt: Date.now()
+          soldAt: Date.now(),
+          ...(defaultLocation?._id ? { locationId: defaultLocation._id } : {})
         });
 
         if (sale) {
@@ -214,30 +217,15 @@ export const useInvoiceProcessing = (user: any) => {
         continue;
       }
 
-      const product = await getProductById({
-        id: item.productId as Id<'products'>
-      });
-
-      if (product) {
-        const newStockLevel = (product.stockLevel ?? 0) - item.quantity;
-        let stockStatus = 'in_stock';
-
-        if (newStockLevel <= 0) {
-          stockStatus = 'out_of_stock';
-        } else if (newStockLevel <= (product.reorderLevel ?? 0)) {
-          stockStatus = 'low_stock';
-        }
-
-        await updateProductStock({
-          id: item.productId as Id<'products'>,
-          updates: {
-            stockLevel: newStockLevel,
-            stockStatus: stockStatus as
-              | 'in_stock'
-              | 'low_stock'
-              | 'out_of_stock'
-          }
+      try {
+        await applySaleStockDeduction({
+          productId: item.productId as Id<'products'>,
+          quantityDecremented: item.quantity,
+          ...(defaultLocation?._id ? { locationId: defaultLocation._id } : {})
         });
+      } catch (error) {
+        // eslint-disable-next-line no-console
+        console.error('Stock deduction failed:', error);
       }
     }
   };

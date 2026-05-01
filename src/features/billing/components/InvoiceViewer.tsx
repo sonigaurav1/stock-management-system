@@ -6,7 +6,7 @@ import InvoiceDocument from './InvoiceDocument';
 import { useQuery } from 'convex/react';
 import { api } from '@/../convex/_generated/api';
 import { TEST_COMPANY_DETAILS } from '../constants';
-import { useUser } from '@clerk/clerk-react';
+import { useUser } from '@clerk/nextjs';
 
 type InvoiceViewType = 'invoice' | 'tax-invoice' | string;
 
@@ -27,7 +27,7 @@ const InvoiceViewer = ({
   const invoiceData = useQuery(api.billing.getInvoiceByInvoiceNumber, {
     invoiceNumber
   });
-  const companyDetails = useQuery(api.companyDetails.getCompanyDetails, {
+  const company = useQuery(api.companies.getCompany, {
     userId: user?.id as string
   });
 
@@ -48,20 +48,18 @@ const InvoiceViewer = ({
     amountInWords: invoiceData.amountInWords ?? '',
     vehicleNo: invoiceData.vehicleNo ?? null,
     remarks: invoiceData.remarks ?? null,
-    companyName:
-      companyDetails?.companyName ?? TEST_COMPANY_DETAILS.companyName,
-    companyAddress:
-      companyDetails?.companyAddress ?? TEST_COMPANY_DETAILS.companyAddress,
-    phone: Array.isArray(companyDetails?.phone)
-      ? companyDetails.phone.join(', ')
-      : (companyDetails?.phone ?? TEST_COMPANY_DETAILS.phone),
-    email: companyDetails?.email ?? TEST_COMPANY_DETAILS.email,
-    vatNumber: companyDetails?.vatNumber ?? TEST_COMPANY_DETAILS.vatNumber,
+    companyName: company?.name ?? TEST_COMPANY_DETAILS.companyName,
+    companyAddress: company?.address ?? TEST_COMPANY_DETAILS.companyAddress,
+    phone: Array.isArray(company?.phone)
+      ? company.phone.join(', ')
+      : (company?.phone ?? TEST_COMPANY_DETAILS.phone),
+    email: company?.email ?? TEST_COMPANY_DETAILS.email,
+    vatNumber: company?.taxNumber ?? TEST_COMPANY_DETAILS.vatNumber,
     transactionDate: invoiceData.transactionDate ?? new Date().toISOString(),
     invoiceNumber: invoiceData.invoiceNumber ?? '',
     date: invoiceData.date ?? new Date().toISOString(),
-    processedBy: companyDetails?.processedBy ?? 'Admin',
-    isTestUser: companyDetails ? false : true
+    processedBy: company?.processedBy ?? 'Admin',
+    isTestUser: company ? false : true
   };
 
   return (

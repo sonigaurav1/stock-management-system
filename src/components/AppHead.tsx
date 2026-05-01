@@ -1,24 +1,10 @@
-import Head from 'next/head';
+import Script from 'next/script';
 
 const AppHead = () => (
-  <Head>
-    <title>About Penowa | Premium Healthy Peanut Butter Brand India</title>
-    <meta
-      name='description'
-      content="Learn about Penowa, India's premium healthy peanut butter and nuts butter brand. Discover our story, mission, and commitment to quality, health, and taste."
-    />
-    <meta
-      name='keywords'
-      content='about penowa, peanut butter brand, healthy peanut butter, premium nuts butter, organic peanut butter, penowa story, penowa mission'
-    />
-    <link
-      rel='canonical'
-      href={
-        (process.env.NEXT_PUBLIC_SITE_URL || 'https://penowa.in') + '/about'
-      }
-    />
+  <>
     {/* About Page Structured Data */}
-    <script
+    <Script
+      id='about-page-schema'
       type='application/ld+json'
       dangerouslySetInnerHTML={{
         __html: JSON.stringify({
@@ -37,7 +23,7 @@ const AppHead = () => (
         })
       }}
     />
-  </Head>
+  </>
 );
 
 export default AppHead;

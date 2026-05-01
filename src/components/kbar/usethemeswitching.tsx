@@ -1,5 +1,5 @@
 import { useRegisterActions } from 'kbar';
-import { useTheme } from 'next-themes';
+import { useTheme } from '@/components/layout/ThemeToggle/theme-provider';
 
 const useThemeSwitching = () => {
   const { theme, setTheme } = useTheme();

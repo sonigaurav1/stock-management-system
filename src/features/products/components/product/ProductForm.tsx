@@ -25,22 +25,33 @@ import { Id } from 'convex/_generated/dataModel';
 import { formSchema } from '../../schema/product-schema';
 import CustomImageUpload from '../CustomImageUpload';
 import { useEffect, useState } from 'react';
-import { determineStockStatus, generateSKU, generateSlug } from '@/lib/utils';
-import { Calendar } from 'lucide-react';
+import {
+  determineStockStatus,
+  generateSKU,
+  generateSlug,
+  cn
+} from '@/lib/utils';
+import { Calendar, Plus, Info } from 'lucide-react';
 import { restrictedUser } from '../../constants/restrictedUserData';
-import { useUser } from '@clerk/clerk-react';
+import { useUser } from '@clerk/nextjs';
 import { Progress } from '@/components/ui/progress';
+import { Switch } from '@/components/ui/switch';
 import { maxSizeInMB } from '../../constants';
 import useCompressUploadedImage from '../../hooks/useCompressUploadedImage';
 import CustomInput from '@/components/form/CustomInput';
 import CustomSelect from '@/components/form/CustomSelect';
+import CategoryFormDialog from '../category/CategoryFormDialog';
+import SupplierFormDialog from '../suppliers/SupplierFormDialog';
+import CustomTooltip from '@/components/ui/custom/CustomTooltip';
 
 export default function ProductForm({
   initialData,
-  pageTitle
+  pageTitle,
+  onSuccess
 }: {
   initialData: Product | null;
   pageTitle: string;
+  onSuccess?: () => void;
 }) {
   const { user } = useUser();
   const router = useRouter();
@@ -64,6 +75,8 @@ export default function ProductForm({
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [progress, setProgress] = useState<number>(0);
+  const [categoryRefresh, setCategoryRefresh] = useState<number>(0);
+  const [supplierRefresh, setSupplierRefresh] = useState<number>(0);
 
   const { edgestore } = useEdgeStore();
 
@@ -173,7 +186,9 @@ export default function ProductForm({
         suppliers.find((supplier) => supplier._id === values.supplierId)
           ?.name ?? '',
       lastRestockedAt: values.lastRestockedAt,
-      imageUrl
+      imageUrl,
+      // STEP 5.1: HSN/SAC Code
+      hsnsacCode: values.hsnsacCode
     };
 
     const promise =
@@ -200,15 +215,21 @@ export default function ProductForm({
     });
 
     await promise.then(() => {
-      router.push('/dashboard/product');
+      if (onSuccess) {
+        onSuccess();
+      } else {
+        router.push('/dashboard/product');
+      }
     });
 
     setProgress(0);
     setIsLoading(false);
   }
 
+  const cardClassName = cn('w-full', !onSuccess && 'mx-auto mb-16');
+
   return (
-    <Card className='mx-auto mb-16 w-full'>
+    <Card className={cardClassName}>
       <CardHeader>
         <CardTitle className='text-left text-2xl font-bold'>
           {pageTitle}
@@ -223,7 +244,15 @@ export default function ProductForm({
               render={({ field }) => (
                 <div className='space-y-6'>
                   <FormItem className='h-full w-full'>
-                    <FormLabel>Images</FormLabel>
+                    <div className='flex items-center gap-2'>
+                      <FormLabel>Images</FormLabel>
+                      <CustomTooltip
+                        tooltipContent='Upload product images to help customers identify products visually. First image will be the main product image.'
+                        side='right'
+                      >
+                        <Info className='h-4 w-4 cursor-help text-muted-foreground' />
+                      </CustomTooltip>
+                    </div>
                     <FormControl>
                       <CustomImageUpload
                         value={field.value}
@@ -246,11 +275,20 @@ export default function ProductForm({
                 label='Product Model'
                 placeHolder='Enter Product Model'
                 required
+                tooltipContent='The product name or model number as it appears on the product. This is used for searching and listing products.'
               />
               <CustomInput
                 name='brand'
                 label='Product Brand'
                 placeHolder='Enter Product Brand'
+                tooltipContent='The manufacturer or brand name of the product (e.g., Apple, Samsung, Sony). Helps in filtering and categorizing products.'
+              />
+              {/* STEP 5.1: HSN/SAC Code */}
+              <CustomInput
+                name='hsnsacCode'
+                label='HSN/SAC Code'
+                placeHolder='e.g., 8471 for Computers'
+                tooltipContent='HSN (Harmonized System of Nomenclature) code for goods, SAC code for services. Required for GST invoices and tax compliance. Search codes at: cleartax.gov.in/hsn-code-search'
               />
               <CustomSelect
                 name='categoryId'
@@ -263,6 +301,15 @@ export default function ProductForm({
                 label='Category'
                 valueKey='_id'
                 labelKey='name'
+                tooltipContent='Product category for organizing inventory. Categories help in filtering products and generating category-wise reports.'
+                trailingComponent={
+                  <CategoryFormDialog
+                    triggerIcon={true}
+                    onCategoryAdded={() => {
+                      setCategoryRefresh(categoryRefresh + 1);
+                    }}
+                  />
+                }
               />
               <CustomSelect
                 name='supplierId'
@@ -274,6 +321,15 @@ export default function ProductForm({
                 label='Supplier'
                 valueKey='_id'
                 labelKey='name'
+                tooltipContent='Primary supplier for this product. Used for purchase orders and tracking supplier performance.'
+                trailingComponent={
+                  <SupplierFormDialog
+                    triggerIcon={true}
+                    onSupplierAdded={() => {
+                      setSupplierRefresh(supplierRefresh + 1);
+                    }}
+                  />
+                }
               />
               {/* <FormField
                 control={form.control}
@@ -309,7 +365,15 @@ export default function ProductForm({
                 name='serialNumber'
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Serial Number</FormLabel>
+                    <div className='flex items-center gap-2'>
+                      <FormLabel>Serial Number</FormLabel>
+                      <CustomTooltip
+                        tooltipContent='Unique serial number for tracking individual items. Useful for warranty tracking and warranty claims.'
+                        side='right'
+                      >
+                        <Info className='h-4 w-4 cursor-help text-muted-foreground' />
+                      </CustomTooltip>
+                    </div>
                     <FormControl>
                       <Input
                         type='text'
@@ -328,12 +392,25 @@ export default function ProductForm({
                 name='purchasePrice'
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Purchase Price</FormLabel>
+                    <div className='flex items-center gap-2'>
+                      <FormLabel>Purchase Price</FormLabel>
+                      <CustomTooltip
+                        tooltipContent='Cost price per unit - what you pay to the supplier. Used for profit margin calculation.'
+                        side='right'
+                      >
+                        <Info className='h-4 w-4 cursor-help text-muted-foreground' />
+                      </CustomTooltip>
+                    </div>
                     <FormControl>
                       <Input
-                        {...field}
                         type='text'
                         placeholder='Enter Purchase Price'
+                        value={field.value ?? ''}
+                        onChange={(e) =>
+                          field.onChange(
+                            e.target.value === '' ? '' : e.target.value
+                          )
+                        }
                       />
                     </FormControl>
                     <FormMessage />
@@ -345,14 +422,27 @@ export default function ProductForm({
                 name='sellingPrice'
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Selling Price</FormLabel>
+                    <div className='flex items-center gap-2'>
+                      <FormLabel>Selling Price</FormLabel>
+                      <CustomTooltip
+                        tooltipContent='Selling price per unit - what customers pay. Your profit = Selling Price - Purchase Price.'
+                        side='right'
+                      >
+                        <Info className='h-4 w-4 cursor-help text-muted-foreground' />
+                      </CustomTooltip>
+                    </div>
                     <FormControl>
                       <Input
                         type='number'
                         placeholder='Enter Selling Price'
                         className='no-spinner'
                         min={0}
-                        {...field}
+                        value={field.value ?? ''}
+                        onChange={(e) =>
+                          field.onChange(
+                            e.target.value === '' ? '' : Number(e.target.value)
+                          )
+                        }
                       />
                     </FormControl>
                     <FormMessage />
@@ -364,14 +454,27 @@ export default function ProductForm({
                 name='stockLevel'
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Stock Level</FormLabel>
+                    <div className='flex items-center gap-2'>
+                      <FormLabel>Stock Level</FormLabel>
+                      <CustomTooltip
+                        tooltipContent='Current quantity in stock. When this reaches reorder level, you will be alerted to restock.'
+                        side='right'
+                      >
+                        <Info className='h-4 w-4 cursor-help text-muted-foreground' />
+                      </CustomTooltip>
+                    </div>
                     <FormControl>
                       <Input
                         type='number'
                         placeholder='Enter Stock Level'
                         className='no-spinner'
                         min={0}
-                        {...field}
+                        value={field.value ?? ''}
+                        onChange={(e) =>
+                          field.onChange(
+                            e.target.value === '' ? '' : Number(e.target.value)
+                          )
+                        }
                       />
                     </FormControl>
                     <FormMessage />
@@ -409,17 +512,64 @@ export default function ProductForm({
                 name='reorderLevel'
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Reorder Level</FormLabel>
+                    <div className='flex items-center gap-2'>
+                      <FormLabel>Reorder Level</FormLabel>
+                      <CustomTooltip
+                        tooltipContent='Minimum stock quantity before you get an alert. Recommended: 10-20% of maximum stock level.'
+                        side='right'
+                      >
+                        <Info className='h-4 w-4 cursor-help text-muted-foreground' />
+                      </CustomTooltip>
+                    </div>
                     <FormControl>
                       <Input
                         type='number'
                         placeholder='Enter Reorder Level'
                         className='no-spinner'
                         min={0}
-                        {...field}
+                        value={field.value ?? ''}
+                        onChange={(e) =>
+                          field.onChange(
+                            e.target.value === '' ? '' : Number(e.target.value)
+                          )
+                        }
                       />
                     </FormControl>
                     <FormMessage />
+                  </FormItem>
+                )}
+              />
+              {/* STEP 4.2: Auto-Reorder Switch */}
+              <FormField
+                control={form.control}
+                name='autoReorderEnabled'
+                render={({ field }) => (
+                  <FormItem className='flex flex-row items-center justify-between rounded-lg border p-4'>
+                    <div className='flex items-center gap-2 space-y-0.5'>
+                      <div>
+                        <div className='flex items-center gap-2'>
+                          <FormLabel className='text-base'>
+                            Auto-Reorder
+                          </FormLabel>
+                          <CustomTooltip
+                            tooltipContent='When enabled, a purchase order will be automatically created when stock falls below reorder level.'
+                            side='right'
+                          >
+                            <Info className='h-4 w-4 cursor-help text-muted-foreground' />
+                          </CustomTooltip>
+                        </div>
+                        <p className='text-sm text-muted-foreground'>
+                          Automatically create purchase order when stock falls
+                          below reorder level
+                        </p>
+                      </div>
+                    </div>
+                    <FormControl>
+                      <Switch
+                        checked={field.value ?? false}
+                        onCheckedChange={field.onChange}
+                      />
+                    </FormControl>
                   </FormItem>
                 )}
               />
@@ -455,7 +605,15 @@ export default function ProductForm({
                 name='lastRestockedAt'
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Last Restocked At</FormLabel>
+                    <div className='flex items-center gap-2'>
+                      <FormLabel>Last Restocked At</FormLabel>
+                      <CustomTooltip
+                        tooltipContent='Date when the product was last restocked. Helps track inventory turnover and restock frequency.'
+                        side='right'
+                      >
+                        <Info className='h-4 w-4 cursor-help text-muted-foreground' />
+                      </CustomTooltip>
+                    </div>
                     <FormControl>
                       <div className='relative'>
                         <Input
@@ -498,7 +656,15 @@ export default function ProductForm({
               name='description'
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Description</FormLabel>
+                  <div className='flex items-center gap-2'>
+                    <FormLabel>Description</FormLabel>
+                    <CustomTooltip
+                      tooltipContent='Product description for customer reference and sales quotes. Include key features and specifications.'
+                      side='right'
+                    >
+                      <Info className='h-4 w-4 cursor-help text-muted-foreground' />
+                    </CustomTooltip>
+                  </div>
                   <FormControl>
                     <Textarea
                       placeholder='Enter Product Description'

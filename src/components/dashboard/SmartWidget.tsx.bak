@@ -1,0 +1,120 @@
+'use client';
+
+import React from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import {
+  MoreVertical,
+  Eye,
+  EyeOff,
+  Lock,
+  Unlock,
+  Settings
+} from 'lucide-react';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger
+} from '@/components/ui/dropdown-menu';
+import type { Widget } from '@/types/dashboard';
+
+interface SmartWidgetProps {
+  widget: Widget;
+  children: React.ReactNode;
+  isLocked?: boolean;
+  onToggleVisibility?: (widgetId: string, isVisible: boolean) => void;
+  onToggleLock?: (widgetId: string) => void;
+  onConfigure?: (widgetId: string) => void;
+  isDragging?: boolean;
+}
+
+export function SmartWidget({
+  widget,
+  children,
+  isLocked = false,
+  onToggleVisibility,
+  onToggleLock,
+  onConfigure,
+  isDragging = false
+}: SmartWidgetProps) {
+  const sizeClass = {
+    small: 'col-span-1',
+    medium: 'col-span-1 md:col-span-2',
+    large: 'col-span-1 md:col-span-3'
+  }[widget.size];
+
+  return (
+    <Card
+      className={`${sizeClass} ${isDragging ? 'opacity-50' : ''} transition-all duration-200 hover:shadow-md`}
+    >
+      <CardHeader className='flex flex-row items-start justify-between pb-3'>
+        <div className='flex flex-col gap-1'>
+          <CardTitle className='text-base font-semibold'>
+            {widget.title}
+          </CardTitle>
+          <p className='text-xs text-muted-foreground'>{widget.description}</p>
+        </div>
+
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <button className='rounded p-1 hover:bg-muted'>
+              <MoreVertical className='h-4 w-4 text-muted-foreground' />
+            </button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align='end'>
+            {onToggleVisibility && (
+              <DropdownMenuItem
+                onClick={() => onToggleVisibility(widget.id, !widget.isVisible)}
+                className='cursor-pointer'
+              >
+                {widget.isVisible ? (
+                  <>
+                    <EyeOff className='mr-2 h-4 w-4' />
+                    Hide Widget
+                  </>
+                ) : (
+                  <>
+                    <Eye className='mr-2 h-4 w-4' />
+                    Show Widget
+                  </>
+                )}
+              </DropdownMenuItem>
+            )}
+
+            {onToggleLock && (
+              <DropdownMenuItem
+                onClick={() => onToggleLock(widget.id)}
+                className='cursor-pointer'
+              >
+                {isLocked ? (
+                  <>
+                    <Unlock className='mr-2 h-4 w-4' />
+                    Unlock Widget
+                  </>
+                ) : (
+                  <>
+                    <Lock className='mr-2 h-4 w-4' />
+                    Lock Widget
+                  </>
+                )}
+              </DropdownMenuItem>
+            )}
+
+            {onConfigure && (
+              <DropdownMenuItem
+                onClick={() => onConfigure(widget.id)}
+                className='cursor-pointer'
+              >
+                <Settings className='mr-2 h-4 w-4' />
+                Configure
+              </DropdownMenuItem>
+            )}
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </CardHeader>
+
+      <CardContent className='pb-4'>{children}</CardContent>
+    </Card>
+  );
+}

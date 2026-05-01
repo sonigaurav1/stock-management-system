@@ -1,103 +1,298 @@
 import { NavItem } from '@/types';
 
 //Info: The following data is used for the sidebar navigation and Cmd K bar.
+// Navigation is organized into logical sections for better UX and scalability
 export const navItems: NavItem[] = [
+  // ============================================
+  // 📊 ANALYTICS & OVERVIEW (Quick Insights)
+  // ============================================
   {
     title: 'Dashboard',
     url: '/dashboard/overview',
     icon: 'dashboard',
     isActive: false,
     shortcut: ['d', 'd'],
-    items: [] // Empty array as there are no child items for Dashboard
+    items: [] // High-level business metrics and KPIs
   },
-  {
-    title: 'Product',
-    url: '/dashboard/product',
-    icon: 'product',
-    shortcut: ['p', 'p'],
-    isActive: false,
-    items: [] // No child items
-  },
-  {
-    title: 'Category',
-    url: '/dashboard/product/category',
-    icon: 'category',
-    shortcut: ['c', 'c'],
-    isActive: false,
-    items: [] // No child items
-  },
-  {
-    title: 'Supplier',
-    url: '/dashboard/product/supplier',
-    icon: 'supplier',
-    shortcut: ['s', 's'],
-    isActive: false,
-    items: [] // No child items
-  },
-  {
-    title: 'Billing',
-    url: '/billing',
-    icon: 'productBilling',
-    shortcut: ['b', 'b'],
-    isActive: false,
-    items: [] // No child items
-  },
-  {
-    title: 'Ledger',
-    url: '/ledger',
-    icon: 'ledger',
-    shortcut: ['l', 'l'],
-    isActive: false,
-    items: [] // No child items
-  },
-  {
-    title: 'Restock',
-    url: '/restock',
-    icon: 'packagePlus',
-    shortcut: ['r', 'r'],
-    isActive: false,
-    items: [] // No child items
-  },
-  {
-    title: 'Settings',
-    url: '/settings', // Placeholder as there is no direct link for the parent
-    icon: 'billing',
-    isActive: false,
 
+  // ============================================
+  // 📦 INVENTORY MANAGEMENT (Core Operations)
+  // ============================================
+  {
+    title: 'Inventory',
+    url: '/inventory',
+    icon: 'packagePlus',
+    isActive: false,
+    shortcut: ['i', 'i'],
     items: [
       {
-        title: 'Profile',
-        url: '/settings/profile',
-        icon: 'userPen'
+        title: 'Products',
+        url: '/dashboard/product',
+        icon: 'product'
+        // Manage all products: create, edit, delete, track quantities
       },
       {
-        title: 'Account',
-        url: '/settings/account',
-        icon: 'creditCard'
+        title: 'Categories',
+        url: '/dashboard/product/category',
+        icon: 'category'
+        // Organize products into logical groups for easier management
+      },
+      {
+        title: 'Stock & Restock',
+        url: '/restock',
+        icon: 'refresh'
+        // Update stock levels, restock items, manage warehouses
+      },
+      {
+        title: 'Warehouses',
+        url: '/locations',
+        icon: 'locations'
+        // Multi-site inventory, transfers, location dashboards and reporting
+      },
+      {
+        title: 'Inventory Audit',
+        url: '/inventory-audit',
+        icon: 'search'
+        // Verify physical stock vs system records, identify discrepancies
+      },
+      {
+        title: 'Inventory Forecast',
+        url: '/inventory-forecast',
+        icon: 'trendingUp'
+        // Predict future stock needs, prevent stockouts
+      }
+    ]
+  },
+
+  // ============================================
+  // 🤝 SUPPLIER & PURCHASING
+  // ============================================
+  {
+    title: 'Purchasing',
+    url: '/procurement',
+    icon: 'briefcase',
+    isActive: false,
+    items: [
+      {
+        title: 'Suppliers',
+        url: '/dashboard/product/supplier',
+        icon: 'supplier'
+        // Source for products, track performance metrics, vendor profiles, ratings, contact info, payment terms
+      }
+    ]
+  },
+
+  // ============================================
+  // 💰 FINANCIAL & ACCOUNTING (Money Flow)
+  // ============================================
+  {
+    title: 'Finance',
+    url: '/finance',
+    icon: 'creditCard',
+    isActive: false,
+    shortcut: ['f', 'f'],
+    items: [
+      {
+        title: 'Expenses',
+        url: '/expenses',
+        icon: 'wallet'
+        // Track and manage business expenses, categorize spending
+      },
+      {
+        title: 'Accounting',
+        url: '/ledger',
+        icon: 'ledger'
+        // Complete accounting records with receipt attachments
+      },
+      {
+        title: 'Invoices',
+        url: '/invoice',
+        icon: 'productBilling'
+        // View, manage, and generate sales invoices
+      },
+      {
+        title: 'Billing',
+        url: '/billing',
+        icon: 'productBilling'
+        // Subscription plans, recurring charges, payment tracking
+      }
+    ]
+  },
+
+  // ============================================
+  // 📈 REPORTS & INSIGHTS (Business Intelligence)
+  // ============================================
+  {
+    title: 'Reports',
+    url: '/reports',
+    icon: 'barChart3',
+    isActive: false,
+    items: [
+      {
+        title: 'Sales Report',
+        url: '/reports/sales',
+        icon: 'trendingUp'
+        // Revenue trends, top products, customer insights
+      },
+      {
+        title: 'Stock Report',
+        url: '/reports/stock',
+        icon: 'warehouse'
+        // Stock valuation, inventory aging, dead stock analysis
+      },
+      {
+        title: 'Financial Report',
+        url: '/reports/financial',
+        icon: 'barChart3'
+        // P&L statements, cash flow, profitability analysis
+      }
+    ]
+  },
+
+  // ============================================
+  // 💬 COMMUNICATION HUB (Messaging & Tasks)
+  // ============================================
+  {
+    title: 'Communication',
+    url: '/communication',
+    icon: 'mail',
+    isActive: false,
+    shortcut: ['c', 'c'],
+    items: [
+      {
+        title: 'Messages',
+        url: '/communication/inbox',
+        icon: 'mail'
+        // In-app messaging, team communication, message threads
+      },
+      {
+        title: 'Tasks',
+        url: '/communication/tasks',
+        icon: 'checkSquare'
+        // Task assignment, status tracking, task comments
+      },
+      {
+        title: 'Notifications',
+        url: '/communication/notifications',
+        icon: 'bell'
+        // Notification preferences, channels, quiet hours, alerts
+      }
+    ]
+  },
+
+  // ============================================
+  // ⚙️ CONFIGURATION & SYSTEM (Settings)
+  // ============================================
+  {
+    title: 'Settings',
+    url: '/settings',
+    icon: 'settings',
+    isActive: false,
+    shortcut: ['s', 's'],
+    items: [
+      {
+        title: 'Overview',
+        url: '/settings',
+        icon: 'settings'
+        // Settings dashboard and overview
+      },
+      {
+        title: 'User Preferences',
+        url: '/settings/profile',
+        icon: 'user'
+        // User profile, personal details, password
       },
       {
         title: 'Appearance',
         url: '/settings/appearance',
         icon: 'monitor'
+        // Theme, language, timezone, display settings
+      },
+      {
+        title: 'Display',
+        url: '/settings/display',
+        icon: 'trendingUp'
+        // Dashboard layout, density, UI options
       },
       {
         title: 'Notifications',
         url: '/settings/notifications',
         icon: 'bell'
+        // Email alerts, SMS, in-app notifications
       },
       {
-        title: 'Display',
-        url: '/settings/display',
-        icon: 'settings'
+        title: 'Organization',
+        url: '/settings/organization',
+        icon: 'building'
+        // Company details, tax ID, GST, business registration
+      },
+      {
+        title: 'Users & Permissions',
+        url: '/settings/users',
+        icon: 'shield'
+        // Team management, roles, RBAC, access levels
+      },
+      {
+        title: 'Integrations',
+        url: '/settings/integrations',
+        icon: 'plug'
+        // Accounting software, payment gateways, e-commerce
+      },
+      {
+        title: 'Security & Compliance',
+        url: '/settings/security',
+        icon: 'lock'
+        // 2FA, audit logs, data retention, SSO, API security
+      },
+      {
+        title: 'Billing & Subscription',
+        url: '/settings/billing',
+        icon: 'creditCard'
+        // Plans, usage, invoices, payment methods
+      },
+      {
+        title: 'API & Webhooks',
+        url: '/settings/api',
+        icon: 'key'
+        // API keys, webhook configuration, rate limits
+      },
+      {
+        title: 'Automation',
+        url: '/settings/automation',
+        icon: 'zap'
+        // Workflows, triggers, automated actions
+      },
+      {
+        title: 'Import / Export',
+        url: '/settings/data',
+        icon: 'download'
+        // Backup, restore, and data management
       }
     ]
   },
+
+  // ============================================
+  // 📚 SUPPORT & RESOURCES (Help)
+  // ============================================
   {
-    title: 'Help Center',
+    title: 'Help & Support',
     url: '/help-center',
     icon: 'help',
-    shortcut: ['h', 'h'],
     isActive: false,
-    items: [] // No child items
+    shortcut: ['h', 'h'],
+    items: [
+      {
+        title: 'Help Center',
+        url: '/help-center',
+        icon: 'help'
+        // Documentation, tutorials, FAQs
+      },
+      {
+        title: 'API Documentation',
+        url: '/api-docs',
+        icon: 'book'
+        // Developer resources, webhook guides
+      }
+    ]
   }
 ];

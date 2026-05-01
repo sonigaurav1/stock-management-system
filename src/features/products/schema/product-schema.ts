@@ -11,6 +11,8 @@ const ACCEPTED_IMAGE_TYPES = [
 export const formSchema = z.object({
   name: z.string().nonempty({ message: 'Product model is required' }),
   barcode: z.string().optional(),
+  // STEP 5.1: HSN/SAC Code for GST
+  hsnsacCode: z.string().optional(),
   categoryId: z.string().nonempty({ message: 'Product category is required' }),
   subcategory: z.string().optional(),
   description: z.string().optional(),
@@ -48,6 +50,8 @@ export const formSchema = z.object({
       z.number().min(1, 'Reorder Level must be greater than 0')
     )
     .optional(),
+  // STEP 4.2: Auto-reorder enabled
+  autoReorderEnabled: z.boolean().optional(),
   // stockStatus: z.enum(['in_stock', 'low_stock', 'out_of_stock']),
   supplierId: z.string().optional(),
   lastRestockedAt: z.number().optional(),

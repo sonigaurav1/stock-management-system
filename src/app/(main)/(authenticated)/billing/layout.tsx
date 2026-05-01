@@ -1,15 +1,15 @@
-import React from 'react';
 import type { Metadata } from 'next';
+import BillingAccessGuard from './BillingAccessGuard';
 
 export const metadata: Metadata = {
   title: 'Products: Billing',
   description: 'Manage your billing information and transactions.'
 };
 
-const BillingLayout: React.FC<{ children: React.ReactNode }> = ({
+export default function BillingLayout({
   children
-}) => {
-  return <>{children}</>;
-};
-
-export default BillingLayout;
+}: {
+  children: React.ReactNode;
+}) {
+  return <BillingAccessGuard>{children}</BillingAccessGuard>;
+}

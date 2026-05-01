@@ -8,7 +8,8 @@ import {
 import { cn } from '../../../lib/utils';
 
 interface CustomTooltipProps {
-  triggerElement: ReactNode;
+  children?: ReactNode;
+  triggerElement?: ReactNode;
   tooltipContent: ReactNode | string;
   delayDuration?: number;
   asChild?: boolean;
@@ -24,6 +25,7 @@ interface CustomTooltipProps {
 }
 
 const CustomTooltip = ({
+  children,
   triggerElement,
   tooltipContent,
   delayDuration = 200,
@@ -38,16 +40,19 @@ const CustomTooltip = ({
   sideOffset = 4,
   alignOffset = 0
 }: CustomTooltipProps) => {
-  if (!triggerElement || !tooltipContent) {
+  // Support both children and triggerElement for backwards compatibility
+  const trigger = triggerElement || children;
+
+  if (!trigger || !tooltipContent) {
     // eslint-disable-next-line no-console
     console.warn(
-      'CustomTooltip: triggerElement and tooltipContent are required'
+      'CustomTooltip: triggerElement/children and tooltipContent are required'
     );
     return null;
   }
 
   if (disabled) {
-    return <>{triggerElement}</>;
+    return <>{trigger}</>;
   }
 
   return (
@@ -64,13 +69,13 @@ const CustomTooltip = ({
             typeof tooltipContent === 'string' ? tooltipContent : undefined
           }
         >
-          {triggerElement}
+          {trigger}
         </TooltipTrigger>
         <TooltipContent
           side={side}
           align={align}
           className={cn(
-            'z-50 overflow-hidden rounded-md border bg-popover px-3 py-1.5 text-sm text-popover-foreground shadow-md animate-in fade-in-0 zoom-in-95',
+            'z-50 max-w-[250px] overflow-hidden rounded-md border bg-popover px-3 py-1.5 text-sm text-popover-foreground shadow-md animate-in fade-in-0 zoom-in-95',
             contentClassName
           )}
           sideOffset={sideOffset}

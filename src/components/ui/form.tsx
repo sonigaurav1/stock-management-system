@@ -22,6 +22,7 @@ type FormFieldContextValue<
   TName extends FieldPath<TFieldValues> = FieldPath<TFieldValues>
 > = {
   name: TName;
+  id: string;
 };
 
 const FormFieldContext = React.createContext<FormFieldContextValue>(
@@ -34,8 +35,10 @@ const FormField = <
 >({
   ...props
 }: ControllerProps<TFieldValues, TName>) => {
+  const id = React.useId();
+
   return (
-    <FormFieldContext.Provider value={{ name: props.name }}>
+    <FormFieldContext.Provider value={{ name: props.name, id }}>
       <Controller {...props} />
     </FormFieldContext.Provider>
   );
@@ -76,10 +79,15 @@ const FormItem = React.forwardRef<
   HTMLDivElement,
   React.HTMLAttributes<HTMLDivElement>
 >(({ className, ...props }, ref) => {
-  const id = React.useId();
+  const fieldContextValue = React.useContext(FormFieldContext);
+  const id = fieldContextValue?.id;
+
+  if (!id) {
+    console.warn('FormItem should be used within FormField');
+  }
 
   return (
-    <FormItemContext.Provider value={{ id }}>
+    <FormItemContext.Provider value={{ id: id || '' }}>
       <div
         ref={ref}
         className={cn('mb-2 space-y-2 lg:mb-0', className)}

@@ -22,7 +22,7 @@ export default function Home() {
         onSelectFirm={setSelectedFirm}
         selectedFirmId={selectedFirm ? selectedFirm._id : null}
       />
-      <div className='w-full overflow-auto md:flex-1 md:p-6'>
+      <div className='w-full overflow-auto md:flex-1'>
         {selectedFirm ? (
           <LedgerComponent selectedFirm={selectedFirm} />
         ) : (

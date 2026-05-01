@@ -23,8 +23,8 @@ import { Id } from 'convex/_generated/dataModel';
 import CustomImageUpload from '../CustomImageUpload';
 import { useEffect, useState } from 'react';
 import { Category } from '../../types/category.types';
-import { generateSlug } from '@/lib/utils';
-import { useUser } from '@clerk/clerk-react';
+import { generateSlug, cn } from '@/lib/utils';
+import { useUser } from '@clerk/nextjs';
 import { restrictedUser } from '../../constants/restrictedUserData';
 import { Progress } from '@/components/ui/progress';
 import { maxSizeInMB } from '../../constants';
@@ -34,10 +34,12 @@ import CustomInput from '@/components/form/CustomInput';
 
 export default function CategoryForm({
   initialData,
-  pageTitle
+  pageTitle,
+  onSuccess
 }: {
   initialData: Category | null;
   pageTitle: string;
+  onSuccess?: () => void;
 }) {
   const { user } = useUser();
   const router = useRouter();
@@ -149,14 +151,20 @@ export default function CategoryForm({
     });
 
     await promise.then(() => {
-      router.push('/dashboard/product/category');
+      if (onSuccess) {
+        onSuccess();
+      } else {
+        router.push('/dashboard/product/category');
+      }
     });
     setProgress(0);
     setIsLoading(false);
   }
 
+  const cardClassName = cn('w-full', !onSuccess && 'mx-auto');
+
   return (
-    <Card className='mx-auto w-full'>
+    <Card className={cardClassName}>
       <CardHeader>
         <CardTitle className='text-left text-2xl font-bold'>
           {pageTitle}

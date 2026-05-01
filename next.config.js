@@ -34,6 +34,7 @@ const nextConfig = {
       }
     ]
   },
+  allowedDevOrigins: ['192.168.1.69'],
   transpilePackages: ['geist']
 
   // // Enable PWA

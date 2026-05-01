@@ -1,30 +1,29 @@
 'use client';
 
-import { useUser } from '@clerk/clerk-react';
+import { useUser, useClerk } from '@clerk/nextjs';
 import { useEffect, useState } from 'react';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle
-} from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
-import { Separator } from '@/components/ui/separator';
 import {
-  Phone,
-  Mail,
+  BarChart3,
+  Users,
+  Settings,
+  Layers,
   Building,
-  MapPin,
-  CheckCircle,
-  XCircle,
-  Clock
+  FileText,
+  MessageSquare,
+  TrendingUp
 } from 'lucide-react';
-import { DataTable } from '@/features/admin/components/DataTable';
-import { columns } from '@/features/admin/components/columns';
+import { EnterpriseKPIDashboard } from '@/features/admin/components/EnterpriseKPIDashboard';
+import { EnterpriseAnalyticsDashboard } from '@/features/admin/components/EnterpriseAnalyticsDashboard';
+import { EnterpriseTeamManagement } from '@/features/admin/components/EnterpriseTeamManagement';
+import { EnterpriseAuditLogs } from '@/features/admin/components/EnterpriseAuditLogs';
+import { EnterpriseSystemSettings } from '@/features/admin/components/EnterpriseSystemSettings';
+import { EnterpriseCompanyManagement } from '@/features/admin/components/EnterpriseCompanyManagement';
+import { FeedbackForm } from '@/features/admin/components/FeedbackForm';
+import { FeedbackList } from '@/features/admin/components/FeedbackList';
 
 // Mock data - replace with actual data fetching from your Convex database
 const mockCompanyDetails = {
@@ -43,9 +42,8 @@ const mockCompanyDetails = {
 
 export default function AdminPage() {
   const { user } = useUser();
+  const { signOut } = useClerk();
   const [isAdmin, setIsAdmin] = useState(false);
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const [companyDetails] = useState(mockCompanyDetails);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -62,23 +60,6 @@ export default function AdminPage() {
     setTimeout(() => {
       setLoading(false);
     }, 1000);
-
-    // In a real implementation, you would fetch data from Convex here
-    // Example:
-    // const fetchCompanyDetails = async () => {
-    //   try {
-    //     const data = await convex.query('companyDetails.getByUserId', { userId: user?.id });
-    //     setCompanyDetails(data);
-    //     setLoading(false);
-    //   } catch (error) {
-    //     console.error('Error fetching company details:', error);
-    //     setLoading(false);
-    //   }
-    // };
-    //
-    // if (user?.id) {
-    //   fetchCompanyDetails();
-    // }
   }, [user]);
 
   if (!isAdmin) {
@@ -90,10 +71,18 @@ export default function AdminPage() {
               Access Denied
             </CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className='space-y-4'>
             <p className='text-center'>
               You are not authorized to view this page.
             </p>
+            <Button
+              onClick={() => signOut()}
+              variant='destructive'
+              size='lg'
+              className='w-full'
+            >
+              Sign Out
+            </Button>
           </CardContent>
         </Card>
       </div>
@@ -109,240 +98,182 @@ export default function AdminPage() {
   }
 
   return (
-    <div className='container mx-auto px-4 py-8'>
-      <div className='mb-8 flex flex-col items-start justify-between gap-4 md:flex-row md:items-center'>
-        <div>
-          <h1 className='text-3xl font-bold tracking-tight'>Admin Dashboard</h1>
-          <p className='text-muted-foreground'>
-            Manage company details and user information
-          </p>
-        </div>
-        <div className='flex items-center gap-2'>
-          <Avatar className='h-10 w-10'>
-            <AvatarImage src={user?.imageUrl} alt={user?.fullName || 'Admin'} />
-            <AvatarFallback>{user?.firstName?.charAt(0) || 'A'}</AvatarFallback>
-          </Avatar>
-          <div>
-            <p className='text-sm font-medium'>
-              {user?.fullName || 'Admin User'}
-            </p>
-            <p className='text-xs text-muted-foreground'>
-              {user?.emailAddresses[0]?.emailAddress || 'admin@example.com'}
-            </p>
+    <div className='min-h-screen bg-background'>
+      {/* Header */}
+      <div className='border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60'>
+        <div className='container mx-auto px-4 py-6'>
+          <div className='flex flex-col items-start justify-between gap-4 md:flex-row md:items-center'>
+            <div>
+              <h1 className='text-4xl font-bold tracking-tight'>
+                Enterprise Admin Dashboard
+              </h1>
+              <p className='mt-1 text-muted-foreground'>
+                Complete system management and business intelligence
+              </p>
+            </div>
+            <div className='flex items-center gap-3'>
+              <Avatar className='h-12 w-12'>
+                <AvatarImage
+                  src={user?.imageUrl}
+                  alt={user?.fullName || 'Admin'}
+                />
+                <AvatarFallback>
+                  {user?.firstName?.charAt(0) || 'A'}
+                </AvatarFallback>
+              </Avatar>
+              <div>
+                <p className='text-sm font-medium'>
+                  {user?.fullName || 'Admin User'}
+                </p>
+                <p className='text-xs text-muted-foreground'>
+                  {user?.emailAddresses[0]?.emailAddress || 'admin@example.com'}
+                </p>
+              </div>
+            </div>
           </div>
         </div>
       </div>
 
-      <Tabs defaultValue='company' className='w-full'>
-        <TabsList className='mb-8 grid w-full grid-cols-2'>
-          <TabsTrigger value='company'>Company Details</TabsTrigger>
-          <TabsTrigger value='users'>User Management</TabsTrigger>
-        </TabsList>
+      {/* Main Content */}
+      <div className='container mx-auto px-4 py-8'>
+        <Tabs defaultValue='dashboard' className='w-full'>
+          <TabsList className='mb-8 grid w-full grid-cols-8'>
+            <TabsTrigger value='dashboard' className='gap-2'>
+              <TrendingUp className='h-4 w-4' />
+              <span className='hidden sm:inline'>Dashboard</span>
+            </TabsTrigger>
+            <TabsTrigger value='analytics' className='gap-2'>
+              <BarChart3 className='h-4 w-4' />
+              <span className='hidden sm:inline'>Analytics</span>
+            </TabsTrigger>
+            <TabsTrigger value='company' className='gap-2'>
+              <Building className='h-4 w-4' />
+              <span className='hidden sm:inline'>Company</span>
+            </TabsTrigger>
+            <TabsTrigger value='team' className='gap-2'>
+              <Users className='h-4 w-4' />
+              <span className='hidden sm:inline'>Team</span>
+            </TabsTrigger>
+            <TabsTrigger value='audit' className='gap-2'>
+              <Layers className='h-4 w-4' />
+              <span className='hidden sm:inline'>Audit</span>
+            </TabsTrigger>
+            <TabsTrigger value='feedback' className='gap-2'>
+              <MessageSquare className='h-4 w-4' />
+              <span className='hidden sm:inline'>Feedback</span>
+            </TabsTrigger>
+            <TabsTrigger value='reports' className='gap-2'>
+              <FileText className='h-4 w-4' />
+              <span className='hidden sm:inline'>Reports</span>
+            </TabsTrigger>
+            <TabsTrigger value='settings' className='gap-2'>
+              <Settings className='h-4 w-4' />
+              <span className='hidden sm:inline'>Settings</span>
+            </TabsTrigger>
+          </TabsList>
 
-        <TabsContent value='company' className='space-y-6'>
-          <Card>
-            <CardHeader>
-              <div className='flex items-center justify-between'>
-                <div>
-                  <CardTitle>Company Information</CardTitle>
-                  <CardDescription>
-                    View and manage company details
-                  </CardDescription>
-                </div>
-                <Badge
-                  variant={
-                    companyDetails.isVerified ? 'default' : 'destructive'
-                  }
-                >
-                  {companyDetails.isVerified ? 'Verified' : 'Unverified'}
-                </Badge>
-              </div>
-            </CardHeader>
-            <CardContent className='space-y-6'>
-              <div className='grid grid-cols-1 gap-6 md:grid-cols-2'>
-                <div className='space-y-4'>
-                  <div>
-                    <h3 className='flex items-center gap-2 text-lg font-semibold'>
-                      <Building className='h-5 w-5' />
-                      Company Name
-                    </h3>
-                    <p className='text-muted-foreground'>
-                      {companyDetails.companyName}
-                    </p>
-                  </div>
+          {/* Dashboard Tab */}
+          <TabsContent value='dashboard' className='space-y-6'>
+            <EnterpriseKPIDashboard />
+          </TabsContent>
 
-                  <div>
-                    <h3 className='flex items-center gap-2 text-lg font-semibold'>
-                      <MapPin className='h-5 w-5' />
-                      Address
-                    </h3>
-                    <p className='text-muted-foreground'>
-                      {companyDetails.companyAddress}
-                    </p>
-                  </div>
+          {/* Analytics Tab */}
+          <TabsContent value='analytics' className='space-y-6'>
+            <EnterpriseAnalyticsDashboard />
+          </TabsContent>
 
-                  <div>
-                    <h3 className='flex items-center gap-2 text-lg font-semibold'>
-                      <Mail className='h-5 w-5' />
-                      Email
-                    </h3>
-                    <p className='text-muted-foreground'>
-                      {companyDetails.email}
-                    </p>
-                  </div>
-                </div>
+          {/* Company Tab */}
+          <TabsContent value='company' className='space-y-6'>
+            <EnterpriseCompanyManagement />
+          </TabsContent>
 
-                <div className='space-y-4'>
-                  <div>
-                    <h3 className='flex items-center gap-2 text-lg font-semibold'>
-                      <Phone className='h-5 w-5' />
-                      Phone Numbers
-                    </h3>
-                    <ul className='space-y-1'>
-                      {companyDetails.phone.map((phone, index) => (
-                        <li key={index} className='text-muted-foreground'>
-                          {phone}
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
+          {/* Team Tab */}
+          <TabsContent value='team' className='space-y-6'>
+            <EnterpriseTeamManagement />
+          </TabsContent>
 
-                  <div>
-                    <h3 className='text-lg font-semibold'>VAT Number</h3>
-                    <div className='flex items-center gap-2'>
-                      <p className='text-muted-foreground'>
-                        {companyDetails.vatNumber}
-                      </p>
-                      {companyDetails.isVerified ? (
-                        <CheckCircle className='h-5 w-5 text-green-500' />
-                      ) : (
-                        <XCircle className='h-5 w-5 text-red-500' />
-                      )}
-                    </div>
-                  </div>
+          {/* Audit Logs Tab */}
+          <TabsContent value='audit' className='space-y-6'>
+            <EnterpriseAuditLogs />
+          </TabsContent>
 
-                  <div>
-                    <h3 className='flex items-center gap-2 text-lg font-semibold'>
-                      <Clock className='h-5 w-5' />
-                      Created At
-                    </h3>
-                    <p className='text-muted-foreground'>
-                      {new Date(companyDetails.createdAt).toLocaleDateString()}
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              <Separator />
-
+          {/* Feedback Tab */}
+          <TabsContent value='feedback' className='space-y-6'>
+            <div className='mb-6 flex items-center justify-between'>
               <div>
-                <h3 className='mb-2 text-lg font-semibold'>Company URLs</h3>
-                <ul className='space-y-2'>
-                  {companyDetails.urls.map((url) => (
-                    <li key={url.id} className='flex items-center gap-2'>
-                      <span className='text-muted-foreground'>{url.id}.</span>
-                      <a
-                        href={url.value}
-                        target='_blank'
-                        rel='noopener noreferrer'
-                        className='text-primary hover:underline'
-                      >
-                        {url.value}
-                      </a>
-                    </li>
-                  ))}
-                </ul>
+                <h2 className='text-2xl font-bold tracking-tight'>
+                  User Feedback
+                </h2>
+                <p className='text-muted-foreground'>
+                  Review, respond to, and manage user feedback
+                </p>
               </div>
+              <FeedbackForm />
+            </div>
+            <FeedbackList />
+          </TabsContent>
 
-              <div className='flex justify-end gap-2'>
-                <Button variant='outline'>Edit Details</Button>
-                <Button>Verify Company</Button>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle>OTP Verification</CardTitle>
-              <CardDescription>
-                Manage one-time password settings
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className='space-y-4'>
-                <div className='grid grid-cols-1 gap-4 md:grid-cols-3'>
-                  <div className='rounded-lg border p-4'>
-                    <h3 className='mb-1 font-medium'>Current OTP</h3>
-                    <p className='font-mono text-2xl'>123456</p>
-                  </div>
-                  <div className='rounded-lg border p-4'>
-                    <h3 className='mb-1 font-medium'>Expires At</h3>
-                    <p className='text-sm'>
-                      {new Date(Date.now() + 15 * 60 * 1000).toLocaleString()}
-                    </p>
-                  </div>
-                  <div className='rounded-lg border p-4'>
-                    <h3 className='mb-1 font-medium'>Status</h3>
-                    <Badge>Active</Badge>
-                  </div>
+          {/* Reports Tab */}
+          <TabsContent value='reports' className='space-y-6'>
+            <Card>
+              <CardHeader>
+                <CardTitle>Generate Reports</CardTitle>
+              </CardHeader>
+              <CardContent className='space-y-4'>
+                <div className='grid gap-4 md:grid-cols-3'>
+                  <Card className='cursor-pointer border-2 transition-colors hover:border-primary'>
+                    <CardContent className='pt-6'>
+                      <div className='text-center'>
+                        <FileText className='mx-auto mb-2 h-8 w-8 text-blue-500' />
+                        <p className='font-semibold'>Sales Report</p>
+                        <p className='text-sm text-muted-foreground'>
+                          Monthly & quarterly
+                        </p>
+                        <Button className='mt-4 w-full' size='sm'>
+                          Generate
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+                  <Card className='cursor-pointer border-2 transition-colors hover:border-primary'>
+                    <CardContent className='pt-6'>
+                      <div className='text-center'>
+                        <FileText className='mx-auto mb-2 h-8 w-8 text-green-500' />
+                        <p className='font-semibold'>Inventory Report</p>
+                        <p className='text-sm text-muted-foreground'>
+                          Stock & valuation
+                        </p>
+                        <Button className='mt-4 w-full' size='sm'>
+                          Generate
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+                  <Card className='cursor-pointer border-2 transition-colors hover:border-primary'>
+                    <CardContent className='pt-6'>
+                      <div className='text-center'>
+                        <FileText className='mx-auto mb-2 h-8 w-8 text-purple-500' />
+                        <p className='font-semibold'>User Analytics</p>
+                        <p className='text-sm text-muted-foreground'>
+                          Engagement & behavior
+                        </p>
+                        <Button className='mt-4 w-full' size='sm'>
+                          Generate
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
                 </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
 
-                <div className='flex justify-end gap-2'>
-                  <Button variant='outline'>Reset OTP</Button>
-                  <Button>Generate New OTP</Button>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value='users' className='space-y-6'>
-          <Card>
-            <CardHeader>
-              <div className='flex items-center justify-between'>
-                <div>
-                  <CardTitle>User Management</CardTitle>
-                  <CardDescription>
-                    View and manage user accounts
-                  </CardDescription>
-                </div>
-                <Button>Add User</Button>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <DataTable
-                columns={columns}
-                data={[
-                  {
-                    id: '1',
-                    name: 'John Doe',
-                    email: 'john@example.com',
-                    role: 'Admin',
-                    status: 'Active',
-                    lastLogin: '2023-04-01T09:00:00'
-                  },
-                  {
-                    id: '2',
-                    name: 'Jane Smith',
-                    email: 'jane@example.com',
-                    role: 'Editor',
-                    status: 'Active',
-                    lastLogin: '2023-04-01T10:30:00'
-                  },
-                  {
-                    id: '3',
-                    name: 'Bob Johnson',
-                    email: 'bob@example.com',
-                    role: 'Viewer',
-                    status: 'Inactive',
-                    lastLogin: '2023-03-28T14:15:00'
-                  }
-                ]}
-              />
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
+          {/* Settings Tab */}
+          <TabsContent value='settings' className='space-y-6'>
+            <EnterpriseSystemSettings />
+          </TabsContent>
+        </Tabs>
+      </div>
     </div>
   );
 }

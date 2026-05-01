@@ -1,3 +1,5 @@
+'use client';
+
 import React from 'react';
 import { SidebarTrigger } from '../ui/sidebar';
 import { Separator } from '../ui/separator';
@@ -5,8 +7,15 @@ import { Breadcrumbs } from '../breadcrumbs';
 import SearchInput from '../SearchInput';
 import { UserNav } from './UserNav';
 import ThemeToggle from './ThemeToggle/theme-toggle';
+import NotificationButton from './NotificationButton';
 
 export default function Header() {
+  const [isHydrated, setIsHydrated] = React.useState(false);
+
+  React.useEffect(() => {
+    setIsHydrated(true);
+  }, []);
+
   return (
     <header className='flex h-16 shrink-0 items-center justify-between gap-2 transition-[width,height] ease-linear group-has-[[data-collapsible=icon]]/sidebar-wrapper:h-12'>
       <div className='flex items-center gap-2 px-4'>
@@ -19,8 +28,15 @@ export default function Header() {
         <div className='hidden md:flex'>
           <SearchInput />
         </div>
-        <UserNav />
-        <ThemeToggle />
+        {isHydrated ? (
+          <>
+            <NotificationButton />
+            <UserNav />
+            <ThemeToggle />
+          </>
+        ) : (
+          <div className='h-10 w-28' aria-hidden='true' />
+        )}
       </div>
     </header>
   );

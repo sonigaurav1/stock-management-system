@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useMemo, useReducer, useEffect } from 'react';
-import { useUser } from '@clerk/clerk-react';
+import { useUser } from '@clerk/nextjs';
 import { useQuery } from 'convex/react';
 import { api } from '@/../convex/_generated/api';
 import { Info } from 'lucide-react';

@@ -1,21 +1,22 @@
 import React, { useEffect, useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 import { cn } from '../../lib/utils';
-import { Check } from 'lucide-react'; // Import icons
+import { Check, Info } from 'lucide-react';
 import {
   Command,
   CommandEmpty,
   CommandGroup,
   CommandInput,
   CommandItem
-} from '../ui/command'; // Import Command components
-import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover'; // Import Popover components
+} from '../ui/command';
+import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
+import CustomTooltip from '../ui/custom/CustomTooltip';
 
 interface SelectOption {
   value: string;
   label: string;
   _id?: string;
-  [key: string]: any; // Allow for dynamic keys
+  [key: string]: any;
 }
 
 interface Props {
@@ -36,6 +37,16 @@ interface Props {
   disabled?: boolean;
   valueKey?: string;
   labelKey?: string;
+  tooltipContent?: string;
+  showTooltip?: boolean;
+  // Dynamic trailing component (e.g., add category, add supplier)
+  trailingComponent?: React.ReactNode;
+  trailingComponentPosition?: 'top' | 'bottom';
+  // Search functionality
+  searchable?: boolean;
+  searchPlaceholder?: string;
+  // Custom icon for selected item
+  selectedIcon?: React.ReactNode;
 }
 
 const CustomSelect: React.FC<Props> = ({
@@ -55,7 +66,14 @@ const CustomSelect: React.FC<Props> = ({
   hintClassName,
   disabled = false,
   valueKey = '_id',
-  labelKey = 'name'
+  labelKey = 'name',
+  tooltipContent,
+  showTooltip = true,
+  trailingComponent,
+  trailingComponentPosition = 'top',
+  searchable = true,
+  searchPlaceholder = 'Search options...',
+  selectedIcon
 }) => {
   const {
     register,
@@ -68,12 +86,20 @@ const CustomSelect: React.FC<Props> = ({
   const uniqueId = `select-${name}`;
   const value = watch(name);
   const [open, setOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
 
   // Map the options to the correct format
   const normalizedOptions = options.map((option) => ({
     value: String(option[valueKey] || option.value || ''),
     label: String(option[labelKey] || option.label || '')
   }));
+
+  // Filter options based on search query
+  const filteredOptions = searchQuery
+    ? normalizedOptions.filter((option) =>
+        option.label.toLowerCase().includes(searchQuery.toLowerCase())
+      )
+    : normalizedOptions;
 
   // Find the selected option label
   const selectedOption = normalizedOptions.find(
@@ -86,12 +112,13 @@ const CustomSelect: React.FC<Props> = ({
     }
   }, [defaultValue, name, setValue]);
 
-  const handleValueChange = (value: string) => {
-    setValue(name, value);
+  const handleValueChange = (newValue: string) => {
+    setValue(name, newValue);
     if (errors[name]) {
       clearErrors(name);
     }
     setOpen(false);
+    setSearchQuery('');
   };
 
   // Use form errors or passed error prop
@@ -110,19 +137,31 @@ const CustomSelect: React.FC<Props> = ({
         containerClassName
       )}
     >
-      {label && (
-        <label
-          htmlFor={uniqueId}
-          className={cn(
-            'mb-2 max-w-max text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70',
-            required && "after:ml-0.5 after:text-[#EF4444] after:content-['*']",
-            labelClassName
+      {/* Label Row */}
+      <div className='flex items-center justify-between gap-2'>
+        <div className='flex items-center gap-1'>
+          {label && (
+            <label
+              htmlFor={uniqueId}
+              className={cn(
+                'text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70',
+                labelClassName
+              )}
+            >
+              {label}
+              {required && <span className='ml-0.5 text-[#EF4444]'>*</span>}
+            </label>
           )}
-        >
-          {label}
-        </label>
-      )}
+          {showTooltip && tooltipContent && (
+            <CustomTooltip tooltipContent={tooltipContent} side='right'>
+              <Info className='h-4 w-4 cursor-help text-muted-foreground' />
+            </CustomTooltip>
+          )}
+        </div>
+        {trailingComponentPosition === 'top' && trailingComponent}
+      </div>
 
+      {/* Select Button */}
       <div className='relative'>
         <Popover open={open} onOpenChange={setOpen}>
           <PopoverTrigger asChild>
@@ -132,20 +171,23 @@ const CustomSelect: React.FC<Props> = ({
               disabled={disabled}
               className={cn(
                 'flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50',
-                errorMessage && 'border-[#EF4444]',
+                errorMessage && 'border-red-500 focus:ring-red-500',
                 selectClassName,
                 className
               )}
-              aria-describedby={
-                errorMessage
-                  ? `${uniqueId}-error`
-                  : hint
-                    ? `${uniqueId}-hint`
-                    : undefined
-              }
             >
-              <span className={!value ? 'text-muted-foreground' : ''}>
-                {selectedOption?.label || placeholder}
+              <span
+                className={cn(
+                  'flex items-center gap-2',
+                  !value && 'text-muted-foreground'
+                )}
+              >
+                {selectedIcon && value && (
+                  <span className='shrink-0'>{selectedIcon}</span>
+                )}
+                <span className={cn(!value && 'text-muted-foreground')}>
+                  {selectedOption?.label || placeholder}
+                </span>
               </span>
               <svg
                 xmlns='http://www.w3.org/2000/svg'
@@ -157,18 +199,35 @@ const CustomSelect: React.FC<Props> = ({
                 strokeWidth='2'
                 strokeLinecap='round'
                 strokeLinejoin='round'
-                className='h-4 w-4 opacity-50'
+                className='h-4 w-4 shrink-0 opacity-50'
               >
                 <path d='m6 9 6 6 6-6' />
               </svg>
             </button>
           </PopoverTrigger>
-          <PopoverContent className='w-[--radix-popover-trigger-width] p-0'>
-            <Command>
-              <CommandInput placeholder='Search options...' className='h-9' />
-              <CommandEmpty>No option found.</CommandEmpty>
-              <CommandGroup className='max-h-64 overflow-auto'>
-                {normalizedOptions.map((option) => (
+          <PopoverContent
+            className='w-[--radix-popover-trigger-width] p-0'
+            align='start'
+          >
+            {/* Search Input */}
+            {searchable && (
+              <div className='flex items-center border-b px-3'>
+                <Command className='flex-1'>
+                  <CommandInput
+                    placeholder={searchPlaceholder}
+                    value={searchQuery}
+                    onValueChange={setSearchQuery}
+                    className='h-9 border-0 bg-transparent focus:outline-none focus:ring-0'
+                  />
+                </Command>
+              </div>
+            )}
+            <Command className='max-h-[200px] overflow-auto'>
+              <CommandEmpty className='py-6 text-center text-sm text-muted-foreground'>
+                No option found.
+              </CommandEmpty>
+              <CommandGroup>
+                {filteredOptions.map((option) => (
                   <CommandItem
                     key={option.value}
                     value={option.label}
@@ -187,15 +246,20 @@ const CustomSelect: React.FC<Props> = ({
         </Popover>
       </div>
 
+      {/* Trailing Component at Bottom */}
+      {trailingComponentPosition === 'bottom' && trailingComponent}
+
+      {/* Error Message */}
       {errorMessage && (
         <p
           id={`${uniqueId}-error`}
-          className='text-sm font-medium text-[#EF4444]'
+          className='text-sm font-medium text-red-500'
         >
           {errorMessage}
         </p>
       )}
 
+      {/* Hint */}
       {hint && !errorMessage && (
         <p
           id={`${uniqueId}-hint`}

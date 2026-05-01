@@ -1,7 +1,10 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
-import { useUser } from '@clerk/clerk-react';
+import { useState, useEffect, useCallback, useRef } from 'react';
+import { useRouter } from 'next/navigation';
+import { useUser } from '@clerk/nextjs';
+import { useMutation } from 'convex/react';
+import { api } from '@/convex/_generated/api';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -25,7 +28,7 @@ import {
   TooltipTrigger
 } from '@/components/ui/tooltip';
 import { toast } from 'sonner';
-import { Loader2, Info } from 'lucide-react';
+import { Loader2, Info, Download, Upload } from 'lucide-react';
 import { z } from 'zod';
 
 // Validation schemas
@@ -51,7 +54,16 @@ const passwordSchema = z
   });
 
 export default function AccountPage() {
+  const router = useRouter();
   const { user, isLoaded } = useUser();
+  const deleteAllUserDataMutation = useMutation(api.users.deleteAllUserData);
+  const exportUserDataAsBackupMutation = useMutation(
+    api.users.exportUserDataAsBackup
+  );
+  const importUserDataFromBackupMutation = useMutation(
+    api.users.importUserDataFromBackup
+  );
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Email state
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -82,15 +94,20 @@ export default function AccountPage() {
     settingPrimary: false,
     changingPassword: false,
     deletingAccount: false,
-    toggling2FA: false
+    toggling2FA: false,
+    backingUp: false,
+    restoring: false
   });
 
   // Dialog state
   const [openDialog, setOpenDialog] = useState({
     deleteAccount: false,
-    removeEmail: false
+    removeEmail: false,
+    backupBeforeDelete: false
   });
   const [emailToRemove, setEmailToRemove] = useState<string | null>(null);
+  const [shouldBackupBeforeDelete, setShouldBackupBeforeDelete] =
+    useState(false);
 
   // 2FA state
   const [twoFactorEnabled, setTwoFactorEnabled] = useState(false);
@@ -361,9 +378,30 @@ export default function AccountPage() {
 
     setIsLoading((prev) => ({ ...prev, deletingAccount: true }));
     try {
+      // First, backup data if user requested it
+      if (shouldBackupBeforeDelete) {
+        toast.message('Creating backup...');
+        await downloadBackup();
+        await new Promise((resolve) => setTimeout(resolve, 1000));
+      }
+
+      // Then delete all Convex data
+      toast.message('Deleting account data...');
+      await deleteAllUserDataMutation();
+
+      // Then delete the Clerk user
       await user.delete();
+
+      // Close the dialog
+      setOpenDialog((prev) => ({ ...prev, deleteAccount: false }));
+
+      // Show success toast
       toast.success('Account deleted successfully');
-      // Redirect to homepage or login page would typically happen here
+
+      // Redirect to sign-in page after a short delay to allow toast to display
+      setTimeout(() => {
+        router.push('/sign-in');
+      }, 1000);
     } catch (error) {
       toast.error('Error deleting account', {
         description:
@@ -371,7 +409,90 @@ export default function AccountPage() {
       });
     } finally {
       setIsLoading((prev) => ({ ...prev, deletingAccount: false }));
-      setOpenDialog((prev) => ({ ...prev, deleteAccount: false }));
+    }
+  };
+
+  // Download backup
+  const downloadBackup = async () => {
+    setIsLoading((prev) => ({ ...prev, backingUp: true }));
+    try {
+      const backupData = await exportUserDataAsBackupMutation();
+
+      if (!backupData) {
+        toast.error('Failed to create backup', {
+          description: 'Could not fetch your data'
+        });
+        return;
+      }
+
+      const timestamp = new Date()
+        .toISOString()
+        .replace(/[:.]/g, '-')
+        .slice(0, -6);
+      const filename = `backup_${user?.id || 'user'}_${timestamp}.json`;
+
+      // Create blob and download
+      const dataStr = JSON.stringify(backupData, null, 2);
+      const blob = new Blob([dataStr], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+
+      toast.success('Backup downloaded successfully', {
+        description: `File saved as ${filename}`
+      });
+    } catch (error) {
+      toast.error('Error creating backup', {
+        description:
+          error instanceof Error ? error.message : 'Failed to create backup'
+      });
+    } finally {
+      setIsLoading((prev) => ({ ...prev, backingUp: false }));
+    }
+  };
+
+  // Restore from backup
+  const handleRestoreFile = async (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    setIsLoading((prev) => ({ ...prev, restoring: true }));
+    try {
+      toast.loading('Reading backup file...');
+      const fileContent = await file.text();
+      const backupData = JSON.parse(fileContent);
+
+      // Verify backup format
+      if (!backupData.version || !backupData.tables) {
+        throw new Error('Invalid backup file format');
+      }
+
+      toast.loading('Restoring data...');
+      const result = await importUserDataFromBackupMutation({ backupData });
+
+      if (result.success) {
+        toast.success('Data restored successfully', {
+          description: `${result.importedCount} records imported`
+        });
+      }
+    } catch (error) {
+      toast.error('Error restoring backup', {
+        description:
+          error instanceof Error ? error.message : 'Failed to restore backup'
+      });
+    } finally {
+      setIsLoading((prev) => ({ ...prev, restoring: false }));
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
     }
   };
 
@@ -760,6 +881,71 @@ export default function AccountPage() {
 
             <Separator />
 
+            {/* Data Backup & Restore Section */}
+            <div className='space-y-4'>
+              <h3 className='text-lg font-medium'>Data Backup & Restore</h3>
+              <p className='text-sm text-muted-foreground'>
+                Download a backup of all your data or restore from a previous
+                backup
+              </p>
+
+              <div className='space-y-3'>
+                {/* Download Backup */}
+                <div className='rounded border p-4'>
+                  <h4 className='mb-2 font-medium'>Download Backup</h4>
+                  <p className='mb-4 text-sm text-muted-foreground'>
+                    Export all your data as a JSON file. You can use this to
+                    restore your data later or migrate to another account.
+                  </p>
+                  <Button
+                    onClick={downloadBackup}
+                    disabled={isLoading.backingUp}
+                    variant='outline'
+                  >
+                    {isLoading.backingUp ? (
+                      <Loader2 className='mr-2 h-4 w-4 animate-spin' />
+                    ) : (
+                      <Download className='mr-2 h-4 w-4' />
+                    )}
+                    Download Backup
+                  </Button>
+                </div>
+
+                {/* Restore from Backup */}
+                <div className='rounded border p-4'>
+                  <h4 className='mb-2 font-medium'>Restore from Backup</h4>
+                  <p className='mb-4 text-sm text-muted-foreground'>
+                    Upload a previously downloaded backup file to restore your
+                    data.
+                  </p>
+                  <div className='flex gap-2'>
+                    <input
+                      ref={fileInputRef}
+                      type='file'
+                      accept='.json'
+                      onChange={handleRestoreFile}
+                      className='hidden'
+                      aria-label='Select backup file to restore'
+                    />
+                    <Button
+                      onClick={() => fileInputRef.current?.click()}
+                      disabled={isLoading.restoring}
+                      variant='outline'
+                    >
+                      {isLoading.restoring ? (
+                        <Loader2 className='mr-2 h-4 w-4 animate-spin' />
+                      ) : (
+                        <Upload className='mr-2 h-4 w-4' />
+                      )}
+                      Restore from Backup
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <Separator />
+
             {/* Delete Account Section */}
             <div className='space-y-4'>
               <h3 className='text-lg font-medium'>Delete Account</h3>
@@ -769,9 +955,10 @@ export default function AccountPage() {
               </p>
               <Button
                 variant='destructive'
-                onClick={() =>
-                  setOpenDialog((prev) => ({ ...prev, deleteAccount: true }))
-                }
+                onClick={() => {
+                  setShouldBackupBeforeDelete(false);
+                  setOpenDialog((prev) => ({ ...prev, deleteAccount: true }));
+                }}
               >
                 Delete account
               </Button>
@@ -783,9 +970,12 @@ export default function AccountPage() {
       {/* Delete Account Confirmation Dialog */}
       <AlertDialog
         open={openDialog.deleteAccount}
-        onOpenChange={(open) =>
-          setOpenDialog((prev) => ({ ...prev, deleteAccount: open }))
-        }
+        onOpenChange={(open) => {
+          setOpenDialog((prev) => ({ ...prev, deleteAccount: open }));
+          if (!open) {
+            setShouldBackupBeforeDelete(false);
+          }
+        }}
       >
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -795,6 +985,27 @@ export default function AccountPage() {
               account and remove all your data from our servers.
             </AlertDialogDescription>
           </AlertDialogHeader>
+
+          <div className='space-y-3 py-4'>
+            <div className='flex items-center space-x-2'>
+              <input
+                type='checkbox'
+                id='backup-before-delete'
+                checked={shouldBackupBeforeDelete}
+                onChange={(e) => setShouldBackupBeforeDelete(e.target.checked)}
+                className='h-4 w-4'
+                disabled={isLoading.deletingAccount}
+              />
+              <Label htmlFor='backup-before-delete' className='cursor-pointer'>
+                Create a backup of my data before deletion
+              </Label>
+            </div>
+            <p className='pl-6 text-xs text-muted-foreground'>
+              A backup file will be downloaded to your device before your
+              account is deleted.
+            </p>
+          </div>
+
           <AlertDialogFooter>
             <AlertDialogCancel disabled={isLoading.deletingAccount}>
               Cancel

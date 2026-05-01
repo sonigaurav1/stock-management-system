@@ -4,6 +4,8 @@ import { PATH } from '@/constants/PATH';
 import { Spinner } from '@/components/Spinner';
 import { useAuthRedirect } from '@/features/auth/hooks/useAuthRedirect';
 import MobileNavigation from '@/components/MobileNavigation';
+import { AccountStatusGuard } from '@/components/auth/AccountStatusGuard';
+import { BusinessProfileGuard } from '@/features/auth/components/BusinessProfileGuard';
 
 export default function AuthenticatedLayout({
   children
@@ -25,9 +27,11 @@ export default function AuthenticatedLayout({
   }
 
   return (
-    <>
-      {children}
-      <MobileNavigation />
-    </>
+    <AccountStatusGuard>
+      <BusinessProfileGuard>
+        {children}
+        <MobileNavigation />
+      </BusinessProfileGuard>
+    </AccountStatusGuard>
   );
 }

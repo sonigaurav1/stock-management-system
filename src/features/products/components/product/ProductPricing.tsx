@@ -1,15 +1,7 @@
+import { formatCurrency } from '@/lib/utils';
 import { Product } from '../../types/product.types';
 
 export default function ProductPricing({ product }: { product: Product }) {
-  // Format currency
-  const formatCurrency = (amount?: number) => {
-    if (amount === undefined) return 'N/A';
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'NPR'
-    }).format(amount);
-  };
-
   // Calculate profit margin if both prices are available
   // const calculateMargin = () => {
   //   if (product.purchasePrice && product.sellingPrice) {
@@ -36,7 +28,11 @@ export default function ProductPricing({ product }: { product: Product }) {
           <p className='text-sm font-medium text-muted-foreground'>
             Purchase Price
           </p>
-          <p>NPR {product.purchasePrice}</p>
+          <p>
+            {Number.isFinite(Number(product.purchasePrice))
+              ? formatCurrency(Number(product.purchasePrice))
+              : 'N/A'}
+          </p>
         </div>
         <div>
           <p className='text-sm font-medium text-muted-foreground'>

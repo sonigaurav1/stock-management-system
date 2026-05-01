@@ -5,7 +5,7 @@
 import React, { useEffect, useState } from 'react';
 import ThemeProvider from './ThemeToggle/theme-provider';
 import { EdgeStoreProvider } from '@/lib/edgestore';
-import { useUser } from '@clerk/clerk-react';
+import { useUser } from '@clerk/nextjs';
 import { Spinner } from '../Spinner';
 
 export default function Providers({ children }: { children: React.ReactNode }) {

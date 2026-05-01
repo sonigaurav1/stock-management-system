@@ -1,6 +1,12 @@
 import { query, mutation } from './_generated/server';
 import { v } from 'convex/values';
 import { CustomError } from '@/lib/utils';
+import {
+  resolveCallerContext,
+  requirePermission,
+  getDataScopeUserId
+} from './lib/authHelper';
+import { PERMISSIONS } from './lib/permissions';
 
 export type CategoryFilters = {
   searchTerm?: string;
@@ -14,22 +20,20 @@ export const createCategory = mutation({
     imageUrl: v.optional(v.string())
   },
   handler: async (ctx, args) => {
-    const identify = await ctx.auth.getUserIdentity();
-    if (!identify) {
-      throw new Error('Not authenticated');
-    }
-    const userId = identify.subject;
+    const caller = await resolveCallerContext(ctx);
+    requirePermission(caller, PERMISSIONS.CREATE_PRODUCT);
+
+    const userId = getDataScopeUserId(caller);
 
     try {
       return await ctx.db.insert('category', {
         ...args,
-        userId, // Associate category with user
-        isDeleted: false, // New categories start as active
+        userId,
+        isDeleted: false,
         createdAt: Date.now(),
         updatedAt: Date.now()
       });
     } catch (error) {
-      // eslint-disable-next-line no-console
       console.error('Error creating category:', error);
       throw new CustomError('Failed to create category', 400);
     }
@@ -48,11 +52,10 @@ export const updateCategory = mutation({
     })
   },
   handler: async (ctx, args) => {
-    const identify = await ctx.auth.getUserIdentity();
-    if (!identify) {
-      throw new Error('Not authenticated');
-    }
-    const userId = identify.subject;
+    const caller = await resolveCallerContext(ctx);
+    requirePermission(caller, PERMISSIONS.EDIT_PRODUCT);
+
+    const userId = getDataScopeUserId(caller);
 
     const existingCategory = await ctx.db.get(args.id);
     if (!existingCategory || existingCategory.userId !== userId) {
@@ -93,11 +96,10 @@ export const updateCategory = mutation({
 export const deleteCategory = mutation({
   args: { id: v.id('category') },
   handler: async (ctx, args) => {
-    const identify = await ctx.auth.getUserIdentity();
-    if (!identify) {
-      throw new Error('Not authenticated');
-    }
-    const userId = identify.subject;
+    const caller = await resolveCallerContext(ctx);
+    requirePermission(caller, PERMISSIONS.DELETE_PRODUCT);
+
+    const userId = getDataScopeUserId(caller);
 
     const existingCategory = await ctx.db.get(args.id);
     if (!existingCategory || existingCategory.userId !== userId) {
@@ -129,11 +131,10 @@ export const deleteCategory = mutation({
 export const restoreCategory = mutation({
   args: { id: v.id('category') },
   handler: async (ctx, args) => {
-    const identify = await ctx.auth.getUserIdentity();
-    if (!identify) {
-      throw new Error('Not authenticated');
-    }
-    const userId = identify.subject;
+    const caller = await resolveCallerContext(ctx);
+    requirePermission(caller, PERMISSIONS.CREATE_PRODUCT);
+
+    const userId = getDataScopeUserId(caller);
 
     const existingCategory = await ctx.db.get(args.id);
     if (!existingCategory || existingCategory.userId !== userId) {
@@ -150,11 +151,10 @@ export const restoreCategory = mutation({
 // Get all categories
 export const getAllCategories = query({
   handler: async (ctx) => {
-    const identify = await ctx.auth.getUserIdentity();
-    if (!identify) {
-      throw new Error('Not authenticated');
-    }
-    const userId = identify.subject;
+    const caller = await resolveCallerContext(ctx);
+    requirePermission(caller, PERMISSIONS.VIEW_INVENTORY);
+
+    const userId = getDataScopeUserId(caller);
 
     const categories = await ctx.db
       .query('category')
@@ -170,14 +170,13 @@ export const getAllCategories = query({
 export const getCategoryById = query({
   args: { id: v.id('category') },
   handler: async (ctx, args) => {
-    const identify = await ctx.auth.getUserIdentity();
-    if (!identify) {
-      throw new Error('Not authenticated');
-    }
-    const userId = identify.subject;
+    const caller = await resolveCallerContext(ctx);
+    requirePermission(caller, PERMISSIONS.VIEW_INVENTORY);
+
+    const userId = getDataScopeUserId(caller);
 
     const category = await ctx.db.get(args.id);
-    return category?.isDeleted || category?.userId !== userId ? null : category; // Return null if deleted or not owned by user
+    return category?.isDeleted || category?.userId !== userId ? null : category;
   }
 });
 

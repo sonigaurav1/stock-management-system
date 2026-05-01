@@ -1,11 +1,11 @@
 'use client';
 import { ColumnDef } from '@tanstack/react-table';
-import Image from 'next/image';
 import { CellAction } from './CellAction';
 import { Product, SkeletonProduct } from '../../../types/product.types';
 import { Skeleton } from '@/components/ui/skeleton';
 import CustomTooltip from '@/components/ui/custom/CustomTooltip';
 import { truncate } from '@/lib/utils';
+import ImagePreview from '../../common/ImagePreview';
 
 const placeholderImageUrl = '/assets/images/product-placeholder.webp';
 
@@ -22,17 +22,11 @@ export const columns: ColumnDef<Product>[] = [
     cell: ({ row }) => {
       const imageUrl = row.getValue('imageUrl') as string | undefined;
       return (
-        <div className='relative aspect-square max-h-16'>
-          <Image
-            src={imageUrl || placeholderImageUrl}
-            alt={row.getValue('name')}
-            fill
-            sizes='100%'
-            className='rounded-lg'
-            priority={false}
-            loading='lazy'
-          />
-        </div>
+        <ImagePreview
+          src={imageUrl}
+          alt={row.getValue('name') as string}
+          fallbackSrc={placeholderImageUrl}
+        />
       );
     }
   },
@@ -92,6 +86,41 @@ export const columns: ColumnDef<Product>[] = [
     cell: ({ row }) => {
       const stockStatus = row.original.stockStatus;
       return stockStatusMapping[stockStatus] || 'Unknown';
+    }
+  },
+  // STEP 2.2: Margin Column
+  {
+    accessorKey: 'marginPercent',
+    header: 'MARGIN',
+    cell: ({ row }) => {
+      const marginPercent = row.original.marginPercent || 0;
+      let colorClass = 'text-muted-foreground';
+      if (marginPercent >= 30) colorClass = 'text-green-600';
+      else if (marginPercent >= 15) colorClass = 'text-green-500';
+      else if (marginPercent >= 5) colorClass = 'text-yellow-600';
+      else if (marginPercent >= 0) colorClass = 'text-orange-600';
+      else colorClass = 'text-red-600';
+
+      return (
+        <span className={`font-semibold ${colorClass}`}>
+          {marginPercent.toFixed(1)}%
+        </span>
+      );
+    }
+  },
+  // STEP 2.3: Days in Stock Column
+  {
+    accessorKey: 'daysInStock',
+    header: 'DAYS',
+    cell: ({ row }) => {
+      const daysInStock = row.original.daysInStock || 0;
+      let colorClass = 'text-muted-foreground';
+      if (daysInStock <= 30) colorClass = 'text-green-600';
+      else if (daysInStock <= 60) colorClass = 'text-yellow-600';
+      else if (daysInStock <= 90) colorClass = 'text-orange-600';
+      else colorClass = 'text-red-600';
+
+      return <span className={colorClass}>{daysInStock} days</span>;
     }
   },
   {

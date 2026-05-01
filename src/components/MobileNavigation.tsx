@@ -10,7 +10,7 @@ import {
   Settings,
   ShoppingCart
 } from 'lucide-react';
-import { useTheme } from 'next-themes';
+import { useTheme } from '@/components/layout/ThemeToggle/theme-provider';
 
 export default function MobileNavigation() {
   const pathname = usePathname();

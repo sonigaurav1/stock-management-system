@@ -1,5 +1,611 @@
-import { mutation } from './_generated/server';
+import { v } from 'convex/values';
+import { query, mutation } from './_generated/server';
 
+const DATABASE_TABLES = [
+  'users',
+  'products',
+  'category',
+  'suppliers',
+  'stockMovements',
+  'sales',
+  'customers',
+  'invoices',
+  'companies',
+  'transactions',
+  'expenses',
+  'expenseCategories',
+  'budgets',
+  'recurringExpenses',
+  'expenseReports',
+  'customReports',
+  'scheduledReports',
+  'purchaseOrders',
+  'reconciliationMatches',
+  'inventoryReconciliations',
+  'priceChangeRequests',
+  'locations',
+  'locationInventory',
+  'stockTransfers',
+  'payments',
+  'userSettings',
+  'organizations',
+  'organizationMembers',
+  'accountStatus',
+  'companyMembers',
+  'notificationRules',
+  'integrations',
+  'apiKeys',
+  'webhooks',
+  'automationRules',
+  'auditLog',
+  'systemLog',
+  'featureUsage',
+  'dashboardWidgets',
+  'insightSettings',
+  'userInsights',
+  'dashboardExports'
+];
+
+// ============ HELPER FUNCTION: Check Admin Access ============
+const checkAdminAccess = async (ctx: any) => {
+  const user = await ctx.auth.getUserIdentity();
+  const ADMIN_USER_ID = process.env.ADMIN_USER_ID;
+
+  if (user?.id !== ADMIN_USER_ID) {
+    throw new Error('Unauthorized: Only admins can perform this action.');
+  }
+  return user;
+};
+
+// ============ DATABASE STATISTICS ============
+export const getDatabaseStatistics = query({
+  handler: async (ctx) => {
+    const stats: any[] = [];
+
+    for (const tableName of DATABASE_TABLES) {
+      try {
+        const db = ctx.db as any;
+        const records = await db.query(tableName).collect();
+
+        stats.push({
+          name: tableName,
+          documentCount: records.length,
+          status: 'active',
+          lastUpdated: records.length > 0 ? 'Recently' : 'No data',
+          avgSize:
+            records.length > 0
+              ? Math.round(JSON.stringify(records).length / records.length)
+              : 0,
+          indexed: true
+        });
+      } catch (error) {
+        stats.push({
+          name: tableName,
+          documentCount: 0,
+          status: 'error',
+          lastUpdated: 'N/A',
+          avgSize: 0,
+          indexed: false
+        });
+      }
+    }
+
+    return {
+      tables: stats.sort((a, b) => b.documentCount - a.documentCount),
+      totalTables: DATABASE_TABLES.length,
+      totalDocuments: stats.reduce((sum, t) => sum + t.documentCount, 0),
+      timestamp: new Date().toISOString()
+    };
+  }
+});
+
+export const getTableDocuments = query({
+  args: {
+    tableName: v.string(),
+    limit: v.optional(v.number())
+  },
+  handler: async (ctx, { tableName, limit = 100 }) => {
+    await checkAdminAccess(ctx);
+
+    if (!DATABASE_TABLES.includes(tableName)) {
+      throw new Error(`Invalid table: ${tableName}`);
+    }
+
+    const db = ctx.db as any;
+    const records = await db.query(tableName).collect();
+    const limitedRecords = records.slice(0, Math.max(1, Math.min(limit, 500)));
+
+    return {
+      tableName,
+      totalCount: records.length,
+      returnedCount: limitedRecords.length,
+      data: limitedRecords
+    };
+  }
+});
+
+// ============ DELETE TABLE DATA ============
+export const deleteAllDocuments = mutation({
+  args: { tableName: v.string() },
+  handler: async (ctx, { tableName }) => {
+    await checkAdminAccess(ctx);
+
+    const db = ctx.db as any;
+    const records = await db.query(tableName).collect();
+
+    let deletedCount = 0;
+    for (const record of records) {
+      await db.delete(record._id);
+      deletedCount++;
+    }
+
+    return {
+      success: true,
+      message: `Deleted ${deletedCount} documents from ${tableName}`,
+      deletedCount
+    };
+  }
+});
+
+// ============ DELETE SINGLE DOCUMENT ============
+export const deleteDocumentById = mutation({
+  args: {
+    tableName: v.string(),
+    docId: v.string()
+  },
+  handler: async (ctx, { tableName, docId }) => {
+    await checkAdminAccess(ctx);
+
+    if (!DATABASE_TABLES.includes(tableName)) {
+      throw new Error(`Invalid table: ${tableName}`);
+    }
+
+    if (!docId) {
+      throw new Error('Document ID is required');
+    }
+
+    try {
+      const db = ctx.db as any;
+      // Use db.delete directly with the string ID
+      await db.delete(docId as any);
+
+      return {
+        success: true,
+        message: `Document deleted from ${tableName}`,
+        docId
+      };
+    } catch (error) {
+      throw new Error(
+        `Failed to delete document: ${error instanceof Error ? error.message : 'Unknown error'}`
+      );
+    }
+  }
+});
+
+// ============ ANALYTICS ============
+export const getAnalyticsData = query({
+  args: { months: v.optional(v.number()) },
+  handler: async (ctx, { months = 6 }) => {
+    // TODO: Replace with real data from your database
+    // Example: const sales = await ctx.db.query('sales').collect();
+
+    return {
+      revenueData: [
+        { month: 'Jan', revenue: 45000, orders: 240, customers: 1200 },
+        { month: 'Feb', revenue: 52000, orders: 290, customers: 1400 },
+        { month: 'Mar', revenue: 48000, orders: 280, customers: 1300 },
+        { month: 'Apr', revenue: 61000, orders: 340, customers: 1600 },
+        { month: 'May', revenue: 55000, orders: 310, customers: 1500 },
+        { month: 'Jun', revenue: 67000, orders: 380, customers: 1800 }
+      ],
+      categoryData: [
+        { name: 'Electronics', value: 35, fill: '#3b82f6' },
+        { name: 'Clothing', value: 25, fill: '#10b981' },
+        { name: 'Home & Garden', value: 20, fill: '#f59e0b' },
+        { name: 'Books', value: 15, fill: '#8b5cf6' },
+        { name: 'Other', value: 5, fill: '#ef4444' }
+      ],
+      userActivityData: [
+        { hour: '00:00', users: 120, sessions: 80 },
+        { hour: '04:00', users: 45, sessions: 30 },
+        { hour: '08:00', users: 230, sessions: 150 },
+        { hour: '12:00', users: 450, sessions: 280 },
+        { hour: '16:00', users: 520, sessions: 320 },
+        { hour: '20:00', users: 380, sessions: 220 }
+      ]
+    };
+  }
+});
+
+// ============ KPI METRICS ============
+export const getKPIMetrics = query({
+  handler: async (ctx) => {
+    // TODO: Calculate real metrics from database
+    // const totalUsers = await ctx.db.query('users').collect();
+    // const activeUsers = totalUsers.filter(u => u.lastActive > now - 24h);
+
+    return {
+      revenue: {
+        value: '$2.45M',
+        change: 12.5,
+        trend: 'up'
+      },
+      activeUsers: {
+        value: '1,234',
+        change: 8.3,
+        trend: 'up'
+      },
+      orders: {
+        value: '5,890',
+        change: -2.1,
+        trend: 'down'
+      },
+      inventoryValue: {
+        value: '$780K',
+        change: 5.7,
+        trend: 'up'
+      },
+      systemStatus: 'operational',
+      uptime: '99.9%',
+      pendingTasks: 42,
+      activeAlerts: 3
+    };
+  }
+});
+
+// ============ TEAM MANAGEMENT ============
+export const getTeamMembers = query({
+  args: { role: v.optional(v.string()) },
+  handler: async (ctx, { role }) => {
+    // TODO: Query real team members from database
+    // const members = await ctx.db.query('users')
+    //   .filter(u => !role || u.role === role)
+    //   .collect();
+
+    return [
+      {
+        id: '1',
+        name: 'Sarah Johnson',
+        email: 'sarah@example.com',
+        role: 'owner',
+        department: 'Executive',
+        status: 'active',
+        joinedDate: '2023-01-15',
+        lastActive: '2 minutes ago'
+      },
+      {
+        id: '2',
+        name: 'Mike Chen',
+        email: 'mike@example.com',
+        role: 'admin',
+        department: 'Operations',
+        status: 'active',
+        joinedDate: '2023-02-20',
+        lastActive: '15 minutes ago'
+      }
+    ];
+  }
+});
+
+export const inviteTeamMember = mutation({
+  args: {
+    email: v.string(),
+    role: v.string(),
+    department: v.string()
+  },
+  handler: async (ctx, { email, role, department }) => {
+    await checkAdminAccess(ctx);
+
+    // TODO: Send invitation email and create user record
+    // const invites = await ctx.db.collection('invitations');
+    // await invites.insert({ email, role, department, createdAt: Date.now() });
+
+    return {
+      success: true,
+      message: `Invitation sent to ${email}`
+    };
+  }
+});
+
+export const updateTeamMemberRole = mutation({
+  args: {
+    userId: v.string(),
+    newRole: v.string()
+  },
+  handler: async (ctx, { userId, newRole }) => {
+    await checkAdminAccess(ctx);
+
+    // TODO: Update user role in database
+    // const user = await ctx.db.get(userId);
+    // await ctx.db.patch(userId, { role: newRole });
+
+    return { success: true };
+  }
+});
+
+export const removeTeamMember = mutation({
+  args: { userId: v.string() },
+  handler: async (ctx, { userId }) => {
+    await checkAdminAccess(ctx);
+
+    // TODO: Remove user from organization
+    // await ctx.db.delete(userId);
+
+    return { success: true };
+  }
+});
+
+// ============ AUDIT LOGS ============
+export const getAuditLogs = query({
+  args: {
+    category: v.optional(v.string()),
+    status: v.optional(v.string()),
+    limit: v.optional(v.number())
+  },
+  handler: async (ctx, { category, status, limit = 50 }) => {
+    // TODO: Query audit logs from database with filters
+    // const logs = await ctx.db.query('auditLogs')
+    //   .filter(l => !category || l.category === category)
+    //   .filter(l => !status || l.status === status)
+    //   .order('desc')
+    //   .take(limit);
+
+    return [
+      {
+        id: '1',
+        timestamp: new Date(Date.now() - 5 * 60 * 1000),
+        user: 'Sarah Johnson',
+        email: 'sarah@example.com',
+        action: 'User Created',
+        category: 'user',
+        resource: 'User #234',
+        status: 'success',
+        details: 'New admin user created',
+        ipAddress: '192.168.1.1'
+      }
+    ];
+  }
+});
+
+export const logAuditEntry = mutation({
+  args: {
+    user: v.string(),
+    action: v.string(),
+    category: v.string(),
+    resource: v.string(),
+    details: v.string(),
+    status: v.string()
+  },
+  handler: async (ctx, args) => {
+    // TODO: Insert audit log entry
+    // const logs = ctx.db.collection('auditLogs');
+    // await logs.insert({ ...args, timestamp: Date.now() });
+
+    return { success: true };
+  }
+});
+
+export const getAuditStats = query({
+  handler: async (ctx) => {
+    // TODO: Calculate stats from audit logs
+    // const logs = await ctx.db.query('auditLogs').collect();
+
+    return {
+      totalActions: 12543,
+      thisMonth: 2345,
+      failedActions: 23,
+      alerts: 5
+    };
+  }
+});
+
+// ============ COMPANY MANAGEMENT ============
+export const getCompanyDetails = query({
+  handler: async (ctx) => {
+    // TODO: Query company details from database
+    // const company = await ctx.db.query('company').first();
+
+    return {
+      companyName: 'Acme Corporation',
+      email: 'info@acmecorp.com',
+      phone: '+1 (555) 123-4567',
+      address: '123 Business Ave, Tech City, 54321',
+      registrationNumber: 'REG123456',
+      status: 'active',
+      verificationStatus: 'verified',
+      accountTier: 'enterprise',
+      createdAt: new Date(Date.now() - 90 * 24 * 60 * 60 * 1000),
+      lastUpdated: new Date(),
+      subscriptionRenewal: new Date(Date.now() + 27 * 24 * 60 * 60 * 1000),
+      taxYearEnd: new Date(Date.now() + 256 * 24 * 60 * 60 * 1000)
+    };
+  }
+});
+
+export const updateCompanyDetails = mutation({
+  args: {
+    companyName: v.optional(v.string()),
+    email: v.optional(v.string()),
+    phone: v.optional(v.string()),
+    address: v.optional(v.string())
+  },
+  handler: async (ctx, args) => {
+    await checkAdminAccess(ctx);
+
+    // TODO: Update company details
+    // const company = await ctx.db.query('company').first();
+    // if (company) await ctx.db.patch(company._id, args);
+
+    return { success: true };
+  }
+});
+
+export const getComplianceStatus = query({
+  handler: async (ctx) => {
+    // TODO: Query compliance certifications
+    // const compliance = await ctx.db.query('compliance').first();
+
+    return {
+      gdprCompliant: true,
+      pciDssCertified: true,
+      iso27001Certified: true,
+      dataEncryption: 'AES-256',
+      backupFrequency: 'Daily',
+      disasterRecoveryPlan: 'Active'
+    };
+  }
+});
+
+// ============ SYSTEM SETTINGS ============
+export const getSystemSettings = query({
+  handler: async (ctx) => {
+    // TODO: Query system settings from database
+    // const settings = await ctx.db.query('settings').first();
+
+    return {
+      companyName: 'Acme Corporation',
+      timezone: 'UTC',
+      language: 'English',
+      features: {
+        advancedReporting: true,
+        multiTenancy: true,
+        apiAccess: true,
+        webhooks: false
+      },
+      security: {
+        twoFactorAuth: false,
+        sso: false,
+        sessionTimeout: 30,
+        passwordMinLength: 12,
+        ipWhitelistEnabled: false
+      },
+      notifications: {
+        userSignup: true,
+        orderConfirmation: true,
+        systemAlerts: true,
+        dailySummary: false
+      },
+      integrations: {
+        stripe: { connected: true },
+        slack: { connected: false },
+        googleAnalytics: { connected: true },
+        mailchimp: { connected: false }
+      }
+    };
+  }
+});
+
+export const updateSystemSettings = mutation({
+  args: {
+    setting: v.string(),
+    value: v.any()
+  },
+  handler: async (ctx, { setting, value }) => {
+    await checkAdminAccess(ctx);
+
+    // TODO: Update system settings
+    // const settings = await ctx.db.query('settings').first();
+    // if (settings) await ctx.db.patch(settings._id, { [setting]: value });
+
+    return { success: true };
+  }
+});
+
+// ============ DATA EXPORT ============
+export const exportData = mutation({
+  args: {
+    dataType: v.string(),
+    format: v.string(),
+    dateRange: v.string(),
+    compression: v.optional(v.string())
+  },
+  handler: async (ctx, { dataType, format, dateRange, compression }) => {
+    await checkAdminAccess(ctx);
+
+    // TODO: Generate and return export file
+    // This should trigger async job for large exports
+
+    return {
+      success: true,
+      fileName: `export_${Date.now()}.${format}`,
+      downloadUrl: `/api/exports/${Date.now()}`,
+      status: 'ready'
+    };
+  }
+});
+
+export const getRecentExports = query({
+  args: { limit: v.optional(v.number()) },
+  handler: async (ctx, { limit = 10 }) => {
+    // TODO: Query recent exports from database
+    // const exports = await ctx.db.query('exports')
+    //   .order('desc')
+    //   .take(limit);
+
+    return [
+      {
+        name: 'sales_report_april_2026.csv',
+        size: '2.4 MB',
+        date: 'Apr 18, 2026',
+        format: 'csv'
+      }
+    ];
+  }
+});
+
+export const scheduleExport = mutation({
+  args: {
+    name: v.string(),
+    schedule: v.string(),
+    dataType: v.string(),
+    format: v.string()
+  },
+  handler: async (ctx, args) => {
+    await checkAdminAccess(ctx);
+
+    // TODO: Create scheduled export job
+    // const schedules = ctx.db.collection('scheduledExports');
+    // await schedules.insert(args);
+
+    return { success: true };
+  }
+});
+
+// ============ REPORTS ============
+export const generateReport = mutation({
+  args: {
+    reportType: v.string(),
+    format: v.string(),
+    dateRange: v.optional(v.string())
+  },
+  handler: async (ctx, { reportType, format, dateRange }) => {
+    await checkAdminAccess(ctx);
+
+    // TODO: Generate report based on type
+    // Sales, Inventory, User Analytics, etc.
+
+    return {
+      success: true,
+      reportId: `report_${Date.now()}`,
+      downloadUrl: `/api/reports/${Date.now()}`,
+      status: 'generating'
+    };
+  }
+});
+
+export const getReportHistory = query({
+  args: { limit: v.optional(v.number()) },
+  handler: async (ctx, { limit = 20 }) => {
+    // TODO: Query generated reports history
+    // const reports = await ctx.db.query('reports')
+    //   .order('desc')
+    //   .take(limit);
+
+    return [];
+  }
+});
+
+// ============ Legacy Admin Function ============
 export const adminOnlyFunction = mutation(async ({ db, auth }) => {
   const user = await auth.getUserIdentity();
   const ADMIN_USER_ID = process.env.ADMIN_USER_ID;

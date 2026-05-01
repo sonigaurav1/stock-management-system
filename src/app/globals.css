@@ -4,6 +4,48 @@
 
 @layer base {
   :root {
+    /* Dark mode (OLED) - Enterprise Default */
+    --background: 253 43% 3%;
+    --foreground: 253 31% 98%;
+    --muted: 253 13% 13%;
+    --muted-foreground: 253 13% 63%;
+    --popover: 253 43% 3%;
+    --popover-foreground: 253 31% 98%;
+    --card: 253 43% 4%;
+    --card-foreground: 253 31% 99%;
+    --border: 253 13% 20%;
+    --input: 253 13% 20%;
+    --primary: 89 78% 46%;
+    --primary-foreground: 253 43% 3%;
+    --secondary: 253 7% 9%;
+    --secondary-foreground: 253 7% 69%;
+    --accent: 253 13% 14%;
+    --accent-foreground: 253 13% 74%;
+    --destructive: 339.2 90.36% 51.18%;
+    --destructive-foreground: 0 0% 100%;
+    --ring: 89 78% 46%;
+    --radius: 0.5rem;
+
+    /* Chart colors */
+    --chart-1: 89 78% 46%;
+    --chart-2: 253 91% 58%;
+    --chart-3: 30 80% 55%;
+    --chart-4: 280 65% 60%;
+    --chart-5: 340 75% 55%;
+
+    /* Sidebar colors */
+    --sidebar-background: 253 43% 4%;
+    --sidebar-foreground: 240 4.8% 95.9%;
+    --sidebar-primary: 89 78% 46%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 240 3.7% 15.9%;
+    --sidebar-accent-foreground: 240 4.8% 95.9%;
+    --sidebar-border: 240 3.7% 15.9%;
+    --sidebar-ring: 89 78% 46%;
+  }
+
+  /* Light mode variant (optional) */
+  .light {
     --background: 20 66% 99%;
     --foreground: 20 51% 4%;
     --muted: 20 25% 86%;
@@ -14,17 +56,16 @@
     --card-foreground: 20 51% 3%;
     --border: 20 15% 94%;
     --input: 20 15% 94%;
-    --primary: 248 25% 84%;
-    --primary-foreground: 20 48% 12%;
+    --primary: 20 48% 12%;
+    --primary-foreground: 20 66% 98%;
     --secondary: 20 12% 92%;
     --secondary-foreground: 20 12% 32%;
     --accent: 20 12% 92%;
     --accent-foreground: 20 12% 32%;
     --destructive: 11 80% 22%;
     --destructive-foreground: 11 80% 82%;
-    --ring: 248 25% 84%;
-    --radius: 0.5rem;
-    --chart-1: 248 25% 84%;
+    --ring: 20 48% 12%;
+    --chart-1: 20 48% 12%;
     --chart-2: 173 58% 39%;
     --chart-3: 197 37% 24%;
     --chart-4: 43 74% 66%;
@@ -39,48 +80,47 @@
     --sidebar-ring: 217.2 91.2% 59.8%;
   }
 
-  .dark {
-    --background: 253 43% 3%;
-    --foreground: 253 31% 98%;
-    --muted: 253 7% 13%;
-    --muted-foreground: 253 13% 63%;
-    --popover: 253 43% 3%;
-    --popover-foreground: 253 31% 98%;
-    --card: 253 43% 4%;
-    --card-foreground: 253 31% 99%;
-    --border: 215 27.9% 16.9%;
-    --input: 215 27.9% 16.9%;
-    --primary: 253 91% 58%;
-    --primary-foreground: 253 91% 98%;
-    --secondary: 253 7% 9%;
-    --secondary-foreground: 253 7% 69%;
-    --accent: 253 13% 14%;
-    --accent-foreground: 253 13% 74%;
-    --destructive: 339.2 90.36% 51.18%;
-    --destructive-foreground: 0 0% 100%;
-    --ring: 253 91% 58%;
-    --chart-1: 253 91% 58%;
-    --chart-2: 253 13% 74%;
-    --chart-3: 30 80% 55%;
-    --chart-4: 280 65% 60%;
-    --chart-5: 340 75% 55%;
-    --sidebar-background: 253 43% 4%;
-    --sidebar-foreground: 240 4.8% 95.9%;
-    --sidebar-primary: 253 91% 58%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 3.7% 15.9%;
-    --sidebar-accent-foreground: 240 4.8% 95.9%;
-    --sidebar-border: 240 3.7% 15.9%;
-    --sidebar-ring: 253 91% 58%%;
-  }
-}
-
-@layer base {
   * {
     @apply border-border;
   }
+
   body {
     @apply box-border bg-background text-foreground;
+  }
+
+  /* Accessibility: Visible focus states for keyboard navigation */
+  button:focus-visible,
+  a:focus-visible,
+  input:focus-visible,
+  select:focus-visible,
+  textarea:focus-visible,
+  [role='button']:focus-visible,
+  [role='tab']:focus-visible,
+  [role='menuitem']:focus-visible {
+    @apply outline-none ring-2 ring-primary ring-offset-2;
+  }
+
+  /* Dark mode focus ring adjustments */
+  .dark button:focus-visible,
+  .dark a:focus-visible,
+  .dark input:focus-visible,
+  .dark select:focus-visible,
+  .dark textarea:focus-visible,
+  .dark [role='button']:focus-visible,
+  .dark [role='tab']:focus-visible,
+  .dark [role='menuitem']:focus-visible {
+    @apply ring-offset-1 ring-offset-background;
+  }
+
+  /* Reduced motion support */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
   }
 }
 
@@ -102,27 +142,34 @@
   .hover-elevation-dark {
     transition: background-color 0.2s ease;
   }
+
   .hover-elevation-dark:hover {
     background-color: rgba(255, 255, 255, 0.03);
   }
-}
-@layer utilities {
+
   .min-h-screen {
     min-height: 100vh; /* Fallback */
     min-height: 100dvh;
   }
+
   .h-screen {
     height: 100vh; /* Fallback */
     height: 100dvh;
   }
-}
 
-@layer base {
-  * {
-    @apply border-border;
+  /* Enterprise shimmer animation for skeleton loaders */
+  @keyframes shimmer {
+    0% {
+      background-position: -1000px 0;
+    }
+    100% {
+      background-position: 1000px 0;
+    }
   }
-  body {
-    @apply bg-background text-foreground;
+
+  .animate-shimmer {
+    animation: shimmer 2s infinite;
+    background-size: 200% 100%;
   }
 }
 
