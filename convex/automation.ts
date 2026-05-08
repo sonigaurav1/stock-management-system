@@ -1,5 +1,11 @@
 import { mutation, query } from './_generated/server';
 import { v } from 'convex/values';
+import {
+  resolveCallerContext,
+  requirePermission,
+  getDataScopeUserId
+} from './lib/authHelper';
+import { PERMISSIONS } from './lib/permissions';
 
 /**
  * ====================== AUTOMATION RULES MANAGEMENT ======================
@@ -27,12 +33,18 @@ export const createAutomationRule = mutation({
     threshold: v.optional(v.string())
   },
   async handler(ctx, args) {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error('Not authenticated');
+    // 1. Resolve caller context
+    const caller = await resolveCallerContext(ctx);
+
+    // 2. Require permission
+    requirePermission(caller, PERMISSIONS.MANAGE_SETTINGS);
+
+    // 3. Use caller context for data scope
+    const dataOwner = getDataScopeUserId(caller);
 
     return await ctx.db.insert('automationRules', {
       ...args,
-      userId: identity.subject,
+      userId: dataOwner,
       isActive: true,
       executionCount: 0,
       createdAt: Date.now(),
@@ -51,6 +63,20 @@ export const updateAutomationRule = mutation({
     isActive: v.optional(v.boolean())
   },
   async handler(ctx, args) {
+    // 1. Resolve caller context
+    const caller = await resolveCallerContext(ctx);
+
+    // 2. Require permission
+    requirePermission(caller, PERMISSIONS.MANAGE_SETTINGS);
+
+    // 3. Validate data access
+    const dataOwner = getDataScopeUserId(caller);
+    const rule = await ctx.db.get(args.id);
+
+    if (!rule || rule.userId !== dataOwner) {
+      throw new Error('Rule not found or access denied');
+    }
+
     const { id, ...updates } = args;
     await ctx.db.patch(id, {
       ...updates,
@@ -63,6 +89,20 @@ export const updateAutomationRule = mutation({
 export const deleteAutomationRule = mutation({
   args: { id: v.id('automationRules') },
   async handler(ctx, args) {
+    // 1. Resolve caller context
+    const caller = await resolveCallerContext(ctx);
+
+    // 2. Require permission
+    requirePermission(caller, PERMISSIONS.MANAGE_SETTINGS);
+
+    // 3. Validate data access
+    const dataOwner = getDataScopeUserId(caller);
+    const rule = await ctx.db.get(args.id);
+
+    if (!rule || rule.userId !== dataOwner) {
+      throw new Error('Rule not found or access denied');
+    }
+
     await ctx.db.delete(args.id);
     return args.id;
   }
@@ -71,8 +111,19 @@ export const deleteAutomationRule = mutation({
 export const executeAutomationRule = mutation({
   args: { id: v.id('automationRules') },
   async handler(ctx, args) {
+    // 1. Resolve caller context
+    const caller = await resolveCallerContext(ctx);
+
+    // 2. Require permission
+    requirePermission(caller, PERMISSIONS.MANAGE_SETTINGS);
+
+    // 3. Validate data access
+    const dataOwner = getDataScopeUserId(caller);
     const rule = await ctx.db.get(args.id);
-    if (!rule) throw new Error('Rule not found');
+
+    if (!rule || rule.userId !== dataOwner) {
+      throw new Error('Rule not found or access denied');
+    }
 
     await ctx.db.patch(args.id, {
       lastExecutedAt: Date.now(),
@@ -184,8 +235,14 @@ export const createPurchaseOrder = mutation({
     isAutomatic: v.optional(v.boolean())
   },
   async handler(ctx, args) {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error('Not authenticated');
+    // 1. Resolve caller context
+    const caller = await resolveCallerContext(ctx);
+
+    // 2. Require permission
+    requirePermission(caller, PERMISSIONS.MANAGE_STOCK);
+
+    // 3. Use caller context for data scope
+    const dataOwner = getDataScopeUserId(caller);
 
     const productsWithTotals = args.products.map((p) => ({
       ...p,
@@ -202,7 +259,7 @@ export const createPurchaseOrder = mutation({
       supplierId: args.supplierId,
       supplierName: args.supplierName,
       products: productsWithTotals,
-      userId: identity.subject,
+      userId: dataOwner,
       totalAmount,
       orderNumber,
       isAutomatic: args.isAutomatic || false,
@@ -252,8 +309,19 @@ export const updatePurchaseOrderStatus = mutation({
     )
   },
   async handler(ctx, args) {
+    // 1. Resolve caller context
+    const caller = await resolveCallerContext(ctx);
+
+    // 2. Require permission
+    requirePermission(caller, PERMISSIONS.MANAGE_STOCK);
+
+    // 3. Validate data access
+    const dataOwner = getDataScopeUserId(caller);
     const po = await ctx.db.get(args.poId);
-    if (!po) throw new Error('Purchase order not found');
+
+    if (!po || po.userId !== dataOwner) {
+      throw new Error('Purchase order not found or access denied');
+    }
 
     const updates: Record<string, unknown> = {
       status: args.status,
@@ -424,8 +492,14 @@ export const confirmReconciliation = mutation({
     )
   },
   async handler(ctx, args) {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error('Not authenticated');
+    // 1. Resolve caller context
+    const caller = await resolveCallerContext(ctx);
+
+    // 2. Require permission
+    requirePermission(caller, PERMISSIONS.MANAGE_STOCK);
+
+    // 3. Use caller context for data scope
+    const dataOwner = getDataScopeUserId(caller);
 
     // Get transaction to determine amount
     const tx = await ctx.db
@@ -438,7 +512,7 @@ export const confirmReconciliation = mutation({
     const amount = tx.drAmount || tx.crAmount || 0;
 
     const matchId = await ctx.db.insert('reconciliationMatches', {
-      userId: identity.subject,
+      userId: dataOwner,
       transactionId: args.transactionId,
       invoiceId: args.invoiceId,
       paymentId: args.paymentId,
@@ -448,7 +522,7 @@ export const confirmReconciliation = mutation({
       matchType: args.matchType,
       confidence: args.matchType === 'exact' ? 100 : 85,
       status: 'confirmed',
-      matchedBy: identity.subject,
+      matchedBy: caller.callerId,
       createdAt: Date.now(),
       confirmedAt: Date.now()
     });
@@ -618,11 +692,17 @@ export const resolveDuplicate = mutation({
     )
   },
   async handler(ctx, args) {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error('Not authenticated');
+    // 1. Resolve caller context
+    const caller = await resolveCallerContext(ctx);
+
+    // 2. Require permission
+    requirePermission(caller, PERMISSIONS.MANAGE_STOCK);
+
+    // 3. Use caller context for data scope
+    const dataOwner = getDataScopeUserId(caller);
 
     const logId = await ctx.db.insert('systemLog', {
-      userId: identity.subject,
+      userId: dataOwner,
       logType: 'duplicate_detection',
       entityType: args.entityType,
       record1Id: args.record1Id,
@@ -633,7 +713,7 @@ export const resolveDuplicate = mutation({
       status:
         args.resolution === 'false_positive' ? 'false_positive' : 'merged',
       resolutionNotes: undefined,
-      resolvedBy: identity.subject,
+      resolvedBy: caller.callerId,
       resolvedAt: Date.now(),
       timestamp: Date.now()
     });
@@ -848,11 +928,17 @@ export const applyCategoryToTransaction = mutation({
     category: v.string()
   },
   async handler(ctx, args) {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error('Not authenticated');
+    // 1. Resolve caller context
+    const caller = await resolveCallerContext(ctx);
+
+    // 2. Require permission
+    requirePermission(caller, PERMISSIONS.MANAGE_SETTINGS);
+
+    // 3. Use caller context for data scope
+    const dataOwner = getDataScopeUserId(caller);
 
     const mappingId = await ctx.db.insert('transactionCategoryMappings', {
-      userId: identity.subject,
+      userId: dataOwner,
       transactionId: args.transactionId,
       suggestedCategory: args.category,
       confidence: 100,
@@ -877,8 +963,14 @@ export const applyCategoriesToMultiple = mutation({
     )
   },
   async handler(ctx, args) {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error('Not authenticated');
+    // 1. Resolve caller context
+    const caller = await resolveCallerContext(ctx);
+
+    // 2. Require permission
+    requirePermission(caller, PERMISSIONS.MANAGE_SETTINGS);
+
+    // 3. Use caller context for data scope
+    const dataOwner = getDataScopeUserId(caller);
 
     const results: Array<any> = [];
     let successCount = 0;
@@ -887,7 +979,7 @@ export const applyCategoriesToMultiple = mutation({
     for (const cat of args.categorizations) {
       try {
         const mappingId = await ctx.db.insert('transactionCategoryMappings', {
-          userId: identity.subject,
+          userId: dataOwner,
           transactionId: cat.transactionId,
           suggestedCategory: cat.category,
           confidence: 100,
@@ -938,8 +1030,14 @@ export const executeBulkOperation = mutation({
     operationParameters: v.optional(v.any())
   },
   async handler(ctx, args) {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error('Not authenticated');
+    // 1. Resolve caller context
+    const caller = await resolveCallerContext(ctx);
+
+    // 2. Require permission
+    requirePermission(caller, PERMISSIONS.MANAGE_STOCK);
+
+    // 3. Use caller context for data scope
+    const dataOwner = getDataScopeUserId(caller);
 
     if (args.targetIds.length === 0) throw new Error('No targets specified');
 
@@ -950,7 +1048,7 @@ export const executeBulkOperation = mutation({
 
     // Create job record
     const bulkJobId = await ctx.db.insert('bulkOperationJobs', {
-      userId: identity.subject,
+      userId: dataOwner,
       jobId,
       entityType: args.entityType,
       operation: args.operation,
@@ -1033,7 +1131,7 @@ export const executeBulkOperation = mutation({
         } else if (args.entityType === 'transactions') {
           if (args.operation === 'categorize') {
             await ctx.db.insert('transactionCategoryMappings', {
-              userId: identity.subject,
+              userId: dataOwner,
               transactionId: id,
               suggestedCategory: args.operationParameters?.category,
               confidence: 100,

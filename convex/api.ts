@@ -1,5 +1,11 @@
 import { mutation, query } from './_generated/server';
 import { v } from 'convex/values';
+import {
+  resolveCallerContext,
+  requirePermission,
+  getDataScopeUserId
+} from './lib/authHelper';
+import { PERMISSIONS } from './lib/permissions';
 
 /**
  * API Keys & Webhooks Management
@@ -36,15 +42,21 @@ export const getApiKeys = query({
 export const createApiKey = mutation({
   args: { name: v.string() },
   async handler(ctx, args) {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error('Not authenticated');
+    // 1. Resolve caller context
+    const caller = await resolveCallerContext(ctx);
+
+    // 2. Require permission
+    requirePermission(caller, PERMISSIONS.MANAGE_ORGANIZATION);
+
+    // 3. Use caller context for data scope
+    const dataOwner = getDataScopeUserId(caller);
 
     // Generate API key (in production, use a proper key generation library)
     const key = `sk_live_${Math.random().toString(36).substring(2, 50)}`;
     const displayKey = key.slice(-8);
 
     const id = await ctx.db.insert('apiKeys', {
-      userId: identity.subject,
+      userId: dataOwner,
       name: args.name,
       key, // Will be hashed before storage
       displayKey,
@@ -59,6 +71,20 @@ export const createApiKey = mutation({
 export const deleteApiKey = mutation({
   args: { id: v.id('apiKeys') },
   async handler(ctx, args) {
+    // 1. Resolve caller context
+    const caller = await resolveCallerContext(ctx);
+
+    // 2. Require permission
+    requirePermission(caller, PERMISSIONS.MANAGE_ORGANIZATION);
+
+    // 3. Validate data access
+    const dataOwner = getDataScopeUserId(caller);
+    const key = await ctx.db.get(args.id);
+
+    if (!key || key.userId !== dataOwner) {
+      throw new Error('API key not found or access denied');
+    }
+
     await ctx.db.delete(args.id);
     return args.id;
   }
@@ -85,13 +111,19 @@ export const createWebhook = mutation({
     events: v.array(v.string())
   },
   async handler(ctx, args) {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error('Not authenticated');
+    // 1. Resolve caller context
+    const caller = await resolveCallerContext(ctx);
+
+    // 2. Require permission
+    requirePermission(caller, PERMISSIONS.MANAGE_ORGANIZATION);
+
+    // 3. Use caller context for data scope
+    const dataOwner = getDataScopeUserId(caller);
 
     const secret = Math.random().toString(36).substring(2);
 
     return await ctx.db.insert('webhooks', {
-      userId: identity.subject,
+      userId: dataOwner,
       url: args.url,
       events: args.events,
       isActive: true,
@@ -106,6 +138,20 @@ export const createWebhook = mutation({
 export const deleteWebhook = mutation({
   args: { id: v.id('webhooks') },
   async handler(ctx, args) {
+    // 1. Resolve caller context
+    const caller = await resolveCallerContext(ctx);
+
+    // 2. Require permission
+    requirePermission(caller, PERMISSIONS.MANAGE_ORGANIZATION);
+
+    // 3. Validate data access
+    const dataOwner = getDataScopeUserId(caller);
+    const webhook = await ctx.db.get(args.id);
+
+    if (!webhook || webhook.userId !== dataOwner) {
+      throw new Error('Webhook not found or access denied');
+    }
+
     await ctx.db.delete(args.id);
     return args.id;
   }

@@ -1,5 +1,11 @@
 import { mutation, query } from './_generated/server';
 import { v } from 'convex/values';
+import {
+  resolveCallerContext,
+  requirePermission,
+  getDataScopeUserId
+} from './lib/authHelper';
+import { PERMISSIONS } from './lib/permissions';
 
 /**
  * Integrations API
@@ -35,13 +41,19 @@ export const connectIntegration = mutation({
     config: v.optional(v.any())
   },
   async handler(ctx, args) {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error('Not authenticated');
+    // 1. Resolve caller context
+    const caller = await resolveCallerContext(ctx);
+
+    // 2. Require permission
+    requirePermission(caller, PERMISSIONS.MANAGE_ORGANIZATION);
+
+    // 3. Use caller context for data scope
+    const dataOwner = getDataScopeUserId(caller);
 
     // In production, encrypt apiKey and apiSecret using a service
     return await ctx.db.insert('integrations', {
       ...args,
-      userId: identity.subject,
+      userId: dataOwner,
       enabled: true,
       createdAt: Date.now(),
       updatedAt: Date.now()
@@ -52,6 +64,20 @@ export const connectIntegration = mutation({
 export const disconnectIntegration = mutation({
   args: { id: v.id('integrations') },
   async handler(ctx, args) {
+    // 1. Resolve caller context
+    const caller = await resolveCallerContext(ctx);
+
+    // 2. Require permission
+    requirePermission(caller, PERMISSIONS.MANAGE_ORGANIZATION);
+
+    // 3. Validate data access
+    const dataOwner = getDataScopeUserId(caller);
+    const integration = await ctx.db.get(args.id);
+
+    if (!integration || integration.userId !== dataOwner) {
+      throw new Error('Integration not found or access denied');
+    }
+
     await ctx.db.delete(args.id);
     return args.id;
   }
@@ -63,6 +89,20 @@ export const updateIntegrationSync = mutation({
     syncStatus: v.string() // "success", "failed", "in_progress"
   },
   async handler(ctx, args) {
+    // 1. Resolve caller context
+    const caller = await resolveCallerContext(ctx);
+
+    // 2. Require permission
+    requirePermission(caller, PERMISSIONS.MANAGE_ORGANIZATION);
+
+    // 3. Validate data access
+    const dataOwner = getDataScopeUserId(caller);
+    const integration = await ctx.db.get(args.id);
+
+    if (!integration || integration.userId !== dataOwner) {
+      throw new Error('Integration not found or access denied');
+    }
+
     const { id, syncStatus } = args;
     await ctx.db.patch(id, {
       syncStatus,
