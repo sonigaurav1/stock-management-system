@@ -1,5 +1,11 @@
 import { v } from 'convex/values';
 import { query } from './_generated/server';
+import {
+  resolveCallerContext,
+  requirePermission,
+  getDataScopeUserId
+} from './lib/authHelper';
+import { PERMISSIONS } from './lib/permissions';
 
 /**
  * P&L Intelligence Module
@@ -49,11 +55,9 @@ export const getProfitLossReport = query({
     )
   },
   handler: async (ctx, { period }) => {
-    const identify = await ctx.auth.getUserIdentity();
-    if (!identify) {
-      throw new Error('Not authenticated');
-    }
-    const userId = identify.subject;
+    const caller = await resolveCallerContext(ctx);
+    requirePermission(caller, PERMISSIONS.VIEW_FINANCIAL_REPORTS);
+    const userId = getDataScopeUserId(caller);
 
     const { startDate, endDate } = getDateRange(period);
 
@@ -140,11 +144,9 @@ export const getProductProfitability = query({
     limit: v.optional(v.number())
   },
   handler: async (ctx, { period, limit = 10 }) => {
-    const identify = await ctx.auth.getUserIdentity();
-    if (!identify) {
-      throw new Error('Not authenticated');
-    }
-    const userId = identify.subject;
+    const caller = await resolveCallerContext(ctx);
+    requirePermission(caller, PERMISSIONS.VIEW_FINANCIAL_REPORTS);
+    const userId = getDataScopeUserId(caller);
 
     const { startDate, endDate } = getDateRange(period);
 
@@ -234,11 +236,9 @@ export const getCategoryMargins = query({
     )
   },
   handler: async (ctx, { period }) => {
-    const identify = await ctx.auth.getUserIdentity();
-    if (!identify) {
-      throw new Error('Not authenticated');
-    }
-    const userId = identify.subject;
+    const caller = await resolveCallerContext(ctx);
+    requirePermission(caller, PERMISSIONS.VIEW_FINANCIAL_REPORTS);
+    const userId = getDataScopeUserId(caller);
 
     const { startDate, endDate } = getDateRange(period);
 
@@ -320,10 +320,8 @@ export const getBreakEvenAnalysis = query({
     monthlyFixedCosts: v.optional(v.number())
   },
   handler: async (ctx, { productId, monthlyFixedCosts = 0 }) => {
-    const identify = await ctx.auth.getUserIdentity();
-    if (!identify) {
-      throw new Error('Not authenticated');
-    }
+    const caller = await resolveCallerContext(ctx);
+    requirePermission(caller, PERMISSIONS.VIEW_FINANCIAL_REPORTS);
 
     const product = await ctx.db.get(productId as any);
     if (
@@ -375,11 +373,9 @@ export const getProfitTrend = query({
     months: v.optional(v.number()) // Compare last N months
   },
   handler: async (ctx, { months = 3 }) => {
-    const identify = await ctx.auth.getUserIdentity();
-    if (!identify) {
-      throw new Error('Not authenticated');
-    }
-    const userId = identify.subject;
+    const caller = await resolveCallerContext(ctx);
+    requirePermission(caller, PERMISSIONS.VIEW_FINANCIAL_REPORTS);
+    const userId = getDataScopeUserId(caller);
 
     const trends = [];
     const now = new Date();
@@ -438,17 +434,16 @@ export const getLowMarginProducts = query({
     minMarginPercentage: v.optional(v.number())
   },
   handler: async (ctx, { minMarginPercentage = 10 }) => {
-    const identify = await ctx.auth.getUserIdentity();
-    if (!identify) {
-      throw new Error('Not authenticated');
-    }
+    const caller = await resolveCallerContext(ctx);
+    requirePermission(caller, PERMISSIONS.VIEW_FINANCIAL_REPORTS);
+    const userId = getDataScopeUserId(caller);
 
     const { startDate, endDate } = getDateRange('monthly');
 
     const allSales = await ctx.db
       .query('sales')
       .withIndex('by_user_and_isDeleted', (q) =>
-        q.eq('userId', identify.subject).eq('isDeleted', false)
+        q.eq('userId', userId).eq('isDeleted', false)
       )
       .collect();
 

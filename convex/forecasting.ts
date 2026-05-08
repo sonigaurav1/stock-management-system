@@ -1,6 +1,12 @@
 import { query } from './_generated/server';
 import { v } from 'convex/values';
 import { internal } from './_generated/api';
+import {
+  resolveCallerContext,
+  requirePermission,
+  getDataScopeUserId
+} from './lib/authHelper';
+import { PERMISSIONS } from './lib/permissions';
 
 /**
  * Sales Forecasting Query
@@ -12,9 +18,14 @@ export const getSalesForecasts = query({
     includeConfidence: v.boolean()
   },
   async handler(ctx, { months, includeConfidence }) {
+    const caller = await resolveCallerContext(ctx);
+    requirePermission(caller, PERMISSIONS.VIEW_FINANCIAL_REPORTS);
+    const userId = getDataScopeUserId(caller);
+
     // Get 12 months of historical sales data
     const transactions = await ctx.db
       .query('transactions')
+      .withIndex('by_user_firm_isDeleted')
       .order('desc')
       .take(500);
 
@@ -120,8 +131,13 @@ export const getSalesForecasts = query({
 export const getGrowthProjections = query({
   args: {},
   async handler(ctx) {
+    const caller = await resolveCallerContext(ctx);
+    requirePermission(caller, PERMISSIONS.VIEW_FINANCIAL_REPORTS);
+    const userId = getDataScopeUserId(caller);
+
     const transactions = await ctx.db
       .query('transactions')
+      .withIndex('by_user_firm_isDeleted')
       .order('desc')
       .take(500);
 
@@ -193,9 +209,19 @@ export const getChurnPrediction = query({
     riskThreshold: v.number()
   },
   async handler(ctx, { riskThreshold }) {
-    const customers = await ctx.db.query('customers').collect();
+    const caller = await resolveCallerContext(ctx);
+    requirePermission(caller, PERMISSIONS.VIEW_FINANCIAL_REPORTS);
+    const userId = getDataScopeUserId(caller);
+
+    const customers = await ctx.db
+      .query('customers')
+      .withIndex('by_user_and_isDeleted', (q) =>
+        q.eq('userId', userId).eq('isDeleted', false)
+      )
+      .collect();
     const transactions = await ctx.db
       .query('transactions')
+      .withIndex('by_user_firm_isDeleted')
       .order('desc')
       .take(1000);
 
@@ -297,6 +323,8 @@ export const runScenario = query({
       months
     }
   ) {
+    const caller = await resolveCallerContext(ctx);
+    requirePermission(caller, PERMISSIONS.VIEW_FINANCIAL_REPORTS);
     // Calculate scenario impact
     // Marketing: 4x ROI multiplier
     const marketingImpact = (marketingIncrease / 100) * 4;

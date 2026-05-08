@@ -1,5 +1,11 @@
 import { query } from './_generated/server';
 import { v } from 'convex/values';
+import {
+  resolveCallerContext,
+  requirePermission,
+  getDataScopeUserId
+} from './lib/authHelper';
+import { PERMISSIONS } from './lib/permissions';
 
 /**
  * Cash Flow Forecast Query
@@ -8,8 +14,13 @@ import { v } from 'convex/values';
 export const forecastCashFlow = query({
   args: { months: v.number() },
   async handler(ctx, { months }) {
+    const caller = await resolveCallerContext(ctx);
+    requirePermission(caller, PERMISSIONS.VIEW_FINANCIAL_REPORTS);
+    const userId = getDataScopeUserId(caller);
+
     const transactions = await ctx.db
       .query('transactions')
+      .withIndex('by_user_firm_isDeleted')
       .order('desc')
       .take(10000);
     const now = new Date();
@@ -141,7 +152,14 @@ export const forecastCashFlow = query({
 export const generateBudget = query({
   args: { year: v.number() },
   async handler(ctx, { year }) {
-    const transactions = await ctx.db.query('transactions').collect();
+    const caller = await resolveCallerContext(ctx);
+    requirePermission(caller, PERMISSIONS.VIEW_FINANCIAL_REPORTS);
+    const userId = getDataScopeUserId(caller);
+
+    const transactions = await ctx.db
+      .query('transactions')
+      .withIndex('by_user_firm_isDeleted')
+      .collect();
 
     // Get last 24 months of data for averaging
     const now = new Date();
@@ -247,7 +265,14 @@ export const generateBudget = query({
 export const analyzeVariance = query({
   args: { year: v.number(), month: v.number() },
   async handler(ctx, { year, month }) {
-    const transactions = await ctx.db.query('transactions').collect();
+    const caller = await resolveCallerContext(ctx);
+    requirePermission(caller, PERMISSIONS.VIEW_FINANCIAL_REPORTS);
+    const userId = getDataScopeUserId(caller);
+
+    const transactions = await ctx.db
+      .query('transactions')
+      .withIndex('by_user_firm_isDeleted')
+      .collect();
     const targetDate = new Date(year, month - 1);
 
     // Get budget (simplified - in real app would fetch saved budget)
@@ -368,7 +393,14 @@ export const analyzeVariance = query({
 export const forecastProfitability = query({
   args: { quarters: v.number() },
   async handler(ctx, { quarters }) {
-    const transactions = await ctx.db.query('transactions').collect();
+    const caller = await resolveCallerContext(ctx);
+    requirePermission(caller, PERMISSIONS.VIEW_FINANCIAL_REPORTS);
+    const userId = getDataScopeUserId(caller);
+
+    const transactions = await ctx.db
+      .query('transactions')
+      .withIndex('by_user_firm_isDeleted')
+      .collect();
     const now = new Date();
     const currentQuarter = Math.floor(now.getMonth() / 3) + 1;
     const currentYear = now.getFullYear();

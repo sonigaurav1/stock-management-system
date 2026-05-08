@@ -1,38 +1,11 @@
 import { v } from 'convex/values';
 import { query } from './_generated/server';
-
-/**
- * Resolve effective userId for team members.
- * If user is a team member without their own company, returns owner's userId.
- */
-async function resolveEffectiveUserId(
-  ctx: any,
-  userId: string
-): Promise<string> {
-  // First check if user has their own company
-  const company = await ctx.db
-    .query('companies')
-    .withIndex('by_user_and_isDeleted', (q: any) =>
-      q.eq('userId', userId).eq('isDeleted', false)
-    )
-    .first();
-
-  if (company) {
-    return userId;
-  }
-
-  // User doesn't have their own company - check if they're a team member
-  const teamMembership = await ctx.db
-    .query('teamMembers')
-    .withIndex('by_user', (q: any) => q.eq('userId', userId))
-    .first();
-
-  if (teamMembership) {
-    return teamMembership.userId;
-  }
-
-  return userId;
-}
+import {
+  resolveCallerContext,
+  requirePermission,
+  getDataScopeUserId
+} from './lib/authHelper';
+import { PERMISSIONS } from './lib/permissions';
 
 // Dashboard
 
@@ -40,15 +13,9 @@ async function resolveEffectiveUserId(
 export const getTotalRevenueWithComparison = query({
   handler: async (ctx) => {
     try {
-      const identity = await ctx.auth.getUserIdentity();
-
-      if (!identity) {
-        throw new Error('Not authenticated');
-      }
-      const userId = identity.subject;
-
-      // Resolve effective userId for team members
-      const effectiveUserId = await resolveEffectiveUserId(ctx, userId);
+      const caller = await resolveCallerContext(ctx);
+      requirePermission(caller, PERMISSIONS.VIEW_ANALYTICS);
+      const userId = getDataScopeUserId(caller);
 
       // Calculate date ranges as timestamps
       const now = new Date();
@@ -84,7 +51,7 @@ export const getTotalRevenueWithComparison = query({
       const currentMonthSales = await ctx.db
         .query('sales')
         .withIndex('by_user_and_isDeleted', (q) =>
-          q.eq('userId', effectiveUserId).eq('isDeleted', false)
+          q.eq('userId', userId).eq('isDeleted', false)
         )
         .filter((q) =>
           q.and(
@@ -98,7 +65,7 @@ export const getTotalRevenueWithComparison = query({
       const previousMonthSales = await ctx.db
         .query('sales')
         .withIndex('by_user_and_isDeleted', (q) =>
-          q.eq('userId', effectiveUserId).eq('isDeleted', false)
+          q.eq('userId', userId).eq('isDeleted', false)
         )
         .filter((q) =>
           q.and(
@@ -144,15 +111,9 @@ export const getTotalRevenueWithComparison = query({
 export const getTotalSalesWithComparison = query({
   handler: async (ctx) => {
     try {
-      const identity = await ctx.auth.getUserIdentity();
-
-      if (!identity) {
-        throw new Error('Not authenticated');
-      }
-      const userId = identity.subject;
-
-      // Resolve effective userId for team members
-      const effectiveUserId = await resolveEffectiveUserId(ctx, userId);
+      const caller = await resolveCallerContext(ctx);
+      requirePermission(caller, PERMISSIONS.VIEW_ANALYTICS);
+      const userId = getDataScopeUserId(caller);
 
       // Calculate date ranges as timestamps
       const now = new Date();
@@ -188,7 +149,7 @@ export const getTotalSalesWithComparison = query({
       const currentMonthSales = await ctx.db
         .query('sales')
         .withIndex('by_user_and_isDeleted', (q) =>
-          q.eq('userId', effectiveUserId).eq('isDeleted', false)
+          q.eq('userId', userId).eq('isDeleted', false)
         )
         .filter((q) =>
           q.and(
@@ -202,7 +163,7 @@ export const getTotalSalesWithComparison = query({
       const previousMonthSales = await ctx.db
         .query('sales')
         .withIndex('by_user_and_isDeleted', (q) =>
-          q.eq('userId', effectiveUserId).eq('isDeleted', false)
+          q.eq('userId', userId).eq('isDeleted', false)
         )
         .filter((q) =>
           q.and(
@@ -241,15 +202,9 @@ export const getTotalSalesWithComparison = query({
 export const getTotalCustomersWithComparison = query({
   handler: async (ctx) => {
     try {
-      const identity = await ctx.auth.getUserIdentity();
-
-      if (!identity) {
-        throw new Error('Not authenticated');
-      }
-      const userId = identity.subject;
-
-      // Resolve effective userId for team members
-      const effectiveUserId = await resolveEffectiveUserId(ctx, userId);
+      const caller = await resolveCallerContext(ctx);
+      requirePermission(caller, PERMISSIONS.VIEW_ANALYTICS);
+      const userId = getDataScopeUserId(caller);
 
       // Calculate date ranges as timestamps
       const now = new Date();
@@ -285,7 +240,7 @@ export const getTotalCustomersWithComparison = query({
       const currentMonthCustomers = await ctx.db
         .query('customers')
         .withIndex('by_user_and_isDeleted', (q) =>
-          q.eq('userId', effectiveUserId).eq('isDeleted', false)
+          q.eq('userId', userId).eq('isDeleted', false)
         )
         .filter((q) =>
           q.and(
@@ -299,7 +254,7 @@ export const getTotalCustomersWithComparison = query({
       const previousMonthCustomers = await ctx.db
         .query('customers')
         .withIndex('by_user_and_isDeleted', (q) =>
-          q.eq('userId', effectiveUserId).eq('isDeleted', false)
+          q.eq('userId', userId).eq('isDeleted', false)
         )
         .filter((q) =>
           q.and(
@@ -341,15 +296,9 @@ export const getRecentSalesAndMonthlyTotal = query({
     pageSize: v.optional(v.number())
   },
   handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity();
-
-    if (!identity) {
-      throw new Error('Not authenticated');
-    }
-    const userId = identity.subject;
-
-    // Resolve effective userId for team members
-    const effectiveUserId = await resolveEffectiveUserId(ctx, userId);
+    const caller = await resolveCallerContext(ctx);
+    requirePermission(caller, PERMISSIONS.VIEW_ANALYTICS);
+    const userId = getDataScopeUserId(caller);
 
     // Calculate date range for the current month
     const now = new Date();
@@ -374,7 +323,7 @@ export const getRecentSalesAndMonthlyTotal = query({
     const recentSales = await ctx.db
       .query('sales')
       .withIndex('by_user_and_isDeleted', (q) =>
-        q.eq('userId', effectiveUserId).eq('isDeleted', false)
+        q.eq('userId', userId).eq('isDeleted', false)
       )
       .filter((q) =>
         q.and(
@@ -401,84 +350,20 @@ export const getRecentSalesAndMonthlyTotal = query({
   }
 });
 
-// // Get all sales
+// Get all sales
 export const getAllSales = query({
   handler: async (ctx) => {
-    const identity = await ctx.auth.getUserIdentity();
-
-    if (!identity) {
-      throw new Error('Not authenticated');
-    }
-    const userId = identity.subject;
-
-    // Resolve effective userId for team members
-    const effectiveUserId = await resolveEffectiveUserId(ctx, userId);
+    const caller = await resolveCallerContext(ctx);
+    requirePermission(caller, PERMISSIONS.VIEW_ANALYTICS);
+    const userId = getDataScopeUserId(caller);
 
     const sales = await ctx.db
       .query('sales')
       .withIndex('by_user_and_isDeleted', (q) =>
-        q.eq('userId', effectiveUserId).eq('isDeleted', false)
+        q.eq('userId', userId).eq('isDeleted', false)
       )
       .collect();
 
     return sales;
   }
 });
-
-// // Get all sales (updated for organization access)
-// export const getAllSales = query({
-//   handler: async (ctx) => {
-//     const identity = await ctx.auth.getUserIdentity();
-
-//     if (!identity) {
-//       throw new Error('Not authenticated');
-//     }
-//     const userId = identity.subject;
-
-//     // First, find all organizations this user belongs to
-//     const memberships = await ctx.db
-//       .query("organizationMembers")
-//       .withIndex("by_user", q => q.eq("userId", userId))
-//       .collect();
-
-//     // If user doesn't belong to any org, just show their own sales
-//     if (memberships.length === 0) {
-//       const sales = await ctx.db
-//         .query('sales')
-//         .withIndex('by_user_and_isDeleted', (q) =>
-//           q.eq('userId', effectiveUserId).eq('isDeleted', false)
-//         )
-//         .collect();
-//       return sales;
-//     }
-
-//     // Get all sales from organizations the user belongs to
-//     type Sale = {
-//       userId: string;
-//       totalAmount: number;
-//       soldAt: number;
-//       isDeleted: boolean;
-//     };
-//     let allSales: Array<Sale> = [];
-//     for (const membership of memberships) {
-//       // Get the organization
-//       const organization = await ctx.db.get(membership.organizationId);
-
-//       if (!organization) {
-//         continue; // Skip this membership if the organization is null
-//       }
-
-//       // Get sales for the organization owner (replace userId with ownerId)
-//       const orgSales = await ctx.db
-//         .query('sales')
-//         .withIndex('by_user_and_isDeleted', (q) =>
-//           q.eq('userId', organization.ownerId).eq('isDeleted', false)
-//         )
-//         .collect();
-
-//       allSales = [...allSales, ...orgSales];
-//     }
-
-//     return allSales;
-//   }
-// });

@@ -1,5 +1,11 @@
 import { mutation, query } from './_generated/server';
 import { v } from 'convex/values';
+import {
+  resolveCallerContext,
+  requirePermission,
+  getDataScopeUserId
+} from './lib/authHelper';
+import { PERMISSIONS } from './lib/permissions';
 
 /**
  * ====================== PHASE 3.2: ADVANCED REPORTING ENGINE ======================
@@ -11,26 +17,30 @@ import { v } from 'convex/values';
 export const getCustomReports = query({
   args: {},
   async handler(ctx) {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error('Not authenticated');
+    const caller = await resolveCallerContext(ctx);
+    requirePermission(caller, PERMISSIONS.VIEW_REPORTS);
+    const userId = getDataScopeUserId(caller);
 
-    const reports = await ctx.db.query('customReports').collect();
-    return reports
-      .filter((r: any) => r.userId === identity.subject)
-      .map((r: any) => ({
-        id: r._id,
-        name: r.name,
-        description: r.description,
-        type: r.type,
-        lastUpdated: r.updatedAt,
-        savedBy: r.userId,
-        isShared: r.isShared,
-        filters: r.filters,
-        groupBy: r.groupBy,
-        columns: r.columns,
-        sortBy: r.sortBy,
-        createdAt: r.createdAt
-      }));
+    const reports = await ctx.db
+      .query('customReports')
+      .withIndex('by_user_and_isDeleted', (q) =>
+        q.eq('userId', userId).eq('isDeleted', false)
+      )
+      .collect();
+    return reports.map((r: any) => ({
+      id: r._id,
+      name: r.name,
+      description: r.description,
+      type: r.type,
+      lastUpdated: r.updatedAt,
+      savedBy: r.userId,
+      isShared: r.isShared,
+      filters: r.filters,
+      groupBy: r.groupBy,
+      columns: r.columns,
+      sortBy: r.sortBy,
+      createdAt: r.createdAt
+    }));
   }
 });
 
@@ -59,11 +69,12 @@ export const createCustomReport = mutation({
     )
   },
   async handler(ctx, args) {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error('Not authenticated');
+    const caller = await resolveCallerContext(ctx);
+    requirePermission(caller, PERMISSIONS.EXPORT_DATA);
+    const userId = getDataScopeUserId(caller);
 
     const reportId = await ctx.db.insert('customReports', {
-      userId: identity.subject,
+      userId,
       name: args.name,
       description: args.description || '',
       type: args.type,
@@ -72,6 +83,7 @@ export const createCustomReport = mutation({
       groupBy: args.groupBy || [],
       columns: args.columns,
       sortBy: args.sortBy || [],
+      isDeleted: false,
       createdAt: Date.now(),
       updatedAt: Date.now()
     });
@@ -102,20 +114,41 @@ export const generateReport = query({
     columns: v.array(v.string())
   },
   async handler(ctx, args) {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error('Not authenticated');
+    const caller = await resolveCallerContext(ctx);
+    requirePermission(caller, PERMISSIONS.VIEW_REPORTS);
+    const userId = getDataScopeUserId(caller);
 
     let data: any[] = [];
 
-    // Fetch data based on source
+    // Fetch data based on source, filtered by userId
     if (args.dataSource === 'sales') {
-      data = await ctx.db.query('sales').collect();
+      data = await ctx.db
+        .query('sales')
+        .withIndex('by_user_and_isDeleted', (q) =>
+          q.eq('userId', userId).eq('isDeleted', false)
+        )
+        .collect();
     } else if (args.dataSource === 'transactions') {
-      data = await ctx.db.query('transactions').collect();
+      data = await ctx.db
+        .query('transactions')
+        .withIndex('by_user_and_isDeleted', (q) =>
+          q.eq('userId', userId).eq('isDeleted', false)
+        )
+        .collect();
     } else if (args.dataSource === 'payments') {
-      data = await ctx.db.query('payments').collect();
+      data = await ctx.db
+        .query('payments')
+        .withIndex('by_user_and_isDeleted', (q) =>
+          q.eq('userId', userId).eq('isDeleted', false)
+        )
+        .collect();
     } else if (args.dataSource === 'products') {
-      data = await ctx.db.query('products').collect();
+      data = await ctx.db
+        .query('products')
+        .withIndex('by_user_and_isDeleted', (q) =>
+          q.eq('userId', userId).eq('isDeleted', false)
+        )
+        .collect();
     }
 
     // Apply filters
@@ -184,7 +217,7 @@ export const generateReport = query({
       dataSource: args.dataSource,
       rowCount: formattedData.length,
       totalRecordsProcessed: filtered.length,
-      data: formattedData.slice(0, 1000), // Limit to 1000 rows for UI
+      data: formattedData.slice(0, 1000),
       summary: {
         recordsMatched: filtered.length,
         groupCount: Object.keys(grouped).length,
@@ -210,18 +243,23 @@ export const createScheduledReport = mutation({
     includeCharts: v.boolean()
   },
   async handler(ctx, args) {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error('Not authenticated');
+    const caller = await resolveCallerContext(ctx);
+    requirePermission(caller, PERMISSIONS.EXPORT_DATA);
+    const userId = getDataScopeUserId(caller);
 
     const scheduleId = await ctx.db.insert('scheduledReports', {
-      userId: identity.subject,
+      userId,
       reportId: args.reportId,
+      reportName: args.reportName,
       schedule: args.schedule,
+      dayOfWeek: args.dayOfWeek,
+      dayOfMonth: args.dayOfMonth,
       timeOfDay: args.timeOfDay,
       recipients: args.recipients,
       format: args.format,
       includeCharts: args.includeCharts,
       isActive: true,
+      isDeleted: false,
       lastExecutionTime: Date.now(),
       nextExecutionTime: Date.now(),
       createdAt: Date.now(),
@@ -239,23 +277,28 @@ export const createScheduledReport = mutation({
 export const getScheduledReports = query({
   args: {},
   async handler(ctx) {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error('Not authenticated');
+    const caller = await resolveCallerContext(ctx);
+    requirePermission(caller, PERMISSIONS.VIEW_REPORTS);
+    const userId = getDataScopeUserId(caller);
 
-    const scheduled = await ctx.db.query('scheduledReports').collect();
-    return scheduled
-      .filter((r: any) => r.userId === identity.subject)
-      .map((r: any) => ({
-        id: r._id,
-        reportName: r.reportName,
-        schedule: r.schedule,
-        recipients: r.recipients,
-        format: r.format,
-        isActive: r.isActive,
-        lastExecutedAt: r.lastExecutedAt,
-        nextExecutionAt: r.nextExecutionAt,
-        executionCount: r.executionCount
-      }));
+    const scheduled = await ctx.db
+      .query('scheduledReports')
+      .withIndex('by_user_and_isDeleted', (q) =>
+        q.eq('userId', userId).eq('isDeleted', false)
+      )
+      .collect();
+
+    return scheduled.map((r: any) => ({
+      id: r._id,
+      reportName: r.reportName,
+      schedule: r.schedule,
+      recipients: r.recipients,
+      format: r.format,
+      isActive: r.isActive,
+      lastExecutedAt: r.lastExecutedAt,
+      nextExecutionAt: r.nextExecutionAt,
+      executionCount: r.executionCount
+    }));
   }
 });
 
@@ -270,14 +313,33 @@ export const executeDrillDown = query({
     columns: v.array(v.string())
   },
   async handler(ctx, args) {
+    const caller = await resolveCallerContext(ctx);
+    requirePermission(caller, PERMISSIONS.VIEW_REPORTS);
+    const userId = getDataScopeUserId(caller);
+
     let baseData: any[] = [];
 
     if (args.dataSource === 'sales') {
-      baseData = await ctx.db.query('sales').collect();
+      baseData = await ctx.db
+        .query('sales')
+        .withIndex('by_user_and_isDeleted', (q) =>
+          q.eq('userId', userId).eq('isDeleted', false)
+        )
+        .collect();
     } else if (args.dataSource === 'transactions') {
-      baseData = await ctx.db.query('transactions').collect();
+      baseData = await ctx.db
+        .query('transactions')
+        .withIndex('by_user_and_isDeleted', (q) =>
+          q.eq('userId', userId).eq('isDeleted', false)
+        )
+        .collect();
     } else if (args.dataSource === 'products') {
-      baseData = await ctx.db.query('products').collect();
+      baseData = await ctx.db
+        .query('products')
+        .withIndex('by_user_and_isDeleted', (q) =>
+          q.eq('userId', userId).eq('isDeleted', false)
+        )
+        .collect();
     }
 
     const drillDownData = baseData
@@ -322,14 +384,33 @@ export const prepareReportExport = query({
     includeCharts: v.boolean()
   },
   async handler(ctx, args) {
+    const caller = await resolveCallerContext(ctx);
+    requirePermission(caller, PERMISSIONS.EXPORT_DATA);
+    const userId = getDataScopeUserId(caller);
+
     let data: any[] = [];
 
     if (args.dataSource === 'sales') {
-      data = await ctx.db.query('sales').collect();
+      data = await ctx.db
+        .query('sales')
+        .withIndex('by_user_and_isDeleted', (q) =>
+          q.eq('userId', userId).eq('isDeleted', false)
+        )
+        .collect();
     } else if (args.dataSource === 'transactions') {
-      data = await ctx.db.query('transactions').collect();
+      data = await ctx.db
+        .query('transactions')
+        .withIndex('by_user_and_isDeleted', (q) =>
+          q.eq('userId', userId).eq('isDeleted', false)
+        )
+        .collect();
     } else if (args.dataSource === 'products') {
-      data = await ctx.db.query('products').collect();
+      data = await ctx.db
+        .query('products')
+        .withIndex('by_user_and_isDeleted', (q) =>
+          q.eq('userId', userId).eq('isDeleted', false)
+        )
+        .collect();
     }
 
     // Apply filters
@@ -385,8 +466,8 @@ export const prepareReportExport = query({
 export const getReportExecutionHistory = query({
   args: {},
   async handler(ctx) {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error('Not authenticated');
+    const caller = await resolveCallerContext(ctx);
+    requirePermission(caller, PERMISSIONS.VIEW_REPORTS);
 
     return {
       recentExecutions: [
@@ -438,12 +519,26 @@ export const generateComparisonReport = query({
     period2End: v.number()
   },
   async handler(ctx, args) {
+    const caller = await resolveCallerContext(ctx);
+    requirePermission(caller, PERMISSIONS.VIEW_REPORTS);
+    const userId = getDataScopeUserId(caller);
+
     let data: any[] = [];
 
     if (args.dataSource === 'sales') {
-      data = await ctx.db.query('sales').collect();
+      data = await ctx.db
+        .query('sales')
+        .withIndex('by_user_and_isDeleted', (q) =>
+          q.eq('userId', userId).eq('isDeleted', false)
+        )
+        .collect();
     } else if (args.dataSource === 'transactions') {
-      data = await ctx.db.query('transactions').collect();
+      data = await ctx.db
+        .query('transactions')
+        .withIndex('by_user_and_isDeleted', (q) =>
+          q.eq('userId', userId).eq('isDeleted', false)
+        )
+        .collect();
     }
 
     // Period 1 data
@@ -504,6 +599,9 @@ export const generateBenchmarkReport = query({
     yourValue: v.number()
   },
   async handler(ctx, args) {
+    const caller = await resolveCallerContext(ctx);
+    requirePermission(caller, PERMISSIONS.VIEW_REPORTS);
+
     // Mock industry benchmarks
     const benchmarks: Record<string, Record<string, number>> = {
       retailer: {
@@ -568,9 +666,9 @@ export const getGSTReport = query({
     endDate: v.optional(v.number())
   },
   async handler(ctx, args) {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error('Not authenticated');
-    const userId = identity.subject;
+    const caller = await resolveCallerContext(ctx);
+    requirePermission(caller, PERMISSIONS.EXPORT_DATA);
+    const userId = getDataScopeUserId(caller);
 
     const startDate = args.startDate || Date.now() - 30 * 24 * 60 * 60 * 1000;
     const endDate = args.endDate || Date.now();
@@ -578,13 +676,12 @@ export const getGSTReport = query({
     // Get all invoices in date range
     const invoices = await ctx.db
       .query('invoices')
-      .filter((q) => q.eq(q.field('userId'), userId))
+      .withIndex('by_user_and_isDeleted', (q) =>
+        q.eq('userId', userId).eq('isDeleted', false)
+      )
       .collect()
       .then((inv) =>
-        inv.filter(
-          (i) =>
-            !i.isDeleted && i.createdAt >= startDate && i.createdAt <= endDate
-        )
+        inv.filter((i) => i.createdAt >= startDate && i.createdAt <= endDate)
       );
 
     // Get products with HSN codes

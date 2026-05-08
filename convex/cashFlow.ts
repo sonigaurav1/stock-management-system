@@ -1,5 +1,11 @@
 import { v } from 'convex/values';
 import { query } from './_generated/server';
+import {
+  resolveCallerContext,
+  requirePermission,
+  getDataScopeUserId
+} from './lib/authHelper';
+import { PERMISSIONS } from './lib/permissions';
 
 /**
  * Cash Flow Management Module
@@ -11,11 +17,9 @@ import { query } from './_generated/server';
  */
 export const getCashPositionSummary = query({
   handler: async (ctx) => {
-    const identify = await ctx.auth.getUserIdentity();
-    if (!identify) {
-      throw new Error('Not authenticated');
-    }
-    const userId = identify.subject;
+    const caller = await resolveCallerContext(ctx);
+    requirePermission(caller, PERMISSIONS.VIEW_FINANCIAL_REPORTS);
+    const userId = getDataScopeUserId(caller);
 
     // Get all payments received (cash on hand indicator)
     const paymentsReceived = await ctx.db
@@ -99,11 +103,9 @@ export const getPaymentDueAlerts = query({
     daysAhead: v.optional(v.number()) // Show payments due in next N days
   },
   handler: async (ctx, { daysAhead = 30 }) => {
-    const identify = await ctx.auth.getUserIdentity();
-    if (!identify) {
-      throw new Error('Not authenticated');
-    }
-    const userId = identify.subject;
+    const caller = await resolveCallerContext(ctx);
+    requirePermission(caller, PERMISSIONS.VIEW_FINANCIAL_REPORTS);
+    const userId = getDataScopeUserId(caller);
 
     const now = Date.now();
     const futureDate = now + daysAhead * 24 * 60 * 60 * 1000;
@@ -160,11 +162,9 @@ export const getPaymentDueAlerts = query({
  */
 export const getInvoiceAging = query({
   handler: async (ctx) => {
-    const identify = await ctx.auth.getUserIdentity();
-    if (!identify) {
-      throw new Error('Not authenticated');
-    }
-    const userId = identify.subject;
+    const caller = await resolveCallerContext(ctx);
+    requirePermission(caller, PERMISSIONS.VIEW_FINANCIAL_REPORTS);
+    const userId = getDataScopeUserId(caller);
 
     const now = Date.now();
     const sales = await ctx.db
@@ -255,11 +255,9 @@ export const getInvoiceAging = query({
  */
 export const getReceivablesDashboard = query({
   handler: async (ctx) => {
-    const identify = await ctx.auth.getUserIdentity();
-    if (!identify) {
-      throw new Error('Not authenticated');
-    }
-    const userId = identify.subject;
+    const caller = await resolveCallerContext(ctx);
+    requirePermission(caller, PERMISSIONS.VIEW_FINANCIAL_REPORTS);
+    const userId = getDataScopeUserId(caller);
 
     // Get all customers
     const customers = await ctx.db
@@ -345,11 +343,9 @@ export const getReceivablesDashboard = query({
  */
 export const getPayablesDashboard = query({
   handler: async (ctx) => {
-    const identify = await ctx.auth.getUserIdentity();
-    if (!identify) {
-      throw new Error('Not authenticated');
-    }
-    const userId = identify.subject;
+    const caller = await resolveCallerContext(ctx);
+    requirePermission(caller, PERMISSIONS.VIEW_FINANCIAL_REPORTS);
+    const userId = getDataScopeUserId(caller);
 
     // Get all suppliers
     const suppliers = await ctx.db
@@ -447,11 +443,9 @@ export const getCashFlowForecast = query({
     months: v.optional(v.number())
   },
   handler: async (ctx, { months = 3 }) => {
-    const identify = await ctx.auth.getUserIdentity();
-    if (!identify) {
-      throw new Error('Not authenticated');
-    }
-    const userId = identify.subject;
+    const caller = await resolveCallerContext(ctx);
+    requirePermission(caller, PERMISSIONS.VIEW_FINANCIAL_REPORTS);
+    const userId = getDataScopeUserId(caller);
 
     // Get historical sales and payments for last 12 months
     const now = Date.now();
