@@ -1,28 +1,41 @@
 import { mutation, query } from './_generated/server';
 import { v } from 'convex/values';
+import {
+  resolveCallerContext,
+  requirePermission,
+  getDataScopeUserId
+} from './lib/authHelper';
+import { PERMISSIONS } from './lib/permissions';
 
 /**
  * Audit Log API
  * Tracks all user actions for compliance and debugging
  */
 
-export const getAuditLog = query({
+/**
+ * Get audit logs for organization (requires VIEW_AUDIT_LOGS permission)
+ */
+export const getAuditLogs = query({
   args: { limit: v.optional(v.number()) },
   async handler(ctx, args) {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error('Not authenticated');
+    const caller = await resolveCallerContext(ctx);
+    requirePermission(caller, PERMISSIONS.VIEW_AUDIT_LOGS);
 
+    const userId = getDataScopeUserId(caller);
     const limit = args.limit || 100;
 
     return await ctx.db
       .query('auditLog')
-      .withIndex('by_user', (q) => q.eq('userId', identity.subject))
+      .withIndex('by_user', (q) => q.eq('userId', userId))
       .order('desc')
       .take(limit);
   }
 });
 
-export const logAction = mutation({
+/**
+ * Log audit entry (INTERNAL - system calls only, no permission check needed)
+ */
+export const logAuditEntry = mutation({
   args: {
     action: v.string(),
     entityType: v.string(),
@@ -43,7 +56,10 @@ export const logAction = mutation({
   }
 });
 
-export const searchAuditLog = query({
+/**
+ * Get audit statistics (owner only)
+ */
+export const getAuditStats = query({
   args: {
     action: v.optional(v.string()),
     entityType: v.optional(v.string()),
@@ -51,23 +67,41 @@ export const searchAuditLog = query({
     endDate: v.optional(v.number())
   },
   async handler(ctx, args) {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error('Not authenticated');
+    const caller = await resolveCallerContext(ctx);
+    requirePermission(caller, PERMISSIONS.VIEW_AUDIT_LOGS);
+
+    const userId = getDataScopeUserId(caller);
 
     let query = ctx.db
       .query('auditLog')
-      .withIndex('by_user', (q) => q.eq('userId', identity.subject));
+      .withIndex('by_user', (q) => q.eq('userId', userId));
 
-    // Note: Convex doesn't support complex filtering directly
-    // You'd need to fetch all and filter in code, or implement a better indexing strategy
     const logs = await query.collect();
 
-    return logs.filter((log) => {
+    const filtered = logs.filter((log) => {
       if (args.action && log.action !== args.action) return false;
       if (args.entityType && log.entityType !== args.entityType) return false;
       if (args.startDate && log.createdAt < args.startDate) return false;
       if (args.endDate && log.createdAt > args.endDate) return false;
       return true;
     });
+
+    return {
+      total: filtered.length,
+      byAction: filtered.reduce(
+        (acc, log) => {
+          acc[log.action] = (acc[log.action] || 0) + 1;
+          return acc;
+        },
+        {} as Record<string, number>
+      ),
+      byEntityType: filtered.reduce(
+        (acc, log) => {
+          acc[log.entityType] = (acc[log.entityType] || 0) + 1;
+          return acc;
+        },
+        {} as Record<string, number>
+      )
+    };
   }
 });

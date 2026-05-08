@@ -1,12 +1,23 @@
 // File: convex/companyDetails.js
 import { mutation, query } from './_generated/server';
 import { v } from 'convex/values';
+import {
+  resolveCallerContext,
+  requirePermission,
+  getDataScopeUserId
+} from './lib/authHelper';
+import { PERMISSIONS } from './lib/permissions';
 
-// Get company details for a specific user
+/**
+ * Get company details (owner only)
+ */
 export const getCompanyDetails = query({
-  args: { userId: v.string() },
-  handler: async (ctx, args) => {
-    const { userId } = args;
+  args: {},
+  handler: async (ctx) => {
+    const caller = await resolveCallerContext(ctx);
+    requirePermission(caller, PERMISSIONS.VIEW_ORGANIZATION);
+
+    const userId = getDataScopeUserId(caller);
 
     const companyDetails = await ctx.db
       .query('companyDetails')
@@ -19,6 +30,9 @@ export const getCompanyDetails = query({
   }
 });
 
+/**
+ * Create company details (auto-sets userId from identity, owner only)
+ */
 export const createCompanyDetails = mutation({
   args: {
     companyName: v.string(),
@@ -29,14 +43,13 @@ export const createCompanyDetails = mutation({
     urls: v.array(v.object({ id: v.number(), value: v.string() })),
     isDeleted: v.boolean(),
     createdAt: v.number(),
-    processedBy: v.optional(v.string()) // Added field to track the user who create the invoice receipt
+    processedBy: v.optional(v.string())
   },
   handler: async (ctx, args) => {
-    const identify = await ctx.auth.getUserIdentity();
-    if (!identify) {
-      throw new Error('Not authenticated');
-    }
-    const userId = identify.subject;
+    const caller = await resolveCallerContext(ctx);
+    requirePermission(caller, PERMISSIONS.MANAGE_ORGANIZATION);
+
+    const userId = getDataScopeUserId(caller);
 
     // Check if company details already exist for this user
     const existingDetails = await ctx.db
@@ -55,7 +68,7 @@ export const createCompanyDetails = mutation({
         email: args.email,
         vatNumber: args.vatNumber,
         urls: args.urls,
-        processedBy: args.processedBy, // Set the user who created the company details
+        processedBy: userId,
         updatedAt: Date.now()
       });
     } else {
@@ -71,7 +84,7 @@ export const createCompanyDetails = mutation({
         isVerified: false,
         isDeleted: args.isDeleted,
         createdAt: args.createdAt,
-        processedBy: args.processedBy // Set the user who created the company details
+        processedBy: userId
       });
 
       return newDetails;
@@ -79,7 +92,9 @@ export const createCompanyDetails = mutation({
   }
 });
 
-// Update company details
+/**
+ * Update company details (owner only)
+ */
 export const updateCompanyDetails = mutation({
   args: {
     companyName: v.string(),
@@ -90,11 +105,10 @@ export const updateCompanyDetails = mutation({
     urls: v.array(v.object({ id: v.number(), value: v.string() }))
   },
   handler: async (ctx, args) => {
-    const identify = await ctx.auth.getUserIdentity();
-    if (!identify) {
-      throw new Error('Not authenticated');
-    }
-    const userId = identify.subject;
+    const caller = await resolveCallerContext(ctx);
+    requirePermission(caller, PERMISSIONS.MANAGE_ORGANIZATION);
+
+    const userId = getDataScopeUserId(caller);
 
     const companyDetails = await ctx.db
       .query('companyDetails')
@@ -114,11 +128,16 @@ export const updateCompanyDetails = mutation({
   }
 });
 
-// Update verification status
+/**
+ * Update verification status (owner only, super admin can also update)
+ */
 export const updateVerificationStatus = mutation({
-  args: { userId: v.string(), isVerified: v.boolean() },
+  args: { isVerified: v.boolean() },
   handler: async (ctx, args) => {
-    const { userId, isVerified } = args;
+    const caller = await resolveCallerContext(ctx);
+    requirePermission(caller, PERMISSIONS.MANAGE_ORGANIZATION);
+
+    const userId = getDataScopeUserId(caller);
 
     const companyDetails = await ctx.db
       .query('companyDetails')
@@ -132,23 +151,24 @@ export const updateVerificationStatus = mutation({
     }
 
     return await ctx.db.patch(companyDetails._id, {
-      isVerified,
+      isVerified: args.isVerified,
       updatedAt: Date.now()
     });
   }
 });
 
-// Create company details from registration form (simplified version)
+/**
+ * Create company details from registration form (auto-sets userId from identity)
+ */
 export const createCompanyDetailsFromRegistration = mutation({
   args: {
-    userId: v.string(),
     companyName: v.string(),
     address: v.string(),
     city: v.string(),
     state: v.string(),
     postalCode: v.string(),
     country: v.string(),
-    phone: v.string(), // Single phone string from form
+    phone: v.string(),
     email: v.string(),
     taxNumber: v.optional(v.string()),
     website: v.optional(v.string())
@@ -159,15 +179,13 @@ export const createCompanyDetailsFromRegistration = mutation({
       throw new Error('Not authenticated');
     }
 
-    if (identity.subject !== args.userId) {
-      throw new Error('Can only update your own company details');
-    }
+    const userId = identity.subject;
 
     // Check if company details already exist for this user
     const existingDetails = await ctx.db
       .query('companyDetails')
       .withIndex('by_user_and_isDeleted', (q) =>
-        q.eq('userId', args.userId).eq('isDeleted', false)
+        q.eq('userId', userId).eq('isDeleted', false)
       )
       .first();
 
@@ -189,7 +207,7 @@ export const createCompanyDetailsFromRegistration = mutation({
     } else {
       // Create new company details
       return await ctx.db.insert('companyDetails', {
-        userId: args.userId,
+        userId,
         companyName: args.companyName,
         companyAddress: fullAddress,
         phone: phoneArray,
@@ -205,11 +223,16 @@ export const createCompanyDetailsFromRegistration = mutation({
   }
 });
 
-// Get company name by ID
+/**
+ * Get company name by current user
+ */
 export const getCompanyNameById = query({
-  args: { userId: v.string() },
-  handler: async (ctx, args) => {
-    const { userId } = args;
+  args: {},
+  handler: async (ctx) => {
+    const caller = await resolveCallerContext(ctx);
+    requirePermission(caller, PERMISSIONS.VIEW_ORGANIZATION);
+
+    const userId = getDataScopeUserId(caller);
 
     const companyDetails = await ctx.db
       .query('companyDetails')
@@ -226,11 +249,16 @@ export const getCompanyNameById = query({
   }
 });
 
-// Check if business profile is complete
+/**
+ * Check if business profile is complete (organization settings)
+ */
 export const isBusinessProfileComplete = query({
-  args: { userId: v.string() },
-  handler: async (ctx, args) => {
-    const { userId } = args;
+  args: {},
+  handler: async (ctx) => {
+    const caller = await resolveCallerContext(ctx);
+    requirePermission(caller, PERMISSIONS.VIEW_ORGANIZATION);
+
+    const userId = getDataScopeUserId(caller);
 
     // Check organizationSettings table instead of companyDetails
     const organizationSettings = await ctx.db

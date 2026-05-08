@@ -1,16 +1,22 @@
 import { v } from 'convex/values';
 import { query, mutation } from './_generated/server';
 import type { Insight } from '@/../src/types/dashboard';
+import {
+  resolveCallerContext,
+  requirePermission,
+  getDataScopeUserId
+} from './lib/authHelper';
+import { PERMISSIONS } from './lib/permissions';
 
-// Generate insights based on current metrics
+/**
+ * Generate insights based on current metrics (requires VIEW_ANALYTICS permission)
+ */
 export const generateInsights = query({
   handler: async (ctx) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) {
-      throw new Error('Not authenticated');
-    }
+    const caller = await resolveCallerContext(ctx);
+    requirePermission(caller, PERMISSIONS.VIEW_ANALYTICS);
 
-    const userId = identity.subject;
+    const userId = getDataScopeUserId(caller);
 
     const insights: Insight[] = [];
 
@@ -222,18 +228,18 @@ export const generateInsights = query({
   }
 });
 
-// Get non-dismissed insights
+/**
+ * Get non-dismissed insights (scoped to caller)
+ */
 export const getActiveInsights = query({
   args: {
     limit: v.optional(v.number())
   },
   handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) {
-      throw new Error('Not authenticated');
-    }
+    const caller = await resolveCallerContext(ctx);
+    requirePermission(caller, PERMISSIONS.VIEW_ANALYTICS);
 
-    const userId = identity.subject;
+    const userId = getDataScopeUserId(caller);
     const limit = args.limit ?? 10;
     const now = Date.now();
 
@@ -256,18 +262,18 @@ export const getActiveInsights = query({
   }
 });
 
-// Dismiss an insight
+/**
+ * Dismiss an insight (own insights only)
+ */
 export const dismissInsight = mutation({
   args: {
     insightId: v.string()
   },
   handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) {
-      throw new Error('Not authenticated');
-    }
+    const caller = await resolveCallerContext(ctx);
+    requirePermission(caller, PERMISSIONS.VIEW_ANALYTICS);
 
-    const userId = identity.subject;
+    const userId = getDataScopeUserId(caller);
 
     const insight = await ctx.db
       .query('userInsights')
@@ -276,7 +282,7 @@ export const dismissInsight = mutation({
       .first();
 
     if (!insight) {
-      throw new Error('Insight not found');
+      throw new Error('Insight not found or access denied');
     }
 
     await ctx.db.patch(insight._id, {
@@ -288,7 +294,9 @@ export const dismissInsight = mutation({
   }
 });
 
-// Store a new insight
+/**
+ * Store a new insight (sets userId from caller)
+ */
 export const storeInsight = mutation({
   args: {
     type: v.string(),
@@ -302,12 +310,10 @@ export const storeInsight = mutation({
     expiresAt: v.optional(v.number())
   },
   handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) {
-      throw new Error('Not authenticated');
-    }
+    const caller = await resolveCallerContext(ctx);
+    requirePermission(caller, PERMISSIONS.VIEW_ANALYTICS);
 
-    const userId = identity.subject;
+    const userId = getDataScopeUserId(caller);
 
     const insightId = await ctx.db.insert('userInsights', {
       userId,
@@ -328,7 +334,9 @@ export const storeInsight = mutation({
   }
 });
 
-// Clear expired insights
+/**
+ * Clear expired insights (system cleanup - internal)
+ */
 export const clearExpiredInsights = mutation({
   handler: async (ctx) => {
     const identity = await ctx.auth.getUserIdentity();

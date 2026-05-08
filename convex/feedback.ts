@@ -1,12 +1,17 @@
 import { mutation, query } from './_generated/server';
 import { v } from 'convex/values';
+import {
+  resolveCallerContext,
+  requirePermission,
+  getDataScopeUserId
+} from './lib/authHelper';
+import { PERMISSIONS } from './lib/permissions';
 
 /**
  * Create a new feedback entry
  */
 export const createFeedback = mutation({
   args: {
-    userId: v.string(),
     title: v.string(),
     message: v.string(),
     category: v.string(), // e.g., "bug", "feature", "improvement", "other"
@@ -15,8 +20,13 @@ export const createFeedback = mutation({
     attachmentUrl: v.optional(v.string())
   },
   handler: async (ctx, args) => {
+    const caller = await resolveCallerContext(ctx);
+    requirePermission(caller, PERMISSIONS.VIEW_ORGANIZATION);
+
+    const userId = getDataScopeUserId(caller);
+
     const feedbackId = await ctx.db.insert('feedback', {
-      userId: args.userId,
+      userId,
       title: args.title,
       message: args.message,
       category: args.category,
@@ -34,19 +44,24 @@ export const createFeedback = mutation({
 });
 
 /**
- * Get all feedback (for admin)
+ * Get all feedback (for admin) - paginated
  */
-export const getAllFeedback = query({
+export const getFeedback = query({
   args: {
     sortBy: v.optional(v.string()), // "date", "rating", "category"
     filter: v.optional(v.string()), // "all", "unread", "resolved", "pending"
     limit: v.optional(v.number())
   },
   handler: async (ctx, args) => {
-    let query = ctx.db.query('feedback');
+    const caller = await resolveCallerContext(ctx);
+    requirePermission(caller, PERMISSIONS.VIEW_ORGANIZATION);
 
-    // Build filtered query
-    const allFeedback = await query.collect();
+    const userId = getDataScopeUserId(caller);
+
+    const allFeedback = await ctx.db
+      .query('feedback')
+      .filter((q) => q.eq(q.field('userId'), userId))
+      .collect();
 
     // Apply filters
     let filtered = allFeedback;
@@ -77,40 +92,69 @@ export const getAllFeedback = query({
 });
 
 /**
- * Get feedback by user
+ * Search feedback
  */
-export const getFeedbackByUser = query({
+export const searchFeedback = query({
   args: {
-    userId: v.string(),
+    query: v.optional(v.string()),
     limit: v.optional(v.number())
   },
   handler: async (ctx, args) => {
+    const caller = await resolveCallerContext(ctx);
+    requirePermission(caller, PERMISSIONS.VIEW_ORGANIZATION);
+
+    const userId = getDataScopeUserId(caller);
+
     const userFeedback = await ctx.db
       .query('feedback')
-      .filter((q) => q.eq(q.field('userId'), args.userId))
+      .filter((q) => q.eq(q.field('userId'), userId))
       .collect();
 
+    let filtered = userFeedback;
+    if (args.query) {
+      const lowerQuery = args.query.toLowerCase();
+      filtered = userFeedback.filter(
+        (f) =>
+          f.title.toLowerCase().includes(lowerQuery) ||
+          f.message.toLowerCase().includes(lowerQuery) ||
+          f.category.toLowerCase().includes(lowerQuery)
+      );
+    }
+
     const limit = args.limit || 10;
-    return userFeedback
-      .sort((a, b) => b.createdAt - a.createdAt)
-      .slice(0, limit);
+    return filtered.sort((a, b) => b.createdAt - a.createdAt).slice(0, limit);
   }
 });
 
 /**
- * Update feedback status and add response
+ * Update feedback status and add response (owner or admin only)
  */
 export const respondToFeedback = mutation({
   args: {
     feedbackId: v.id('feedback'),
     response: v.string(),
-    respondedBy: v.string(),
     isResolved: v.boolean()
   },
   handler: async (ctx, args) => {
+    const caller = await resolveCallerContext(ctx);
+    requirePermission(caller, PERMISSIONS.VIEW_ORGANIZATION);
+
+    const userId = getDataScopeUserId(caller);
+
+    const feedback = await ctx.db.get(args.feedbackId);
+    if (!feedback) {
+      throw new Error('Feedback not found');
+    }
+
+    if (feedback.userId !== userId) {
+      throw new Error(
+        'Access denied: can only respond to own organization feedback'
+      );
+    }
+
     await ctx.db.patch(args.feedbackId, {
       response: args.response,
-      respondedBy: args.respondedBy,
+      respondedBy: userId,
       respondedAt: Date.now(),
       isResolved: args.isResolved,
       isRead: true,
@@ -122,13 +166,27 @@ export const respondToFeedback = mutation({
 });
 
 /**
- * Mark feedback as read
+ * Mark feedback as read (own feedback only)
  */
 export const markFeedbackAsRead = mutation({
   args: {
     feedbackId: v.id('feedback')
   },
   handler: async (ctx, args) => {
+    const caller = await resolveCallerContext(ctx);
+    requirePermission(caller, PERMISSIONS.VIEW_ORGANIZATION);
+
+    const userId = getDataScopeUserId(caller);
+
+    const feedback = await ctx.db.get(args.feedbackId);
+    if (!feedback) {
+      throw new Error('Feedback not found');
+    }
+
+    if (feedback.userId !== userId) {
+      throw new Error('Access denied: can only mark own feedback as read');
+    }
+
     await ctx.db.patch(args.feedbackId, {
       isRead: true,
       updatedAt: Date.now()
@@ -139,12 +197,20 @@ export const markFeedbackAsRead = mutation({
 });
 
 /**
- * Get feedback statistics
+ * Get feedback statistics (org-scoped)
  */
 export const getFeedbackStats = query({
   args: {},
   handler: async (ctx) => {
-    const allFeedback = await ctx.db.query('feedback').collect();
+    const caller = await resolveCallerContext(ctx);
+    requirePermission(caller, PERMISSIONS.VIEW_ORGANIZATION);
+
+    const userId = getDataScopeUserId(caller);
+
+    const allFeedback = await ctx.db
+      .query('feedback')
+      .filter((q) => q.eq(q.field('userId'), userId))
+      .collect();
 
     const stats = {
       total: allFeedback.length,
@@ -170,13 +236,27 @@ export const getFeedbackStats = query({
 });
 
 /**
- * Delete feedback (admin only)
+ * Delete feedback (own feedback or admin only)
  */
 export const deleteFeedback = mutation({
   args: {
     feedbackId: v.id('feedback')
   },
   handler: async (ctx, args) => {
+    const caller = await resolveCallerContext(ctx);
+    requirePermission(caller, PERMISSIONS.VIEW_ORGANIZATION);
+
+    const userId = getDataScopeUserId(caller);
+
+    const feedback = await ctx.db.get(args.feedbackId);
+    if (!feedback) {
+      throw new Error('Feedback not found');
+    }
+
+    if (feedback.userId !== userId && !caller.isOwner) {
+      throw new Error('Access denied: can only delete own feedback');
+    }
+
     await ctx.db.delete(args.feedbackId);
     return true;
   }
