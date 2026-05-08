@@ -82,18 +82,18 @@ export const deletePayment = mutation({
   }
 });
 
-export const getPayments = mutation({
-  args: {
-    userId: v.string()
-  },
-  handler: async (ctx, args) => {
+export const getPayments = query({
+  args: {},
+  handler: async (ctx) => {
     const caller = await resolveCallerContext(ctx);
     requirePermission(caller, PERMISSIONS.VIEW_REPORTS);
     const userId = getDataScopeUserId(caller);
 
     return await ctx.db
       .query('payments')
-      .filter((q) => q.eq(q.field('userId'), userId))
+      .withIndex('by_user_and_isDeleted', (q) =>
+        q.eq('userId', userId).eq('isDeleted', false)
+      )
       .collect();
   }
 });

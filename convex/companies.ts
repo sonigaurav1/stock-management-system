@@ -464,10 +464,21 @@ export const createCompanyFromRegistration = mutation({
       updatedAt: Date.now()
     };
 
+    let companyId;
     if (existing) {
-      return await ctx.db.patch(existing._id, companyData);
+      companyId = await ctx.db.patch(existing._id, companyData);
     } else {
-      return await ctx.db.insert('companies', companyData);
+      companyId = await ctx.db.insert('companies', companyData);
+
+      // NOTE: Owner is NOT added to companyMembers table.
+      // Owners are handled specially via resolveCallerContext which returns:
+      // - isOwner: true
+      // - ownerId: callerId (they access their own data)
+      // - role: 'owner'
+      // - All permissions granted
+      // This is intentional - owners have full access without needing a membership record.
     }
+
+    return companyId;
   }
 });

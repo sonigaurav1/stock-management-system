@@ -1,6 +1,12 @@
 import { v } from 'convex/values';
 import { query, mutation } from './_generated/server';
 import {
+  resolveCallerContext,
+  requirePermission,
+  getDataScopeUserId
+} from './lib/authHelper';
+import { PERMISSIONS } from './lib/permissions';
+import {
   WIDGET_CONFIGS,
   DEFAULT_LAYOUTS,
   Widget,
@@ -14,12 +20,12 @@ export const initializeDashboard = mutation({
     businessType: v.string()
   },
   handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) {
-      throw new Error('Not authenticated');
-    }
+    // RBAC: Use resolveCallerContext for proper owner/staff separation
+    const caller = await resolveCallerContext(ctx);
+    requirePermission(caller, PERMISSIONS.VIEW_REPORTS);
 
-    const userId = identity.subject;
+    // Use getDataScopeUserId to get the correct userId (owner's userId for staff)
+    const userId = getDataScopeUserId(caller);
 
     // Check if dashboard already exists
     const existing = await ctx.db
@@ -157,12 +163,12 @@ export const updateWidgetVisibility = mutation({
     isVisible: v.boolean()
   },
   handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) {
-      throw new Error('Not authenticated');
-    }
+    // RBAC: Use resolveCallerContext for proper owner/staff separation
+    const caller = await resolveCallerContext(ctx);
+    requirePermission(caller, PERMISSIONS.MANAGE_SETTINGS);
 
-    const userId = identity.subject;
+    // Use getDataScopeUserId to get the correct userId (owner's userId for staff)
+    const userId = getDataScopeUserId(caller);
 
     const dashboard = await ctx.db
       .query('dashboardWidgets')
@@ -192,12 +198,12 @@ export const reorderWidgets = mutation({
     widgetOrder: v.array(v.string()) // Array of widget IDs in new order
   },
   handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) {
-      throw new Error('Not authenticated');
-    }
+    // RBAC: Use resolveCallerContext for proper owner/staff separation
+    const caller = await resolveCallerContext(ctx);
+    requirePermission(caller, PERMISSIONS.MANAGE_SETTINGS);
 
-    const userId = identity.subject;
+    // Use getDataScopeUserId to get the correct userId (owner's userId for staff)
+    const userId = getDataScopeUserId(caller);
 
     const dashboard = await ctx.db
       .query('dashboardWidgets')
@@ -237,12 +243,12 @@ export const updateRefreshInterval = mutation({
     interval: v.number() // milliseconds
   },
   handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) {
-      throw new Error('Not authenticated');
-    }
+    // RBAC: Use resolveCallerContext for proper owner/staff separation
+    const caller = await resolveCallerContext(ctx);
+    requirePermission(caller, PERMISSIONS.MANAGE_SETTINGS);
 
-    const userId = identity.subject;
+    // Use getDataScopeUserId to get the correct userId (owner's userId for staff)
+    const userId = getDataScopeUserId(caller);
 
     const dashboard = await ctx.db
       .query('dashboardWidgets')
@@ -268,12 +274,12 @@ export const resetDashboardToDefaults = mutation({
     businessType: v.string()
   },
   handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) {
-      throw new Error('Not authenticated');
-    }
+    // RBAC: Use resolveCallerContext for proper owner/staff separation
+    const caller = await resolveCallerContext(ctx);
+    requirePermission(caller, PERMISSIONS.MANAGE_SETTINGS);
 
-    const userId = identity.subject;
+    // Use getDataScopeUserId to get the correct userId (owner's userId for staff)
+    const userId = getDataScopeUserId(caller);
 
     const dashboard = await ctx.db
       .query('dashboardWidgets')
@@ -347,12 +353,12 @@ export const updateInsightSettings = mutation({
     lowStockThreshold: v.optional(v.number())
   },
   handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) {
-      throw new Error('Not authenticated');
-    }
+    // RBAC: Use resolveCallerContext for proper owner/staff separation
+    const caller = await resolveCallerContext(ctx);
+    requirePermission(caller, PERMISSIONS.MANAGE_SETTINGS);
 
-    const userId = identity.subject;
+    // Use getDataScopeUserId to get the correct userId (owner's userId for staff)
+    const userId = getDataScopeUserId(caller);
 
     const settings = await ctx.db
       .query('insightSettings')

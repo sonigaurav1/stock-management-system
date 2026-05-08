@@ -165,6 +165,34 @@ export async function POST(request: NextRequest) {
   }
 }
 
+// In-memory rate limiting (per-process, not distributed)
+// For production, use Redis or similar
+const rateLimitMap = new Map<string, { count: number; resetTime: number }>();
+const RATE_LIMIT_MAX = 10; // requests
+const RATE_LIMIT_WINDOW = 60 * 1000; // 1 minute
+
+/**
+ * Check rate limit for a user
+ */
+function checkRateLimit(userId: string): boolean {
+  const now = Date.now();
+  const key = `roles_api:${userId}`;
+  const current = rateLimitMap.get(key);
+
+  if (!current || now > current.resetTime) {
+    // New window
+    rateLimitMap.set(key, { count: 1, resetTime: now + RATE_LIMIT_WINDOW });
+    return true;
+  }
+
+  if (current.count >= RATE_LIMIT_MAX) {
+    return false;
+  }
+
+  current.count++;
+  return true;
+}
+
 export async function PATCH(request: NextRequest) {
   try {
     const body = await request.json();
@@ -175,12 +203,30 @@ export async function PATCH(request: NextRequest) {
       companyOwnerId,
       ownerUsername,
       companyName,
-      isMultiTenant
+      isMultiTenant,
+      idempotencyKey // Optional: for retry safety
     } = body;
 
+    // Validation
     if (!userId) {
       return NextResponse.json(
         { error: 'userId is required' },
+        { status: 400 }
+      );
+    }
+
+    // Rate limiting
+    if (!checkRateLimit(userId)) {
+      return NextResponse.json(
+        { error: 'Rate limit exceeded. Please try again later.' },
+        { status: 429 }
+      );
+    }
+
+    // Validate userId format (Clerk user IDs start with 'user_')
+    if (!userId.startsWith('user_')) {
+      return NextResponse.json(
+        { error: 'Invalid userId format' },
         { status: 400 }
       );
     }
@@ -189,6 +235,11 @@ export async function PATCH(request: NextRequest) {
     const publicMetadata: Record<string, any> = {
       updatedAt: Date.now()
     };
+
+    // Add idempotency key if provided (for tracking retries)
+    if (idempotencyKey) {
+      publicMetadata.lastIdempotencyKey = idempotencyKey;
+    }
 
     // Validate and add role if provided
     if (role) {
@@ -210,6 +261,13 @@ export async function PATCH(request: NextRequest) {
           publicMetadata.isMultiTenant = isMultiTenant;
         }
       } else if (companyOwnerId) {
+        // Validate companyOwnerId format
+        if (!companyOwnerId.startsWith('user_')) {
+          return NextResponse.json(
+            { error: 'Invalid companyOwnerId format' },
+            { status: 400 }
+          );
+        }
         publicMetadata.companyOwnerId = companyOwnerId;
       }
     }
@@ -227,22 +285,58 @@ export async function PATCH(request: NextRequest) {
 
     // Update user's public metadata
     const clerk = await clerkClient();
-    await clerk.users.updateUserMetadata(userId, {
-      publicMetadata
-    });
+
+    try {
+      await clerk.users.updateUserMetadata(userId, {
+        publicMetadata
+      });
+    } catch (clerkError: any) {
+      console.error('[roles API] Clerk update failed:', clerkError);
+
+      // Handle specific Clerk errors
+      if (clerkError?.status === 404) {
+        return NextResponse.json(
+          { error: 'User not found in Clerk' },
+          { status: 404 }
+        );
+      }
+      if (clerkError?.status === 429) {
+        return NextResponse.json(
+          { error: 'Clerk rate limit exceeded. Please try again.' },
+          { status: 429 }
+        );
+      }
+
+      throw clerkError; // Re-throw for general error handling
+    }
+
+    // Verify the update by fetching the user back
+    const updatedUser = await clerk.users.getUser(userId);
+    const verifiedMetadata = updatedUser.publicMetadata;
 
     return NextResponse.json(
       {
         success: true,
         message: `User role updated`,
-        metadata: publicMetadata
+        metadata: publicMetadata,
+        verified: {
+          role: verifiedMetadata.role,
+          companyOwnerId: verifiedMetadata.companyOwnerId
+        }
       },
       { status: 200 }
     );
-  } catch (error) {
-    console.error('Error updating user role:', error);
+  } catch (error: any) {
+    console.error('[roles API] Error updating user role:', error);
+
+    // Return more detailed error in development
+    const isDev = process.env.NODE_ENV === 'development';
+
     return NextResponse.json(
-      { error: 'Failed to update user role' },
+      {
+        error: 'Failed to update user role',
+        details: isDev ? error.message : undefined
+      },
       { status: 500 }
     );
   }

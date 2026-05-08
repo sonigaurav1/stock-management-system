@@ -138,16 +138,19 @@ export const deleteExpense = mutation({
     expenseId: v.string()
   },
   async handler(ctx, args) {
-    const userId = (await ctx.auth.getUserIdentity())?.tokenIdentifier || '';
+    // RBAC: Use resolveCallerContext for proper owner/staff separation
+    const caller = await resolveCallerContext(ctx);
+    requirePermission(caller, PERMISSIONS.MANAGE_EXPENSES);
 
-    if (!userId) {
-      throw new Error('Unauthorized');
-    }
+    // Use getDataScopeUserId to get the correct userId (owner's userId for staff)
+    const userId = getDataScopeUserId(caller);
 
     // Query expenses and find the one with matching string ID
     const allExpenses = await ctx.db
       .query('expenses')
-      .filter((q) => q.eq(q.field('userId'), userId))
+      .withIndex('by_user_and_isDeleted', (q) =>
+        q.eq('userId', userId).eq('isDeleted', false)
+      )
       .collect();
     const expense = allExpenses.find(
       (e) => e._id.toString() === args.expenseId
@@ -166,21 +169,27 @@ export const deleteExpense = mutation({
   }
 });
 
-// Approve an expense (admin action)
+// Approve an expense (requires APPROVE_TRANSACTION permission)
 export const approveExpense = mutation({
   args: {
     expenseId: v.string(),
     approvalNotes: v.optional(v.string())
   },
   async handler(ctx, args) {
-    const userId = (await ctx.auth.getUserIdentity())?.tokenIdentifier || '';
+    // RBAC: Use resolveCallerContext for proper owner/staff separation
+    const caller = await resolveCallerContext(ctx);
+    requirePermission(caller, PERMISSIONS.APPROVE_TRANSACTION);
 
-    if (!userId) {
-      throw new Error('Unauthorized');
-    }
+    // Use getDataScopeUserId to get the correct userId (owner's userId for staff)
+    const userId = getDataScopeUserId(caller);
 
-    // Query all expenses and find the one with matching string ID
-    const allExpenses = await ctx.db.query('expenses').collect();
+    // Query expenses and find the one with matching string ID
+    const allExpenses = await ctx.db
+      .query('expenses')
+      .withIndex('by_user_and_isDeleted', (q) =>
+        q.eq('userId', userId).eq('isDeleted', false)
+      )
+      .collect();
     const expense = allExpenses.find(
       (e) => e._id.toString() === args.expenseId
     );
@@ -189,12 +198,9 @@ export const approveExpense = mutation({
       throw new Error('Expense not found');
     }
 
-    // Check if user has admin rights (simplified check)
-    // In production, verify against organizationMembers or roles table
-
     await ctx.db.patch(expense._id, {
       status: 'approved',
-      approvedBy: userId,
+      approvedBy: caller.callerId,
       approvalDate: Date.now(),
       approvalNotes: args.approvalNotes,
       updatedAt: Date.now()
@@ -208,7 +214,7 @@ export const approveExpense = mutation({
 export const createExpenseCategory = mutation({
   args: {
     name: v.string(),
-    type: v.string(), // "business" | "personal"
+    type: v.union(v.literal('business'), v.literal('personal')),
     isTaxDeductible: v.optional(v.boolean()),
     isRecurring: v.optional(v.boolean()),
     budget: v.optional(v.number()),
@@ -217,11 +223,12 @@ export const createExpenseCategory = mutation({
     description: v.optional(v.string())
   },
   async handler(ctx, args) {
-    const userId = (await ctx.auth.getUserIdentity())?.tokenIdentifier || '';
+    // FIX: Use proper RBAC for multi-tenant isolation
+    const caller = await resolveCallerContext(ctx);
+    requirePermission(caller, PERMISSIONS.MANAGE_EXPENSES);
 
-    if (!userId) {
-      throw new Error('Unauthorized');
-    }
+    // Use ownerId for data scope (staff creates categories in owner's data)
+    const userId = getDataScopeUserId(caller);
 
     const categoryId = await ctx.db.insert('expenseCategories', {
       userId,
@@ -249,11 +256,12 @@ export const createBudget = mutation({
     alertThreshold: v.optional(v.number())
   },
   async handler(ctx, args) {
-    const userId = (await ctx.auth.getUserIdentity())?.tokenIdentifier || '';
+    // FIX: Use proper RBAC for multi-tenant isolation
+    const caller = await resolveCallerContext(ctx);
+    requirePermission(caller, PERMISSIONS.MANAGE_EXPENSES);
 
-    if (!userId) {
-      throw new Error('Unauthorized');
-    }
+    // Use ownerId for data scope (staff manages budgets in owner's data)
+    const userId = getDataScopeUserId(caller);
 
     // Check if budget already exists
     const allBudgets = await ctx.db
@@ -314,11 +322,12 @@ export const createRecurringExpense = mutation({
     notes: v.optional(v.string())
   },
   async handler(ctx, args) {
-    const userId = (await ctx.auth.getUserIdentity())?.tokenIdentifier || '';
+    // FIX: Use proper RBAC for multi-tenant isolation
+    const caller = await resolveCallerContext(ctx);
+    requirePermission(caller, PERMISSIONS.MANAGE_EXPENSES);
 
-    if (!userId) {
-      throw new Error('Unauthorized');
-    }
+    // Use ownerId for data scope (staff creates recurring expenses in owner's data)
+    const userId = getDataScopeUserId(caller);
 
     // Calculate next due date based on frequency
     const nextDueDate = calculateNextDueDate(args.startDate, args.frequency);
@@ -360,11 +369,12 @@ export const getExpenses = query({
     limit: v.optional(v.number())
   },
   async handler(ctx, args) {
-    const userId = (await ctx.auth.getUserIdentity())?.tokenIdentifier || '';
+    // FIX: Use proper RBAC for multi-tenant isolation
+    const caller = await resolveCallerContext(ctx);
+    requirePermission(caller, PERMISSIONS.VIEW_FINANCIAL_REPORTS);
 
-    if (!userId) {
-      throw new Error('Unauthorized');
-    }
+    // Use ownerId for data scope (staff sees owner's expenses)
+    const userId = getDataScopeUserId(caller);
 
     let query = ctx.db
       .query('expenses')
@@ -396,14 +406,15 @@ export const getExpenses = query({
 // Get expense categories
 export const getExpenseCategories = query({
   args: {
-    type: v.optional(v.string())
+    type: v.optional(v.union(v.literal('business'), v.literal('personal')))
   },
   async handler(ctx, args) {
-    const userId = (await ctx.auth.getUserIdentity())?.tokenIdentifier || '';
+    // FIX: Use proper RBAC for multi-tenant isolation
+    const caller = await resolveCallerContext(ctx);
+    requirePermission(caller, PERMISSIONS.VIEW_FINANCIAL_REPORTS);
 
-    if (!userId) {
-      throw new Error('Unauthorized');
-    }
+    // Use ownerId for data scope (staff sees owner's categories)
+    const userId = getDataScopeUserId(caller);
 
     let query = ctx.db
       .query('expenseCategories')
@@ -424,11 +435,12 @@ export const getExpenseMetrics = query({
     endDate: v.number()
   },
   async handler(ctx, args) {
-    const userId = (await ctx.auth.getUserIdentity())?.tokenIdentifier || '';
+    // FIX: Use proper RBAC for multi-tenant isolation
+    const caller = await resolveCallerContext(ctx);
+    requirePermission(caller, PERMISSIONS.VIEW_FINANCIAL_REPORTS);
 
-    if (!userId) {
-      throw new Error('Unauthorized');
-    }
+    // Use ownerId for data scope (staff sees owner's metrics)
+    const userId = getDataScopeUserId(caller);
 
     const expenses = await ctx.db
       .query('expenses')
@@ -477,11 +489,12 @@ export const getBudgetStatus = query({
     month: v.string()
   },
   async handler(ctx, args) {
-    const userId = (await ctx.auth.getUserIdentity())?.tokenIdentifier || '';
+    // FIX: Use proper RBAC for multi-tenant isolation
+    const caller = await resolveCallerContext(ctx);
+    requirePermission(caller, PERMISSIONS.VIEW_FINANCIAL_REPORTS);
 
-    if (!userId) {
-      throw new Error('Unauthorized');
-    }
+    // Use ownerId for data scope (staff sees owner's budgets)
+    const userId = getDataScopeUserId(caller);
 
     const budgets = await ctx.db
       .query('budgets')

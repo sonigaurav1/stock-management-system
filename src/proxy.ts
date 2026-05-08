@@ -18,9 +18,43 @@ const isCompanyRegistrationRoute = createRouteMatcher([
   RoutePattern.COMPANY_REGISTRATION
 ]);
 
+// CRITICAL: Dev-only routes (database admin, dev tools) - blocked in production
+const isDevOnlyRoute = createRouteMatcher(['/database(.*)', '/dev-tools(.*)']);
+
 export default clerkMiddleware(async (auth, request) => {
   try {
-    const { userId, getToken } = await auth();
+    const { userId, sessionClaims, getToken } = await auth();
+
+    // CRITICAL: Block dev-only routes in production
+    if (isDevOnlyRoute(request)) {
+      // Block completely in production
+      if (
+        process.env.NODE_ENV === 'production' ||
+        process.env.VERCEL_ENV === 'production'
+      ) {
+        return new NextResponse('Not Found', { status: 404 });
+      }
+
+      // In dev/staging: require authentication
+      if (!userId) {
+        return NextResponse.redirect(
+          new URL(RedirectDestination.SIGN_IN, request.url)
+        );
+      }
+
+      // Require super admin access
+      const superAdminIds =
+        process.env.NEXT_PUBLIC_SUPER_ADMIN_USER_IDS?.split(',').map((id) =>
+          id.trim()
+        ) || [];
+      const userIdFromClaims = sessionClaims?.sub;
+
+      if (!superAdminIds.includes(userIdFromClaims || '')) {
+        return new NextResponse('Forbidden: Super Admin access required', {
+          status: 403
+        });
+      }
+    }
 
     // Redirect authenticated users from home, sign-in, and sign-up to dashboard
     if (

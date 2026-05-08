@@ -1,5 +1,11 @@
 import { v } from 'convex/values';
 import { mutation, query } from './_generated/server';
+import {
+  resolveCallerContext,
+  requirePermission,
+  getDataScopeUserId
+} from './lib/authHelper';
+import { PERMISSIONS } from './lib/permissions';
 
 // Request dashboard export
 export const requestDashboardExport = mutation({
@@ -15,12 +21,12 @@ export const requestDashboardExport = mutation({
     )
   },
   handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) {
-      throw new Error('Not authenticated');
-    }
+    // RBAC: Use resolveCallerContext for proper owner/staff separation
+    const caller = await resolveCallerContext(ctx);
+    requirePermission(caller, PERMISSIONS.EXPORT_DATA);
 
-    const userId = identity.subject;
+    // Use getDataScopeUserId to get the correct userId (owner's userId for staff)
+    const userId = getDataScopeUserId(caller);
 
     // Create export record
     const exportId = await ctx.db.insert('dashboardExports', {
@@ -53,12 +59,12 @@ export const getExportHistory = query({
     limit: v.optional(v.number())
   },
   handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) {
-      throw new Error('Not authenticated');
-    }
+    // RBAC: Use resolveCallerContext for proper owner/staff separation
+    const caller = await resolveCallerContext(ctx);
+    requirePermission(caller, PERMISSIONS.VIEW_REPORTS);
 
-    const userId = identity.subject;
+    // Use getDataScopeUserId to get the correct userId (owner's userId for staff)
+    const userId = getDataScopeUserId(caller);
     const limit = args.limit ?? 10;
 
     const exports = await ctx.db
@@ -83,12 +89,12 @@ export const prepareExportData = query({
     )
   },
   handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) {
-      throw new Error('Not authenticated');
-    }
+    // RBAC: Use resolveCallerContext for proper owner/staff separation
+    const caller = await resolveCallerContext(ctx);
+    requirePermission(caller, PERMISSIONS.EXPORT_DATA);
 
-    const userId = identity.subject;
+    // Use getDataScopeUserId to get the correct userId (owner's userId for staff)
+    const userId = getDataScopeUserId(caller);
 
     // Get company details for header
     const company = await ctx.db

@@ -1,5 +1,11 @@
 import { mutation, query } from './_generated/server';
 import { v } from 'convex/values';
+import {
+  resolveCallerContext,
+  requirePermission,
+  getDataScopeUserId
+} from './lib/authHelper';
+import { PERMISSIONS } from './lib/permissions';
 
 /**
  * Notification Preferences API
@@ -10,12 +16,16 @@ import { v } from 'convex/values';
 export const getNotificationPreferences = query({
   args: {},
   async handler(ctx) {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error('Not authenticated');
+    // RBAC: Use resolveCallerContext for proper owner/staff separation
+    const caller = await resolveCallerContext(ctx);
+    requirePermission(caller, PERMISSIONS.VIEW_ORGANIZATION);
+
+    // Use getDataScopeUserId to get the correct userId (owner's userId for staff)
+    const userId = getDataScopeUserId(caller);
 
     let prefs = await ctx.db
       .query('notificationPreferences')
-      .withIndex('by_user', (q) => q.eq('userId', identity.subject))
+      .withIndex('by_user', (q) => q.eq('userId', userId))
       .unique();
 
     return prefs;
@@ -26,13 +36,17 @@ export const getNotificationPreferences = query({
 export const createDefaultPreferences = mutation({
   args: {},
   async handler(ctx) {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error('Not authenticated');
+    // RBAC: Use resolveCallerContext for proper owner/staff separation
+    const caller = await resolveCallerContext(ctx);
+    requirePermission(caller, PERMISSIONS.MANAGE_SETTINGS);
+
+    // Use getDataScopeUserId to get the correct userId (owner's userId for staff)
+    const userId = getDataScopeUserId(caller);
 
     // Check if preferences already exist
     let prefs = await ctx.db
       .query('notificationPreferences')
-      .withIndex('by_user', (q) => q.eq('userId', identity.subject))
+      .withIndex('by_user', (q) => q.eq('userId', userId))
       .unique();
 
     if (prefs) {
@@ -41,7 +55,7 @@ export const createDefaultPreferences = mutation({
 
     // Create default preferences
     const prefsId = await ctx.db.insert('notificationPreferences', {
-      userId: identity.subject,
+      userId,
       emailEnabled: true,
       smsEnabled: true,
       slackEnabled: false,
@@ -72,18 +86,22 @@ export const updateChannelPreferences = mutation({
     inAppEnabled: v.optional(v.boolean())
   },
   async handler(ctx, args) {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error('Not authenticated');
+    // RBAC: Use resolveCallerContext for proper owner/staff separation
+    const caller = await resolveCallerContext(ctx);
+    requirePermission(caller, PERMISSIONS.MANAGE_SETTINGS);
+
+    // Use getDataScopeUserId to get the correct userId (owner's userId for staff)
+    const userId = getDataScopeUserId(caller);
 
     let prefs = await ctx.db
       .query('notificationPreferences')
-      .withIndex('by_user', (q) => q.eq('userId', identity.subject))
+      .withIndex('by_user', (q) => q.eq('userId', userId))
       .unique();
 
     if (!prefs) {
       // Create if doesn't exist
       const prefsId = await ctx.db.insert('notificationPreferences', {
-        userId: identity.subject,
+        userId,
         emailEnabled: args.emailEnabled ?? true,
         smsEnabled: args.smsEnabled ?? false,
         slackEnabled: args.slackEnabled ?? false,
@@ -130,12 +148,16 @@ export const updateNotificationTypes = mutation({
     systemAlert: v.optional(v.boolean())
   },
   async handler(ctx, args) {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error('Not authenticated');
+    // RBAC: Use resolveCallerContext for proper owner/staff separation
+    const caller = await resolveCallerContext(ctx);
+    requirePermission(caller, PERMISSIONS.MANAGE_SETTINGS);
+
+    // Use getDataScopeUserId to get the correct userId (owner's userId for staff)
+    const userId = getDataScopeUserId(caller);
 
     let prefs = await ctx.db
       .query('notificationPreferences')
-      .withIndex('by_user', (q) => q.eq('userId', identity.subject))
+      .withIndex('by_user', (q) => q.eq('userId', userId))
       .unique();
 
     if (!prefs) {
@@ -175,12 +197,16 @@ export const setQuietHours = mutation({
     timezone: v.optional(v.string())
   },
   async handler(ctx, args) {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error('Not authenticated');
+    // RBAC: Use resolveCallerContext for proper owner/staff separation
+    const caller = await resolveCallerContext(ctx);
+    requirePermission(caller, PERMISSIONS.MANAGE_SETTINGS);
+
+    // Use getDataScopeUserId to get the correct userId (owner's userId for staff)
+    const userId = getDataScopeUserId(caller);
 
     let prefs = await ctx.db
       .query('notificationPreferences')
-      .withIndex('by_user', (q) => q.eq('userId', identity.subject))
+      .withIndex('by_user', (q) => q.eq('userId', userId))
       .unique();
 
     if (!prefs) {
@@ -205,8 +231,12 @@ export const setQuietHours = mutation({
 export const addPhoneNumber = mutation({
   args: { phoneNumber: v.string() },
   async handler(ctx, args) {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error('Not authenticated');
+    // RBAC: Use resolveCallerContext for proper owner/staff separation
+    const caller = await resolveCallerContext(ctx);
+    requirePermission(caller, PERMISSIONS.MANAGE_SETTINGS);
+
+    // Use getDataScopeUserId to get the correct userId (owner's userId for staff)
+    const userId = getDataScopeUserId(caller);
 
     // Validate phone number format
     const phoneRegex = /^\+?[\d\s\-()]{10,}$/;
@@ -216,7 +246,7 @@ export const addPhoneNumber = mutation({
 
     let prefs = await ctx.db
       .query('notificationPreferences')
-      .withIndex('by_user', (q) => q.eq('userId', identity.subject))
+      .withIndex('by_user', (q) => q.eq('userId', userId))
       .unique();
 
     if (!prefs) {
@@ -239,12 +269,16 @@ export const connectSlackWorkspace = mutation({
     userId: v.string()
   },
   async handler(ctx, args) {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error('Not authenticated');
+    // RBAC: Use resolveCallerContext for proper owner/staff separation
+    const caller = await resolveCallerContext(ctx);
+    requirePermission(caller, PERMISSIONS.MANAGE_SETTINGS);
+
+    // Use getDataScopeUserId to get the correct userId (owner's userId for staff)
+    const userId = getDataScopeUserId(caller);
 
     let prefs = await ctx.db
       .query('notificationPreferences')
-      .withIndex('by_user', (q) => q.eq('userId', identity.subject))
+      .withIndex('by_user', (q) => q.eq('userId', userId))
       .unique();
 
     if (!prefs) {
@@ -265,12 +299,16 @@ export const connectSlackWorkspace = mutation({
 export const disconnectSlack = mutation({
   args: {},
   async handler(ctx) {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error('Not authenticated');
+    // RBAC: Use resolveCallerContext for proper owner/staff separation
+    const caller = await resolveCallerContext(ctx);
+    requirePermission(caller, PERMISSIONS.MANAGE_SETTINGS);
+
+    // Use getDataScopeUserId to get the correct userId (owner's userId for staff)
+    const userId = getDataScopeUserId(caller);
 
     let prefs = await ctx.db
       .query('notificationPreferences')
-      .withIndex('by_user', (q) => q.eq('userId', identity.subject))
+      .withIndex('by_user', (q) => q.eq('userId', userId))
       .unique();
 
     if (!prefs) {
@@ -292,8 +330,12 @@ export const disconnectSlack = mutation({
 export const testNotificationChannel = mutation({
   args: { channel: v.string() }, // "email", "sms", "slack", "inApp"
   async handler(ctx, args) {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error('Not authenticated');
+    // RBAC: Use resolveCallerContext for proper owner/staff separation
+    const caller = await resolveCallerContext(ctx);
+    requirePermission(caller, PERMISSIONS.MANAGE_SETTINGS);
+
+    // Use getDataScopeUserId to get the correct userId (owner's userId for staff)
+    const userId = getDataScopeUserId(caller);
 
     // In production, this would:
     // - For email: Send test email to user's email
@@ -305,7 +347,7 @@ export const testNotificationChannel = mutation({
       // Create a test message
       await ctx.db.insert('messages', {
         senderId: 'system',
-        recipientId: identity.subject,
+        recipientId: userId,
         content: 'This is a test notification from your communication hub.',
         subject: 'Test In-App Notification',
         priority: 'normal',
@@ -331,12 +373,16 @@ export const shouldNotify = query({
     notificationType: v.string() // Type of notification
   },
   async handler(ctx, args) {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error('Not authenticated');
+    // RBAC: Use resolveCallerContext for proper owner/staff separation
+    const caller = await resolveCallerContext(ctx);
+    requirePermission(caller, PERMISSIONS.VIEW_ORGANIZATION);
+
+    // Use getDataScopeUserId to get the correct userId (owner's userId for staff)
+    const userId = getDataScopeUserId(caller);
 
     let prefs = await ctx.db
       .query('notificationPreferences')
-      .withIndex('by_user', (q) => q.eq('userId', identity.subject))
+      .withIndex('by_user', (q) => q.eq('userId', userId))
       .unique();
 
     if (!prefs) return { shouldNotify: true };

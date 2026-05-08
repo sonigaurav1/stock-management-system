@@ -10,6 +10,7 @@ import { Analytics } from '@vercel/analytics/react';
 import { Toaster } from '@/components/ui/sonner';
 import ThemeProvider from '@/components/layout/ThemeToggle/theme-provider';
 import { CookieConsentBanner } from '@/components/cookies/CookieConsentBanner';
+import { RoleSyncProvider } from '@/components/RoleSyncProvider';
 
 const lato = Lato({
   subsets: ['latin'],
@@ -177,12 +178,14 @@ export default function RootLayout({
         <ConvexClientProvider>
           <OnboardingStateProvider>
             <ThemeProvider attribute='class' defaultTheme='light' enableSystem>
-              <SpeedInsights />
-              <Analytics />
-              <NextTopLoader showSpinner={false} />
-              <Toaster richColors />
-              <CookieConsentBanner />
-              {children}
+              <RoleSyncProvider>
+                <SpeedInsights />
+                <Analytics />
+                <NextTopLoader showSpinner={false} />
+                <Toaster richColors />
+                <CookieConsentBanner />
+                {children}
+              </RoleSyncProvider>
             </ThemeProvider>
           </OnboardingStateProvider>
         </ConvexClientProvider>

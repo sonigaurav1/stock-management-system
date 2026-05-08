@@ -1,5 +1,11 @@
 import { query } from './_generated/server';
 import { v } from 'convex/values';
+import {
+  resolveCallerContext,
+  requirePermission,
+  getDataScopeUserId
+} from './lib/authHelper';
+import { PERMISSIONS } from './lib/permissions';
 
 /**
  * Customer Segmentation Query
@@ -8,9 +14,27 @@ import { v } from 'convex/values';
 export const segmentCustomers = query({
   args: {},
   async handler(ctx) {
-    const customers = await ctx.db.query('customers').collect();
+    // RBAC: Use resolveCallerContext for proper owner/staff separation
+    const caller = await resolveCallerContext(ctx);
+    requirePermission(caller, PERMISSIONS.VIEW_REPORTS);
+
+    // Use getDataScopeUserId to get the correct userId (owner's userId for staff)
+    const userId = getDataScopeUserId(caller);
+
+    const customers = await ctx.db
+      .query('customers')
+      .withIndex('by_user_and_isDeleted', (q) =>
+        q.eq('userId', userId).eq('isDeleted', false)
+      )
+      .collect();
     const transactions = await ctx.db
       .query('transactions')
+      .filter((q) =>
+        q.and(
+          q.eq(q.field('userId'), userId),
+          q.eq(q.field('isDeleted'), false)
+        )
+      )
       .order('desc')
       .take(5000);
 
@@ -186,9 +210,27 @@ export const segmentCustomers = query({
 export const calculateLifetimeValue = query({
   args: {},
   async handler(ctx) {
-    const customers = await ctx.db.query('customers').collect();
+    // RBAC: Use resolveCallerContext for proper owner/staff separation
+    const caller = await resolveCallerContext(ctx);
+    requirePermission(caller, PERMISSIONS.VIEW_REPORTS);
+
+    // Use getDataScopeUserId to get the correct userId (owner's userId for staff)
+    const userId = getDataScopeUserId(caller);
+
+    const customers = await ctx.db
+      .query('customers')
+      .withIndex('by_user_and_isDeleted', (q) =>
+        q.eq('userId', userId).eq('isDeleted', false)
+      )
+      .collect();
     const transactions = await ctx.db
       .query('transactions')
+      .filter((q) =>
+        q.and(
+          q.eq(q.field('userId'), userId),
+          q.eq(q.field('isDeleted'), false)
+        )
+      )
       .order('desc')
       .take(5000);
 
@@ -285,8 +327,28 @@ export const calculateLifetimeValue = query({
 export const analyzePurchasePatterns = query({
   args: {},
   async handler(ctx) {
-    const transactions = await ctx.db.query('transactions').collect();
-    const customers = await ctx.db.query('customers').collect();
+    // RBAC: Use resolveCallerContext for proper owner/staff separation
+    const caller = await resolveCallerContext(ctx);
+    requirePermission(caller, PERMISSIONS.VIEW_REPORTS);
+
+    // Use getDataScopeUserId to get the correct userId (owner's userId for staff)
+    const userId = getDataScopeUserId(caller);
+
+    const transactions = await ctx.db
+      .query('transactions')
+      .filter((q) =>
+        q.and(
+          q.eq(q.field('userId'), userId),
+          q.eq(q.field('isDeleted'), false)
+        )
+      )
+      .collect();
+    const customers = await ctx.db
+      .query('customers')
+      .withIndex('by_user_and_isDeleted', (q) =>
+        q.eq('userId', userId).eq('isDeleted', false)
+      )
+      .collect();
 
     const now = new Date();
     const day90 = new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000);
@@ -415,9 +477,27 @@ export const scoreChurnRisk = query({
     riskThreshold: v.number()
   },
   async handler(ctx, { riskThreshold }) {
-    const customers = await ctx.db.query('customers').collect();
+    // RBAC: Use resolveCallerContext for proper owner/staff separation
+    const caller = await resolveCallerContext(ctx);
+    requirePermission(caller, PERMISSIONS.VIEW_REPORTS);
+
+    // Use getDataScopeUserId to get the correct userId (owner's userId for staff)
+    const userId = getDataScopeUserId(caller);
+
+    const customers = await ctx.db
+      .query('customers')
+      .withIndex('by_user_and_isDeleted', (q) =>
+        q.eq('userId', userId).eq('isDeleted', false)
+      )
+      .collect();
     const transactions = await ctx.db
       .query('transactions')
+      .filter((q) =>
+        q.and(
+          q.eq(q.field('userId'), userId),
+          q.eq(q.field('isDeleted'), false)
+        )
+      )
       .order('desc')
       .take(5000);
 
@@ -514,9 +594,34 @@ export const scoreChurnRisk = query({
 export const findUpsellOpportunities = query({
   args: {},
   async handler(ctx) {
-    const customers = await ctx.db.query('customers').collect();
-    const products = await ctx.db.query('products').collect();
-    const transactions = await ctx.db.query('transactions').collect();
+    // RBAC: Use resolveCallerContext for proper owner/staff separation
+    const caller = await resolveCallerContext(ctx);
+    requirePermission(caller, PERMISSIONS.VIEW_REPORTS);
+
+    // Use getDataScopeUserId to get the correct userId (owner's userId for staff)
+    const userId = getDataScopeUserId(caller);
+
+    const customers = await ctx.db
+      .query('customers')
+      .withIndex('by_user_and_isDeleted', (q) =>
+        q.eq('userId', userId).eq('isDeleted', false)
+      )
+      .collect();
+    const products = await ctx.db
+      .query('products')
+      .withIndex('by_user_and_isDeleted', (q) =>
+        q.eq('userId', userId).eq('isDeleted', false)
+      )
+      .collect();
+    const transactions = await ctx.db
+      .query('transactions')
+      .filter((q) =>
+        q.and(
+          q.eq(q.field('userId'), userId),
+          q.eq(q.field('isDeleted'), false)
+        )
+      )
+      .collect();
 
     const now = new Date();
     const day180 = new Date(now.getTime() - 180 * 24 * 60 * 60 * 1000);

@@ -1,5 +1,12 @@
-import { query, mutation } from './_generated/server';
 import { v } from 'convex/values';
+import { mutation, query } from './_generated/server';
+import { QueryCtx } from './_generated/server';
+import {
+  resolveCallerContext,
+  requirePermission,
+  getDataScopeUserId
+} from './lib/authHelper';
+import { PERMISSIONS } from './lib/permissions';
 
 /**
  * STEP 8.1: Product-Supplier Mapping
@@ -10,12 +17,17 @@ import { v } from 'convex/values';
 export const getProductSuppliers = query({
   args: { productId: v.id('products') },
   handler: async (ctx, { productId }) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error('Not authenticated');
+    // RBAC: Use resolveCallerContext for proper owner/staff separation
+    const caller = await resolveCallerContext(ctx);
+    requirePermission(caller, PERMISSIONS.VIEW_INVENTORY);
+
+    // Use getDataScopeUserId to get the correct userId (owner's userId for staff)
+    const userId = getDataScopeUserId(caller);
 
     return await ctx.db
       .query('productSuppliers')
       .withIndex('by_product', (q) => q.eq('productId', productId))
+      .filter((q) => q.eq(q.field('userId'), userId))
       .collect();
   }
 });
@@ -24,12 +36,17 @@ export const getProductSuppliers = query({
 export const getCheapestSupplier = query({
   args: { productId: v.id('products') },
   handler: async (ctx, { productId }) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error('Not authenticated');
+    // RBAC: Use resolveCallerContext for proper owner/staff separation
+    const caller = await resolveCallerContext(ctx);
+    requirePermission(caller, PERMISSIONS.VIEW_INVENTORY);
+
+    // Use getDataScopeUserId to get the correct userId (owner's userId for staff)
+    const userId = getDataScopeUserId(caller);
 
     const productSuppliers = await ctx.db
       .query('productSuppliers')
       .withIndex('by_product', (q) => q.eq('productId', productId))
+      .filter((q) => q.eq(q.field('userId'), userId))
       .collect();
 
     if (productSuppliers.length === 0) return null;
@@ -61,9 +78,12 @@ export const addProductSupplier = mutation({
     isPreferred: v.boolean()
   },
   handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error('Not authenticated');
-    const userId = identity.subject;
+    // RBAC: Use resolveCallerContext for proper owner/staff separation
+    const caller = await resolveCallerContext(ctx);
+    requirePermission(caller, PERMISSIONS.MANAGE_SUPPLIERS);
+
+    // Use getDataScopeUserId to get the correct userId (owner's userId for staff)
+    const userId = getDataScopeUserId(caller);
 
     // If this supplier is preferred, unset other preferred suppliers for this product
     if (args.isPreferred) {
@@ -108,14 +128,18 @@ export const updateProductSupplier = mutation({
     isPreferred: v.optional(v.boolean())
   },
   handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error('Not authenticated');
+    // RBAC: Use resolveCallerContext for proper owner/staff separation
+    const caller = await resolveCallerContext(ctx);
+    requirePermission(caller, PERMISSIONS.MANAGE_SUPPLIERS);
+
+    // Use getDataScopeUserId to get the correct userId (owner's userId for staff)
+    const userId = getDataScopeUserId(caller);
 
     const { id, ...updates } = args;
     const existing = await ctx.db.get(id);
 
-    if (!existing || existing.userId !== identity.subject) {
-      throw new Error('Not found');
+    if (!existing || existing.userId !== userId) {
+      throw new Error('Product-supplier mapping not found or access denied');
     }
 
     // If setting as preferred, unset other preferred suppliers
@@ -143,12 +167,16 @@ export const updateProductSupplier = mutation({
 export const removeProductSupplier = mutation({
   args: { id: v.id('productSuppliers') },
   handler: async (ctx, { id }) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error('Not authenticated');
+    // RBAC: Use resolveCallerContext for proper owner/staff separation
+    const caller = await resolveCallerContext(ctx);
+    requirePermission(caller, PERMISSIONS.MANAGE_SUPPLIERS);
+
+    // Use getDataScopeUserId to get the correct userId (owner's userId for staff)
+    const userId = getDataScopeUserId(caller);
 
     const existing = await ctx.db.get(id);
-    if (!existing || existing.userId !== identity.subject) {
-      throw new Error('Not found');
+    if (!existing || existing.userId !== userId) {
+      throw new Error('Product-supplier mapping not found or access denied');
     }
 
     await ctx.db.delete(id);
@@ -159,9 +187,12 @@ export const removeProductSupplier = mutation({
 export const getProductsWithCheapestSupplier = query({
   args: {},
   handler: async (ctx) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error('Not authenticated');
-    const userId = identity.subject;
+    // RBAC: Use resolveCallerContext for proper owner/staff separation
+    const caller = await resolveCallerContext(ctx);
+    requirePermission(caller, PERMISSIONS.VIEW_INVENTORY);
+
+    // Use getDataScopeUserId to get the correct userId (owner's userId for staff)
+    const userId = getDataScopeUserId(caller);
 
     const products = await ctx.db
       .query('products')
@@ -209,18 +240,24 @@ export const getProductsWithCheapestSupplier = query({
 export const getSupplierProducts = query({
   args: { supplierId: v.id('suppliers') },
   handler: async (ctx, { supplierId }) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error('Not authenticated');
+    // RBAC: Use resolveCallerContext for proper owner/staff separation
+    const caller = await resolveCallerContext(ctx);
+    requirePermission(caller, PERMISSIONS.VIEW_INVENTORY);
+
+    // Use getDataScopeUserId to get the correct userId (owner's userId for staff)
+    const userId = getDataScopeUserId(caller);
 
     const productSuppliers = await ctx.db
       .query('productSuppliers')
       .withIndex('by_supplier', (q) => q.eq('supplierId', supplierId))
+      .filter((q) => q.eq(q.field('userId'), userId))
       .collect();
 
     const result = [];
     for (const ps of productSuppliers) {
       const product = await ctx.db.get(ps.productId);
-      if (product) {
+      // Only include non-deleted products
+      if (product && !product.isDeleted) {
         result.push({
           ...ps,
           productName: product.name,

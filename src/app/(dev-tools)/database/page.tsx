@@ -37,7 +37,9 @@ export default function DatabasePage() {
   const router = useRouter();
   const stats = useQuery(api.admin.getDatabaseStatistics);
   const deleteAllDocuments = useMutation(api.admin.deleteAllDocuments);
+  const deleteAllTables = useMutation(api.admin.deleteAllTables);
   const [deletingTable, setDeletingTable] = useState<string | null>(null);
+  const [isDeletingAllTables, setIsDeletingAllTables] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
 
   if (!stats) {
@@ -60,6 +62,22 @@ export default function DatabasePage() {
       console.error('Error deleting documents:', error);
       toast.error(
         error instanceof Error ? error.message : 'Failed to delete documents'
+      );
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  const handleDeleteAllTables = async () => {
+    setIsDeleting(true);
+    try {
+      const result = await deleteAllTables({});
+      toast.success(`Deleted ${result.totalDeleted} documents from all tables`);
+      setIsDeletingAllTables(false);
+    } catch (error) {
+      console.error('Error deleting all tables:', error);
+      toast.error(
+        error instanceof Error ? error.message : 'Failed to delete all tables'
       );
     } finally {
       setIsDeleting(false);
@@ -89,14 +107,25 @@ export default function DatabasePage() {
     <PageContainer>
       <div className='w-full space-y-6'>
         {/* Header */}
-        <div>
-          <h1 className='flex items-center gap-2 text-3xl font-bold'>
-            <Database className='h-8 w-8' />
-            Database Statistics
-          </h1>
-          <p className='mt-2 text-muted-foreground'>
-            Overview of all database tables and their document counts
-          </p>
+        <div className='flex items-start justify-between'>
+          <div>
+            <h1 className='flex items-center gap-2 text-3xl font-bold'>
+              <Database className='h-8 w-8' />
+              Database Statistics
+            </h1>
+            <p className='mt-2 text-muted-foreground'>
+              Overview of all database tables and their document counts
+            </p>
+          </div>
+          <Button
+            onClick={() => setIsDeletingAllTables(true)}
+            variant='destructive'
+            disabled={!stats || stats.totalDocuments === 0}
+            className='gap-2'
+          >
+            <Trash2 className='h-4 w-4' />
+            Delete All Tables
+          </Button>
         </div>
 
         {/* Summary Cards */}
@@ -262,7 +291,53 @@ export default function DatabasePage() {
         </Card>
       </div>
 
-      {/* Delete Confirmation Dialog */}
+      {/* Delete All Tables Confirmation Dialog */}
+      <AlertDialog
+        open={isDeletingAllTables}
+        onOpenChange={() => setIsDeletingAllTables(false)}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className='text-destructive'>
+              Delete All Tables?
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to permanently delete{' '}
+              <span className='font-semibold text-foreground'>
+                ALL documents from ALL tables
+              </span>{' '}
+              in the database? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <div className='rounded-lg bg-red-50 p-3 text-sm text-red-700 dark:bg-red-950/20 dark:text-red-200'>
+            ⚠️ This will delete all{' '}
+            {stats?.totalDocuments?.toLocaleString() || 0} documents across{' '}
+            {stats?.totalTables || 0} tables permanently.
+          </div>
+          <div className='flex gap-2'>
+            <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteAllTables}
+              disabled={isDeleting}
+              className='bg-destructive hover:bg-destructive/90'
+            >
+              {isDeleting ? (
+                <>
+                  <Loader2 className='mr-2 h-4 w-4 animate-spin' />
+                  Deleting...
+                </>
+              ) : (
+                <>
+                  <Trash2 className='mr-2 h-4 w-4' />
+                  Delete All Tables
+                </>
+              )}
+            </AlertDialogAction>
+          </div>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Delete Single Table Confirmation Dialog */}
       <AlertDialog
         open={!!deletingTable}
         onOpenChange={() => setDeletingTable(null)}

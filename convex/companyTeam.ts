@@ -1,5 +1,11 @@
 import { mutation, query } from './_generated/server';
 import { v } from 'convex/values';
+import {
+  resolveCallerContext,
+  requirePermission,
+  getDataScopeUserId
+} from './lib/authHelper';
+import { PERMISSIONS } from './lib/permissions';
 
 // List all team members for a company (owner's company)
 export const listCompanyTeamMembers = query({
@@ -74,10 +80,16 @@ export const inviteCompanyMember = mutation({
     displayName: v.optional(v.string())
   },
   handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error('Not authenticated');
+    // RBAC: Use resolveCallerContext for proper owner/staff separation
+    const caller = await resolveCallerContext(ctx);
+    requirePermission(caller, PERMISSIONS.MANAGE_USERS);
 
-    const companyOwnerId = identity.subject;
+    // Only owners can invite members
+    if (!caller.isOwner) {
+      throw new Error('Only organization owners can invite members');
+    }
+
+    const companyOwnerId = getDataScopeUserId(caller);
 
     // Validate role
     const validRoles = ['manager', 'staff', 'viewer'];
@@ -136,19 +148,25 @@ export const removeCompanyMember = mutation({
     memberId: v.id('companyMembers')
   },
   handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error('Not authenticated');
+    // RBAC: Use resolveCallerContext for proper owner/staff separation
+    const caller = await resolveCallerContext(ctx);
+    requirePermission(caller, PERMISSIONS.MANAGE_USERS);
+
+    // Only owners can remove members
+    if (!caller.isOwner) {
+      throw new Error('Only organization owners can remove members');
+    }
 
     const member = await ctx.db.get(args.memberId);
     if (!member) throw new Error('Member not found');
 
     // Verify ownership
-    if (member.companyOwnerId !== identity.subject) {
+    if (member.companyOwnerId !== getDataScopeUserId(caller)) {
       throw new Error('Unauthorized');
     }
 
-    // Prevent removing self
-    if (member.email === identity.subject) {
+    // Prevent removing self (check by userId if exists, or skip if user hasn't joined yet)
+    if (member.userId === caller.callerId) {
       throw new Error('Cannot remove yourself');
     }
 
@@ -160,7 +178,7 @@ export const removeCompanyMember = mutation({
 
     // Create audit log
     await ctx.db.insert('auditLog', {
-      userId: identity.subject,
+      userId: caller.callerId,
       action: 'member.removed',
       entityType: 'companyMember',
       entityId: args.memberId,
@@ -179,14 +197,20 @@ export const updateCompanyMemberRole = mutation({
     role: v.string()
   },
   handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error('Not authenticated');
+    // RBAC: Use resolveCallerContext for proper owner/staff separation
+    const caller = await resolveCallerContext(ctx);
+    requirePermission(caller, PERMISSIONS.MANAGE_USERS);
+
+    // Only owners can update member roles
+    if (!caller.isOwner) {
+      throw new Error('Only organization owners can update member roles');
+    }
 
     const member = await ctx.db.get(args.memberId);
     if (!member) throw new Error('Member not found');
 
     // Verify ownership
-    if (member.companyOwnerId !== identity.subject) {
+    if (member.companyOwnerId !== getDataScopeUserId(caller)) {
       throw new Error('Unauthorized');
     }
 
@@ -205,7 +229,7 @@ export const updateCompanyMemberRole = mutation({
 
     // Create audit log
     await ctx.db.insert('auditLog', {
-      userId: identity.subject,
+      userId: caller.callerId,
       action: 'member.role_updated',
       entityType: 'companyMember',
       entityId: args.memberId,
@@ -224,14 +248,20 @@ export const resendInvitation = mutation({
     memberId: v.id('companyMembers')
   },
   handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error('Not authenticated');
+    // RBAC: Use resolveCallerContext for proper owner/staff separation
+    const caller = await resolveCallerContext(ctx);
+    requirePermission(caller, PERMISSIONS.MANAGE_USERS);
+
+    // Only owners can resend invitations
+    if (!caller.isOwner) {
+      throw new Error('Only organization owners can resend invitations');
+    }
 
     const member = await ctx.db.get(args.memberId);
     if (!member) throw new Error('Member not found');
 
     // Verify ownership
-    if (member.companyOwnerId !== identity.subject) {
+    if (member.companyOwnerId !== getDataScopeUserId(caller)) {
       throw new Error('Unauthorized');
     }
 
@@ -241,7 +271,7 @@ export const resendInvitation = mutation({
 
     // Create audit log
     await ctx.db.insert('auditLog', {
-      userId: identity.subject,
+      userId: caller.callerId,
       action: 'invitation.resent',
       entityType: 'companyMember',
       entityId: args.memberId,
@@ -256,12 +286,20 @@ export const resendInvitation = mutation({
 // Get company member count
 export const getCompanyMemberCount = query({
   handler: async (ctx) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error('Not authenticated');
+    // RBAC: Use resolveCallerContext for proper owner/staff separation
+    const caller = await resolveCallerContext(ctx);
+    requirePermission(caller, PERMISSIONS.MANAGE_USERS);
+
+    // Only owners can view member counts
+    if (!caller.isOwner) {
+      throw new Error('Only organization owners can view member counts');
+    }
 
     const members = await ctx.db
       .query('companyMembers')
-      .withIndex('by_company', (q) => q.eq('companyOwnerId', identity.subject))
+      .withIndex('by_company', (q) =>
+        q.eq('companyOwnerId', getDataScopeUserId(caller))
+      )
       .collect();
 
     return {

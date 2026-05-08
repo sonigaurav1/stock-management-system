@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, Suspense } from 'react';
+import { useEffect, useState, Suspense, useCallback } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { useAuth, useUser } from '@clerk/nextjs';
 import { useMutation, useQuery } from 'convex/react';
@@ -16,6 +16,29 @@ import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Loader2, AlertCircle, CheckCircle, Building2 } from 'lucide-react';
 import { toast } from 'sonner';
+
+// Retry configuration for Clerk metadata sync
+const MAX_RETRIES = 3;
+const INITIAL_RETRY_DELAY = 1000; // 1 second
+const MAX_RETRY_DELAY = 5000; // 5 seconds
+
+/**
+ * Sleep utility for retry delays
+ */
+const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
+/**
+ * Calculate exponential backoff delay with jitter
+ */
+const getRetryDelay = (attempt: number): number => {
+  const exponentialDelay = Math.min(
+    INITIAL_RETRY_DELAY * Math.pow(2, attempt),
+    MAX_RETRY_DELAY
+  );
+  // Add random jitter (±20%) to prevent thundering herd
+  const jitter = exponentialDelay * 0.2 * (Math.random() - 0.5);
+  return exponentialDelay + jitter;
+};
 
 function AcceptInviteContent() {
   const searchParams = useSearchParams();
@@ -265,27 +288,132 @@ function AcceptInviteContent() {
                   });
 
                   // Set staff metadata in Clerk after successful invitation acceptance
+                  // This is CRITICAL - without this, staff won't have proper permissions
                   if (result?.ownerId && user?.id) {
-                    try {
-                      // Call the roles API to set staff metadata
-                      await fetch('/api/roles', {
-                        method: 'PATCH',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                          userId: user.id,
-                          role: getInvitationByToken?.role || 'staff',
-                          companyOwnerId: result.ownerId,
-                          ownerUsername:
-                            getInvitationByToken?.invitedBy || 'owner',
-                          companyName: getInvitationByToken?.companyName || ''
-                        })
-                      });
-                    } catch (metaError) {
+                    let metadataSynced = false;
+                    let lastError: Error | null = null;
+
+                    // Retry loop with exponential backoff
+                    for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
+                      try {
+                        console.log(
+                          `[accept-invite] Metadata sync attempt ${attempt + 1}/${MAX_RETRIES}`
+                        );
+
+                        // Call the roles API to set staff metadata
+                        const response = await fetch('/api/roles', {
+                          method: 'PATCH',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({
+                            userId: user.id,
+                            role: getInvitationByToken?.role || 'staff',
+                            companyOwnerId: result.ownerId,
+                            ownerUsername:
+                              getInvitationByToken?.invitedBy || 'owner',
+                            companyName: getInvitationByToken?.companyName || ''
+                          })
+                        });
+
+                        if (!response.ok) {
+                          const errorData = await response
+                            .json()
+                            .catch(() => ({}));
+                          throw new Error(
+                            errorData.error || `HTTP ${response.status}`
+                          );
+                        }
+
+                        // Verify the metadata was actually set by fetching it back
+                        const verifyResponse = await fetch(
+                          `/api/roles?userId=${user.id}`,
+                          {
+                            method: 'GET',
+                            headers: { 'Content-Type': 'application/json' }
+                          }
+                        );
+
+                        if (verifyResponse.ok) {
+                          const verifyData = await verifyResponse.json();
+                          const metadata = verifyData.publicMetadata;
+
+                          if (
+                            metadata?.companyOwnerId === result.ownerId &&
+                            metadata?.role
+                          ) {
+                            console.log(
+                              '[accept-invite] Metadata verified successfully:',
+                              metadata
+                            );
+                            metadataSynced = true;
+                            break; // Success! Exit retry loop
+                          } else {
+                            console.warn(
+                              '[accept-invite] Metadata verification failed, retrying...',
+                              metadata
+                            );
+                            throw new Error('Metadata verification failed');
+                          }
+                        } else {
+                          throw new Error('Failed to verify metadata');
+                        }
+                      } catch (metaError) {
+                        lastError =
+                          metaError instanceof Error
+                            ? metaError
+                            : new Error(String(metaError));
+                        console.error(
+                          `[accept-invite] Metadata sync attempt ${attempt + 1} failed:`,
+                          lastError.message
+                        );
+
+                        // Don't retry on the last attempt
+                        if (attempt < MAX_RETRIES - 1) {
+                          const delay = getRetryDelay(attempt);
+                          console.log(
+                            `[accept-invite] Retrying in ${Math.round(delay)}ms...`
+                          );
+                          await sleep(delay);
+                        }
+                      }
+                    }
+
+                    // Handle final result
+                    if (!metadataSynced) {
                       console.error(
-                        '[accept-invite] Failed to set metadata:',
-                        metaError
+                        '[accept-invite] All metadata sync attempts failed'
                       );
-                      // Don't fail the invitation for metadata errors
+
+                      // Show warning toast but don't block the flow
+                      toast.warning(
+                        'Invitation accepted, but role sync had issues. Please refresh if you encounter permission errors.',
+                        { duration: 6000 }
+                      );
+
+                      // Store in localStorage for recovery on next session
+                      try {
+                        localStorage.setItem(
+                          'pendingRoleSync',
+                          JSON.stringify({
+                            userId: user.id,
+                            role: getInvitationByToken?.role || 'staff',
+                            companyOwnerId: result.ownerId,
+                            ownerUsername:
+                              getInvitationByToken?.invitedBy || 'owner',
+                            companyName:
+                              getInvitationByToken?.companyName || '',
+                            timestamp: Date.now()
+                          })
+                        );
+                      } catch (e) {
+                        // Ignore localStorage errors
+                      }
+                    } else {
+                      // Clean up any pending sync data
+                      try {
+                        localStorage.removeItem('pendingRoleSync');
+                      } catch (e) {
+                        // Ignore
+                      }
                     }
                   }
 

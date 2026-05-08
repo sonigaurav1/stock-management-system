@@ -25,7 +25,11 @@ export default defineSchema({
     inStock: v.boolean(), // In stock status
     reorderLevel: v.optional(v.number()), // Minimum stock before reorder alert
     autoReorderEnabled: v.optional(v.boolean()), // STEP 4.2: Auto-reorder when below reorder level
-    stockStatus: v.string(), // Should be one of "in_stock", "low_stock", "out_of_stock"
+    stockStatus: v.union(
+      v.literal('in_stock'),
+      v.literal('low_stock'),
+      v.literal('out_of_stock')
+    ),
 
     supplierName: v.optional(v.string()), // Supplier name
     supplierId: v.optional(v.string()), // Supplier reference
@@ -97,7 +101,12 @@ export default defineSchema({
   stockMovements: defineTable({
     productId: v.string(), // Which product's stock changed
     userId: v.string(),
-    type: v.string(), // "purchase", "sale", "damage", "return"
+    type: v.union(
+      v.literal('purchase'),
+      v.literal('sale'),
+      v.literal('damage'),
+      v.literal('return')
+    ),
     quantity: v.number(), // Amount of stock added/removed
     reason: v.optional(v.string()), // Why stock changed
     referenceId: v.optional(v.string()), // Invoice/Sale ID for tracking
@@ -121,7 +130,13 @@ export default defineSchema({
     customerName: v.string(), // Customer name
     customerPhone: v.array(v.string()), // Customer phone
 
-    paymentStatus: v.optional(v.string()), // "paid", "unpaid", "partially_paid"
+    paymentStatus: v.optional(
+      v.union(
+        v.literal('paid'),
+        v.literal('unpaid'),
+        v.literal('partially_paid')
+      )
+    ),
 
     isDeleted: v.boolean(), // Soft delete flag (false = active, true = deleted)
     soldAt: v.number() // Timestamp of sale happened
@@ -141,7 +156,13 @@ export default defineSchema({
     paymentMode: v.string(), // "cash", "credit", "debit", "bank_transfer", etc.
     paymentReference: v.optional(v.string()), // Reference number, check number, etc.
     notes: v.optional(v.string()), // Any additional information
-    paymentStatus: v.optional(v.string()), // "paid", "unpaid", "partially_paid"
+    paymentStatus: v.optional(
+      v.union(
+        v.literal('paid'),
+        v.literal('unpaid'),
+        v.literal('partially_paid')
+      )
+    ),
     invoiceNumber: v.string(), // Invoice number if applicable
     dueDate: v.optional(v.number()), // Due date for payment
 
@@ -384,7 +405,11 @@ export default defineSchema({
   organizations: defineTable({
     name: v.string(),
     ownerId: v.string(), // User ID of the owner
-    status: v.string(), // 'active', 'archived', 'deleted'
+    status: v.union(
+      v.literal('active'),
+      v.literal('archived'),
+      v.literal('deleted')
+    ),
     createdAt: v.number(),
     updatedAt: v.number()
   })
@@ -406,8 +431,23 @@ export default defineSchema({
   // Account Status - Controls access to dashboard/admin for business owners
   accountStatus: defineTable({
     userId: v.string(), // Clerk user ID
-    status: v.string(), // "pending", "approved", "blocked", "suspended"
-    businessType: v.string(), // "retailer", "wholesaler", "distributor", "manufacturer", "service_provider", "e_commerce", "corporate", "nonprofit", "other"
+    status: v.union(
+      v.literal('pending'),
+      v.literal('approved'),
+      v.literal('blocked'),
+      v.literal('suspended')
+    ),
+    businessType: v.union(
+      v.literal('retailer'),
+      v.literal('wholesaler'),
+      v.literal('distributor'),
+      v.literal('manufacturer'),
+      v.literal('service_provider'),
+      v.literal('e_commerce'),
+      v.literal('corporate'),
+      v.literal('nonprofit'),
+      v.literal('other')
+    ),
     approvedBy: v.optional(v.string()), // Super admin user ID who approved
     approvedAt: v.optional(v.number()),
     blockedBy: v.optional(v.string()), // Super admin user ID who blocked
@@ -428,8 +468,16 @@ export default defineSchema({
     userId: v.optional(v.string()), // Staff member's Clerk ID (populated on acceptance)
     email: v.string(), // Member's email
     displayName: v.string(), // Member's display name
-    role: v.string(), // "manager", "staff", "viewer"
-    status: v.string(), // "invited", "accepted", "removed"
+    role: v.union(
+      v.literal('manager'),
+      v.literal('staff'),
+      v.literal('viewer')
+    ),
+    status: v.union(
+      v.literal('invited'),
+      v.literal('accepted'),
+      v.literal('removed')
+    ),
     invitedAt: v.number(), // When invitation was sent
     invitedBy: v.string(), // Owner's userId who sent invitation
     acceptedAt: v.optional(v.number()), // When member accepted invitation
@@ -722,8 +770,13 @@ export default defineSchema({
     paymentMethod: v.string(), // "cash", "credit_card", "bank_transfer", "check", etc.
 
     // Type and Status
-    type: v.string(), // "business" | "personal" (personal expenses can be reimbursed)
-    status: v.string(), // "pending", "approved", "rejected", "reimbursed"
+    type: v.union(v.literal('business'), v.literal('personal')),
+    status: v.union(
+      v.literal('pending'),
+      v.literal('approved'),
+      v.literal('rejected'),
+      v.literal('reimbursed')
+    ),
 
     // Approval workflow
     submittedBy: v.optional(v.string()), // User ID who submitted
@@ -783,7 +836,11 @@ export default defineSchema({
     spent: v.number(), // Running total of expenses this period (updated in real-time or batch)
     alertThreshold: v.number(), // Alert at 75% (default), customizable
     alertSent: v.boolean(), // Whether alert has been sent (prevent spam)
-    status: v.string(), // "on_track", "warning", "exceeded"
+    status: v.union(
+      v.literal('on_track'),
+      v.literal('warning'),
+      v.literal('exceeded')
+    ),
     notes: v.optional(v.string()),
     createdAt: v.number(),
     updatedAt: v.optional(v.number())
@@ -977,7 +1034,13 @@ export default defineSchema({
     ),
     orderNumber: v.string(), // Auto-generated PO number
     totalAmount: v.number(),
-    status: v.string(), // "draft", "sent", "confirmed", "received", "cancelled"
+    status: v.union(
+      v.literal('draft'),
+      v.literal('sent'),
+      v.literal('confirmed'),
+      v.literal('received'),
+      v.literal('cancelled')
+    ),
     paymentTerms: v.optional(v.string()), // "net30", "net60", "cash", etc.
     expectedDeliveryDate: v.optional(v.number()),
     notes: v.optional(v.string()),
@@ -1315,7 +1378,7 @@ export default defineSchema({
     readAt: v.optional(v.number()), // When recipient read the message
     attachmentIds: v.optional(v.array(v.id('messageAttachments'))), // File attachments
     replyToId: v.optional(v.id('messages')), // For message threading
-    priority: v.string(), // "low", "normal", "high"
+    priority: v.union(v.literal('low'), v.literal('normal'), v.literal('high')),
     tags: v.array(v.string()), // For organizing messages
     isArchived: v.boolean(), // User can archive messages
     isDeleted: v.boolean(), // Soft delete
@@ -1345,8 +1408,18 @@ export default defineSchema({
     description: v.optional(v.string()),
     assigneeId: v.string(), // Clerk userId of person task is assigned to
     assignorId: v.string(), // Clerk userId of person who assigned the task
-    status: v.string(), // "assigned", "in_progress", "completed", "cancelled"
-    priority: v.string(), // "low", "medium", "high", "urgent"
+    status: v.union(
+      v.literal('assigned'),
+      v.literal('in_progress'),
+      v.literal('completed'),
+      v.literal('cancelled')
+    ),
+    priority: v.union(
+      v.literal('low'),
+      v.literal('medium'),
+      v.literal('high'),
+      v.literal('urgent')
+    ),
     dueDate: v.optional(v.number()), // Deadline timestamp
     completedAt: v.optional(v.number()), // When task was completed
     relatedEntityType: v.optional(v.string()), // e.g., "sale", "purchase", "inventory"

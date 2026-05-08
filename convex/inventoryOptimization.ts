@@ -1,5 +1,11 @@
 import { query } from './_generated/server';
 import { v } from 'convex/values';
+import {
+  resolveCallerContext,
+  requirePermission,
+  getDataScopeUserId
+} from './lib/authHelper';
+import { PERMISSIONS } from './lib/permissions';
 
 /**
  * Stock Level Automation Query
@@ -8,12 +14,30 @@ import { v } from 'convex/values';
 export const calculateOptimalStockLevel = query({
   args: {},
   async handler(ctx) {
-    // Get all products with their stock levels
-    const products = await ctx.db.query('products').collect();
+    // RBAC: Use resolveCallerContext for proper owner/staff separation
+    const caller = await resolveCallerContext(ctx);
+    requirePermission(caller, PERMISSIONS.VIEW_INVENTORY);
+
+    // Use getDataScopeUserId to get the correct userId (owner's userId for staff)
+    const userId = getDataScopeUserId(caller);
+
+    // Get all products with their stock levels (excluding deleted)
+    const products = await ctx.db
+      .query('products')
+      .withIndex('by_user_and_isDeleted', (q) =>
+        q.eq('userId', userId).eq('isDeleted', false)
+      )
+      .collect();
 
     // Get sales data for the last 90 days to calculate daily usage
     const transactions = await ctx.db
       .query('transactions')
+      .filter((q) =>
+        q.and(
+          q.eq(q.field('userId'), userId),
+          q.eq(q.field('isDeleted'), false)
+        )
+      )
       .order('desc')
       .take(1000);
 
@@ -126,15 +150,38 @@ export const calculateOptimalStockLevel = query({
  * Reorder Recommendations Query
  * Get products that need reordering now or soon
  */
-export const getReorderRecommendations = query({
+export const analyzeProductPerformance = query({
   args: {},
   async handler(ctx) {
-    const products = await ctx.db.query('products').collect();
+    // RBAC: Use resolveCallerContext for proper owner/staff separation
+    const caller = await resolveCallerContext(ctx);
+    requirePermission(caller, PERMISSIONS.VIEW_INVENTORY);
+
+    // Use getDataScopeUserId to get the correct userId (owner's userId for staff)
+    const userId = getDataScopeUserId(caller);
+
+    const products = await ctx.db
+      .query('products')
+      .withIndex('by_user_and_isDeleted', (q) =>
+        q.eq('userId', userId).eq('isDeleted', false)
+      )
+      .collect();
     const transactions = await ctx.db
       .query('transactions')
+      .filter((q) =>
+        q.and(
+          q.eq(q.field('userId'), userId),
+          q.eq(q.field('isDeleted'), false)
+        )
+      )
       .order('desc')
       .take(1000);
-    const suppliers = await ctx.db.query('suppliers').collect();
+    const suppliers = await ctx.db
+      .query('suppliers')
+      .withIndex('by_user_and_isDeleted', (q) =>
+        q.eq('userId', userId).eq('isDeleted', false)
+      )
+      .collect();
 
     // Calculate sales trends
     const sales30Days = new Map<string, number>();
@@ -355,8 +402,28 @@ export const identifyDeadStock = query({
 export const trackSupplierLeadTimes = query({
   args: {},
   async handler(ctx) {
-    const suppliers = await ctx.db.query('suppliers').collect();
-    const allTransactions = await ctx.db.query('transactions').collect();
+    // RBAC: Use resolveCallerContext for proper owner/staff separation
+    const caller = await resolveCallerContext(ctx);
+    requirePermission(caller, PERMISSIONS.VIEW_INVENTORY);
+
+    // Use getDataScopeUserId to get the correct userId (owner's userId for staff)
+    const userId = getDataScopeUserId(caller);
+
+    const suppliers = await ctx.db
+      .query('suppliers')
+      .withIndex('by_user_and_isDeleted', (q) =>
+        q.eq('userId', userId).eq('isDeleted', false)
+      )
+      .collect();
+    const allTransactions = await ctx.db
+      .query('transactions')
+      .filter((q) =>
+        q.and(
+          q.eq(q.field('userId'), userId),
+          q.eq(q.field('isDeleted'), false)
+        )
+      )
+      .collect();
 
     // Filter for purchase transactions
     const purchases = allTransactions.filter(

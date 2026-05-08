@@ -1,5 +1,6 @@
 import { mutation, query, action } from './_generated/server';
 import { v } from 'convex/values';
+import { resolveCallerContext, getDataScopeUserId } from './lib/authHelper';
 
 // Create account status for new user
 export const createAccountStatus = mutation({
@@ -8,6 +9,22 @@ export const createAccountStatus = mutation({
     businessType: v.string()
   },
   handler: async (ctx, args) => {
+    // Authentication check: verify the caller is authenticated
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error('Not authenticated');
+    }
+
+    // Authorization check: user can only create their own account status
+    // OR super admins can create for anyone
+    const superAdminIds =
+      process.env.NEXT_PUBLIC_SUPER_ADMIN_USER_IDS?.split(',') || [];
+    const isSuperAdmin = superAdminIds.includes(identity.subject);
+
+    if (identity.subject !== args.userId && !isSuperAdmin) {
+      throw new Error('Can only create account status for yourself');
+    }
+
     // Check if account status already exists
     const existing = await ctx.db
       .query('accountStatus')
@@ -213,13 +230,13 @@ export const suspendAccount = mutation({
 // Get all accounts for super admin dashboard
 export const getAllAccounts = query({
   handler: async (ctx) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error('Unauthorized');
+    // RBAC: Use resolveCallerContext for proper owner/staff separation
+    const caller = await resolveCallerContext(ctx);
 
     // Verify super admin
     const superAdminIds =
       process.env.NEXT_PUBLIC_SUPER_ADMIN_USER_IDS?.split(',') || [];
-    if (!superAdminIds.includes(identity.subject)) {
+    if (!superAdminIds.includes(caller.callerId)) {
       throw new Error('Only super admins can view all accounts');
     }
 
@@ -233,13 +250,13 @@ export const getAccountsByStatus = query({
     status: v.string()
   },
   handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error('Unauthorized');
+    // RBAC: Use resolveCallerContext for proper owner/staff separation
+    const caller = await resolveCallerContext(ctx);
 
     // Verify super admin
     const superAdminIds =
       process.env.NEXT_PUBLIC_SUPER_ADMIN_USER_IDS?.split(',') || [];
-    if (!superAdminIds.includes(identity.subject)) {
+    if (!superAdminIds.includes(caller.callerId)) {
       throw new Error('Only super admins can view accounts');
     }
 
@@ -250,16 +267,23 @@ export const getAccountsByStatus = query({
   }
 });
 
-// Update business type (user can update their own)
+// Update business type (user can update their own, or super admin)
 export const updateBusinessType = mutation({
   args: {
     userId: v.string(),
     businessType: v.string()
   },
   handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error('Unauthorized');
-    if (identity.subject !== args.userId) {
+    // RBAC: Use resolveCallerContext for proper owner/staff separation
+    const caller = await resolveCallerContext(ctx);
+
+    // Users can only update their own business type
+    // OR super admins can update any user's business type
+    const superAdminIds =
+      process.env.NEXT_PUBLIC_SUPER_ADMIN_USER_IDS?.split(',') || [];
+    const isSuperAdmin = superAdminIds.includes(caller.callerId);
+
+    if (caller.callerId !== args.userId && !isSuperAdmin) {
       throw new Error('Can only update your own account');
     }
 
@@ -287,6 +311,19 @@ export const verifyOnboardingComplete = query({
     userId: v.string()
   },
   handler: async (ctx, args) => {
+    // RBAC: Use resolveCallerContext for proper owner/staff separation
+    const caller = await resolveCallerContext(ctx);
+
+    // Users can only check their own onboarding status
+    // OR super admins can check any user's status
+    const superAdminIds =
+      process.env.NEXT_PUBLIC_SUPER_ADMIN_USER_IDS?.split(',') || [];
+    const isSuperAdmin = superAdminIds.includes(caller.callerId);
+
+    if (caller.callerId !== args.userId && !isSuperAdmin) {
+      throw new Error('Can only check your own onboarding status');
+    }
+
     const accountStatus = await ctx.db
       .query('accountStatus')
       .withIndex('by_user', (q) => q.eq('userId', args.userId))

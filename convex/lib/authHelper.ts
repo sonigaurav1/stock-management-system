@@ -1,5 +1,10 @@
 import { QueryCtx, MutationCtx } from '../_generated/server';
-import { Permission, hasPermission } from './permissions';
+import {
+  Permission,
+  hasPermission,
+  getPresetPermissions,
+  PERMISSIONS
+} from './permissions';
 
 /**
  * Represents the context of who is making the request and what they can access
@@ -157,4 +162,87 @@ export function assertDataAccess(
   if (ctx.ownerId !== targetOwnerId) {
     throw new Error('You do not have access to this data');
   }
+}
+
+/**
+ * UNIFIED: Check both companyMembers AND teamMembers for permissions
+ * This bridges the gap during migration from teamManagement to companyAccess
+ * DEPRECATED teamMembers path - will be removed after full migration
+ */
+export async function resolveCallerContextUnified(
+  ctx: QueryCtx | MutationCtx
+): Promise<MemberContext> {
+  const identity = await ctx.auth.getUserIdentity();
+  if (!identity) {
+    throw new Error('Not authenticated');
+  }
+
+  const callerId = identity.subject;
+
+  // Check companyMembers first (new canonical system)
+  const companyMembership = await ctx.db
+    .query('companyMembers')
+    .withIndex('by_userId', (q) => q.eq('userId', callerId))
+    .filter((q) => q.eq(q.field('status'), 'accepted'))
+    .first();
+
+  if (companyMembership) {
+    const roleRecord = await ctx.db
+      .query('customRoles')
+      .withIndex('by_user', (q) =>
+        q.eq('userId', companyMembership.companyOwnerId)
+      )
+      .filter((q) => q.eq(q.field('name'), companyMembership.role))
+      .first();
+
+    return {
+      callerId,
+      ownerId: companyMembership.companyOwnerId,
+      role: companyMembership.role,
+      permissions:
+        roleRecord?.permissions ?? getPresetPermissions(companyMembership.role),
+      isOwner: false,
+      membershipId: companyMembership._id.toString()
+    };
+  }
+
+  // DEPRECATED: Check teamMembers (legacy system - to be removed)
+  const teamMemberships = await ctx.db
+    .query('teamMembers')
+    .withIndex('by_user_and_member', (q) =>
+      q.eq('userId', callerId).eq('memberKey', callerId)
+    )
+    .collect();
+
+  if (teamMemberships.length > 0) {
+    // Aggregate permissions from all teams
+    const allPerms = new Set<string>();
+    for (const m of teamMemberships) {
+      if (m.customRoleId) {
+        const role = await ctx.db.get(m.customRoleId);
+        if (role) {
+          role.permissions.forEach((p: string) => allPerms.add(p));
+        }
+      }
+    }
+
+    // Return unified context with legacy indicator
+    return {
+      callerId,
+      ownerId: teamMemberships[0].userId,
+      role: 'team_member',
+      permissions: Array.from(allPerms),
+      isOwner: false,
+      membershipId: teamMemberships[0]._id.toString()
+    };
+  }
+
+  // Owner path (unchanged)
+  return {
+    callerId,
+    ownerId: callerId,
+    role: 'owner',
+    permissions: Object.values(PERMISSIONS),
+    isOwner: true
+  };
 }

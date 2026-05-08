@@ -198,12 +198,69 @@ export const removeMember = mutation({
       throw new Error('Cannot remove the organization owner');
     }
 
+    const removedUserId = membership.userId;
+    const removedEmail = membership.email;
+    const removedRole = membership.role;
+
+    // FIX: Clear member's Clerk metadata (if user had accepted invitation)
+    if (removedUserId) {
+      try {
+        await fetch(
+          `https://api.clerk.com/v1/users/${removedUserId}/metadata`,
+          {
+            method: 'PATCH',
+            headers: {
+              Authorization: `Bearer ${process.env.CLERK_SECRET_KEY}`,
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              public_metadata: {
+                role: null,
+                companyOwnerId: null,
+                membershipId: null,
+                removedAt: Date.now()
+              }
+            })
+          }
+        );
+      } catch (error) {
+        console.error('[removeMember] Failed to clear Clerk metadata:', error);
+        // Log but don't fail — DB is source of truth
+      }
+    }
+
+    // FIX: Clear userId link and update status
     await ctx.db.patch(args.membershipId, {
       status: 'removed',
+      userId: undefined, // Clear the link to Clerk user
+      role: undefined, // Clear role
       updatedAt: Date.now()
     });
 
-    return { success: true, message: 'Member removed' };
+    // FIX: Write to audit log
+    await ctx.db.insert('auditLog', {
+      userId: caller.ownerId,
+      action: 'member_removed',
+      entityType: 'companyMember',
+      entityId: args.membershipId.toString(),
+      changes: {
+        removedUserId,
+        removedEmail,
+        removedRole,
+        removedBy: caller.callerId,
+        removedAt: Date.now()
+      },
+      ipAddress:
+        (ctx as any).request?.headers?.get('x-forwarded-for') || undefined,
+      createdAt: Date.now()
+    });
+
+    return {
+      success: true,
+      message: 'Member removed',
+      removedUserId,
+      auditLogCreated: true
+    };
   }
 });
 
@@ -372,6 +429,19 @@ export const acceptInvitation = mutation({
 
     const userId = identity.subject;
 
+    // CRITICAL FIX: Validate that the authenticated user's email matches the invitation email
+    // This prevents users from accepting invitations sent to different email addresses
+    const identityEmail =
+      (identity as any).email || (identity as any).claims?.email;
+    if (
+      identityEmail &&
+      identityEmail.toLowerCase() !== args.email.toLowerCase()
+    ) {
+      throw new Error(
+        'Invitation email does not match your authenticated email address'
+      );
+    }
+
     // Find pending invitation for this email
     const invitation = await ctx.db
       .query('companyMembers')
@@ -383,12 +453,32 @@ export const acceptInvitation = mutation({
       throw new Error('No pending invitation found for this email');
     }
 
+    // Additional check: ensure the invitation email matches what was requested
+    if (invitation.email.toLowerCase() !== args.email.toLowerCase()) {
+      throw new Error('Invitation email mismatch');
+    }
+
     // Accept invitation by linking the user's Clerk ID
     await ctx.db.patch(invitation._id, {
       userId: userId,
       status: 'accepted',
       acceptedAt: Date.now(),
       updatedAt: Date.now()
+    });
+
+    // FIX: Create audit log for invitation acceptance
+    await ctx.db.insert('auditLog', {
+      userId: invitation.companyOwnerId,
+      action: 'invitation_accepted',
+      entityType: 'companyMember',
+      entityId: invitation._id.toString(),
+      changes: {
+        acceptedBy: userId,
+        acceptedEmail: args.email,
+        role: invitation.role,
+        acceptedAt: Date.now()
+      },
+      createdAt: Date.now()
     });
 
     return {

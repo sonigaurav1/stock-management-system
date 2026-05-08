@@ -1,5 +1,11 @@
 import { v } from 'convex/values';
 import { mutation, query, internalMutation } from './_generated/server';
+import {
+  resolveCallerContext,
+  requirePermission,
+  getDataScopeUserId
+} from './lib/authHelper';
+import { PERMISSIONS } from './lib/permissions';
 
 // ==================== BUDGET MANAGEMENT ====================
 
@@ -79,11 +85,12 @@ export const checkBudgetAlerts = mutation({
     month: v.string()
   },
   async handler(ctx, args) {
-    const userId = (await ctx.auth.getUserIdentity())?.tokenIdentifier || '';
+    // FIX: Use proper RBAC for multi-tenant isolation
+    const caller = await resolveCallerContext(ctx);
+    requirePermission(caller, PERMISSIONS.MANAGE_EXPENSES);
 
-    if (!userId) {
-      throw new Error('Unauthorized');
-    }
+    // Use ownerId for data scope (staff manages budgets in owner's data)
+    const userId = getDataScopeUserId(caller);
 
     const budgets = await ctx.db
       .query('budgets')
@@ -187,11 +194,12 @@ export const createRecurringExpensesBatch = mutation({
     endDate: v.number()
   },
   async handler(ctx, args) {
-    const userId = (await ctx.auth.getUserIdentity())?.tokenIdentifier || '';
+    // FIX: Use proper RBAC for multi-tenant isolation
+    const caller = await resolveCallerContext(ctx);
+    requirePermission(caller, PERMISSIONS.MANAGE_EXPENSES);
 
-    if (!userId) {
-      throw new Error('Unauthorized');
-    }
+    // Use ownerId for data scope (staff manages recurring expenses in owner's data)
+    const userId = getDataScopeUserId(caller);
 
     const recurringExpenses = await ctx.db
       .query('recurringExpenses')
@@ -263,11 +271,12 @@ export const getBudgetForecast = query({
     month: v.string()
   },
   async handler(ctx, args) {
-    const userId = (await ctx.auth.getUserIdentity())?.tokenIdentifier || '';
+    // FIX: Use proper RBAC for multi-tenant isolation
+    const caller = await resolveCallerContext(ctx);
+    requirePermission(caller, PERMISSIONS.VIEW_FINANCIAL_REPORTS);
 
-    if (!userId) {
-      throw new Error('Unauthorized');
-    }
+    // Use ownerId for data scope (staff sees owner's budget forecast)
+    const userId = getDataScopeUserId(caller);
 
     const budgets = await ctx.db
       .query('budgets')
@@ -318,11 +327,12 @@ export const submitExpenseForApproval = mutation({
     approvers: v.array(v.string()) // User IDs in approval order
   },
   async handler(ctx, args) {
-    const userId = (await ctx.auth.getUserIdentity())?.tokenIdentifier || '';
+    // FIX: Use proper RBAC for multi-tenant isolation
+    const caller = await resolveCallerContext(ctx);
+    requirePermission(caller, PERMISSIONS.MANAGE_EXPENSES);
 
-    if (!userId) {
-      throw new Error('Unauthorized');
-    }
+    // Use ownerId for data scope (staff submits expenses in owner's data)
+    const userId = getDataScopeUserId(caller);
 
     // Query expenses and find the one with matching string ID
     const allExpenses = await ctx.db
@@ -341,7 +351,7 @@ export const submitExpenseForApproval = mutation({
     const approvalId = await ctx.db.insert('expenseApprovals', {
       userId: userId,
       expenseId: expense._id.toString(),
-      requestedBy: userId,
+      requestedBy: caller.callerId, // Record actual user who submitted
       approvers: args.approvers.map((approverId, index) => ({
         approverUserId: approverId,
         order: index + 1,
@@ -354,7 +364,7 @@ export const submitExpenseForApproval = mutation({
 
     // Update expense status
     await ctx.db.patch(expense._id, {
-      status: 'pending_approval',
+      status: 'pending',
       updatedAt: Date.now()
     });
 
@@ -369,11 +379,9 @@ export const approveExpenseAtLevel = mutation({
     comments: v.optional(v.string())
   },
   async handler(ctx, args) {
-    const userId = (await ctx.auth.getUserIdentity())?.tokenIdentifier || '';
-
-    if (!userId) {
-      throw new Error('Unauthorized');
-    }
+    // FIX: Use proper RBAC for multi-tenant isolation
+    const caller = await resolveCallerContext(ctx);
+    requirePermission(caller, PERMISSIONS.APPROVE_TRANSACTION);
 
     // Query approvals and find the one with matching string ID
     const allApprovals = await ctx.db.query('expenseApprovals').collect();
@@ -388,7 +396,8 @@ export const approveExpenseAtLevel = mutation({
     const currentApprover =
       approval.approvers[approval.currentApprovalLevel - 1];
 
-    if (currentApprover.approverUserId !== userId) {
+    // FIX: Check if caller is the designated approver (using callerId for identity check)
+    if (currentApprover.approverUserId !== caller.callerId) {
       throw new Error('Not authorized to approve at this level');
     }
 
@@ -444,11 +453,9 @@ export const rejectExpense = mutation({
     reason: v.string()
   },
   async handler(ctx, args) {
-    const userId = (await ctx.auth.getUserIdentity())?.tokenIdentifier || '';
-
-    if (!userId) {
-      throw new Error('Unauthorized');
-    }
+    // FIX: Use proper RBAC for multi-tenant isolation
+    const caller = await resolveCallerContext(ctx);
+    requirePermission(caller, PERMISSIONS.APPROVE_TRANSACTION);
 
     // Query approvals and find the one with matching string ID
     const allApprovals = await ctx.db.query('expenseApprovals').collect();
@@ -463,7 +470,8 @@ export const rejectExpense = mutation({
     const currentApprover =
       approval.approvers[approval.currentApprovalLevel - 1];
 
-    if (currentApprover.approverUserId !== userId) {
+    // FIX: Check if caller is the designated approver (using callerId for identity check)
+    if (currentApprover.approverUserId !== caller.callerId) {
       throw new Error('Not authorized to reject at this level');
     }
 
@@ -504,12 +512,11 @@ export const rejectExpense = mutation({
 // Get pending approvals for current user
 export const getPendingApprovals = query({
   async handler(ctx) {
-    const userId = (await ctx.auth.getUserIdentity())?.tokenIdentifier || '';
+    // FIX: Use proper RBAC for multi-tenant isolation
+    const caller = await resolveCallerContext(ctx);
+    requirePermission(caller, PERMISSIONS.VIEW_FINANCIAL_REPORTS);
 
-    if (!userId) {
-      throw new Error('Unauthorized');
-    }
-
+    // FIX: Use callerId to check if current user is the designated approver
     const approvals = await ctx.db
       .query('expenseApprovals')
       .filter((q) => q.eq(q.field('overallStatus'), 'pending'))
@@ -521,7 +528,8 @@ export const getPendingApprovals = query({
     for (const approval of approvals) {
       const currentApprover =
         approval.approvers[approval.currentApprovalLevel - 1];
-      if (currentApprover.approverUserId === userId) {
+      // FIX: Check if caller is the designated approver
+      if (currentApprover.approverUserId === caller.callerId) {
         // Query expenses and find matching one
         const allExpenses = await ctx.db.query('expenses').collect();
         const expense = allExpenses.find(

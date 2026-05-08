@@ -429,15 +429,16 @@ export const updateProduct = mutation({
     })
   },
   handler: async (ctx, args) => {
-    const identify = await ctx.auth.getUserIdentity();
-    if (!identify) {
-      throw new Error('Not authenticated');
-    }
-    const userId = identify.subject;
+    // RBAC: Use resolveCallerContext for proper owner/staff separation
+    const caller = await resolveCallerContext(ctx);
+    requirePermission(caller, PERMISSIONS.EDIT_PRODUCT);
+
+    // Use getDataScopeUserId to get the correct userId (owner's userId for staff)
+    const userId = getDataScopeUserId(caller);
 
     const existingProduct = await ctx.db.get(args.id);
     if (!existingProduct || existingProduct.userId !== userId) {
-      throw new Error('Unauthorized');
+      throw new Error('Product not found or access denied');
     }
 
     let updates = { ...args.updates };
@@ -453,15 +454,16 @@ export const updateProduct = mutation({
 export const deleteProduct = mutation({
   args: { id: v.id('products') },
   handler: async (ctx, args) => {
-    const identify = await ctx.auth.getUserIdentity();
-    if (!identify) {
-      throw new Error('Not authenticated');
-    }
-    const userId = identify.subject;
+    // RBAC: Use resolveCallerContext for proper owner/staff separation
+    const caller = await resolveCallerContext(ctx);
+    requirePermission(caller, PERMISSIONS.DELETE_PRODUCT);
+
+    // Use getDataScopeUserId to get the correct userId (owner's userId for staff)
+    const userId = getDataScopeUserId(caller);
 
     const existingProduct = await ctx.db.get(args.id);
     if (!existingProduct || existingProduct.userId !== userId) {
-      throw new Error('Unauthorized');
+      throw new Error('Product not found or access denied');
     }
 
     return await ctx.db.patch(args.id, {
@@ -475,15 +477,16 @@ export const deleteProduct = mutation({
 export const restoreProduct = mutation({
   args: { id: v.id('products') },
   handler: async (ctx, args) => {
-    const identify = await ctx.auth.getUserIdentity();
-    if (!identify) {
-      throw new Error('Not authenticated');
-    }
-    const userId = identify.subject;
+    // RBAC: Use resolveCallerContext for proper owner/staff separation
+    const caller = await resolveCallerContext(ctx);
+    requirePermission(caller, PERMISSIONS.EDIT_PRODUCT);
+
+    // Use getDataScopeUserId to get the correct userId (owner's userId for staff)
+    const userId = getDataScopeUserId(caller);
 
     const existingProduct = await ctx.db.get(args.id);
     if (!existingProduct || existingProduct.userId !== userId) {
-      throw new Error('Unauthorized');
+      throw new Error('Product not found or access denied');
     }
 
     return await ctx.db.patch(args.id, {
@@ -527,11 +530,12 @@ export const createProducts = mutation({
     )
   },
   handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) {
-      throw new Error('Not authenticated');
-    }
-    const userId = identity.subject;
+    // RBAC: Use resolveCallerContext for proper owner/staff separation
+    const caller = await resolveCallerContext(ctx);
+    requirePermission(caller, PERMISSIONS.CREATE_PRODUCT);
+
+    // Use getDataScopeUserId to get the correct userId (owner's userId for staff)
+    const userId = getDataScopeUserId(caller);
 
     const results: Array<{
       index: number;
@@ -652,20 +656,27 @@ export const exportProducts = query({
     includeDeleted: v.optional(v.boolean())
   },
   handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) {
-      throw new Error('Not authenticated');
-    }
-    const userId = identity.subject;
+    // RBAC: Use resolveCallerContext for proper owner/staff separation
+    const caller = await resolveCallerContext(ctx);
+    requirePermission(caller, PERMISSIONS.EXPORT_DATA);
 
-    let products = await ctx.db
-      .query('products')
-      .withIndex('by_user', (q) => q.eq('userId', userId))
-      .collect();
+    // Use getDataScopeUserId to get the correct userId (owner's userId for staff)
+    const userId = getDataScopeUserId(caller);
 
-    // Filter deleted if needed
-    if (!args.includeDeleted) {
-      products = products.filter((p) => !p.isDeleted);
+    // FIX: Use proper index with isDeleted filter at database level
+    let products;
+    if (args.includeDeleted) {
+      products = await ctx.db
+        .query('products')
+        .withIndex('by_user', (q) => q.eq('userId', userId))
+        .collect();
+    } else {
+      products = await ctx.db
+        .query('products')
+        .withIndex('by_user_and_isDeleted', (q) =>
+          q.eq('userId', userId).eq('isDeleted', false)
+        )
+        .collect();
     }
 
     // Return full product data for export
@@ -885,11 +896,12 @@ export const bulkRestockProducts = mutation({
     )
   },
   handler: async (ctx, args) => {
-    const identify = await ctx.auth.getUserIdentity();
-    if (!identify) {
-      throw new Error('Not authenticated');
-    }
-    const userId = identify.subject;
+    // CRITICAL FIX: Use resolveCallerContext for proper owner/staff separation
+    const caller = await resolveCallerContext(ctx);
+    requirePermission(caller, PERMISSIONS.MANAGE_STOCK);
+
+    // FIX: Use getDataScopeUserId to get the correct userId (owner's userId for staff)
+    const userId = getDataScopeUserId(caller);
 
     const results = [];
 
@@ -905,6 +917,7 @@ export const bulkRestockProducts = mutation({
         continue;
       }
 
+      // Ownership check now works correctly with resolved userId
       if ((product as any).userId !== userId) {
         results.push({
           productId: item.productId,

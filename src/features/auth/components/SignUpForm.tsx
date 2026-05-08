@@ -657,7 +657,6 @@ export default function SignUpForm({
         });
 
         // For invited users: Accept invitation and join existing organization
-        // For new users: Create new company
         if ((isInvitedUser && invitation) || companyInvitationId) {
           // Accept the invitation using the correct email-based approach
           // (invitation._id is from companyMembers table, not invitations table)

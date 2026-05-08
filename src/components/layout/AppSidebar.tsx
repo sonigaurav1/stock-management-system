@@ -1,4 +1,5 @@
 'use client';
+
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
   Collapsible,
@@ -29,7 +30,8 @@ import {
   SidebarMenuSubItem,
   SidebarRail
 } from '@/components/ui/sidebar';
-import { navItems, NavItem } from '@/constants/data';
+import { navItems } from '@/constants/data';
+import { NavItem } from '@/types';
 import {
   BadgeCheck,
   BadgeInfo,
@@ -39,7 +41,11 @@ import {
   CreditCard,
   GalleryVerticalEnd,
   LogOut,
-  MessageSquare
+  MessageSquare,
+  Crown,
+  Shield,
+  User,
+  Eye
 } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
@@ -49,8 +55,17 @@ import { Icons } from '../icons';
 import { useQuery } from 'convex/react';
 import { api } from '@/../convex/_generated/api';
 import { capitalizeWords } from '@/lib/utils';
-import { useUserRole, getRoleLabel } from '@/hooks/useUserRole';
-import { PERMISSIONS } from '@/convex/permissions';
+
+// Enterprise role-based navigation imports
+import {
+  ROLE_CONFIG,
+  ROLE_QUICK_ACTIONS,
+  filterNavByRole,
+  getQuickActions,
+  getRoleDisplayInfo,
+  ROLE_HIERARCHY,
+  MENU_PERMISSIONS
+} from '@/config/role-nav-config';
 
 export const company = {
   name: 'NextTech',
@@ -58,63 +73,36 @@ export const company = {
   plan: 'Enterprise'
 };
 
-// Permission mapping: which permission is required to view each nav item
-const NAV_PERMISSIONS: Record<string, string> = {
-  Dashboard: PERMISSIONS.VIEW_INVENTORY,
-  Inventory: PERMISSIONS.VIEW_INVENTORY,
-  Purchasing: PERMISSIONS.VIEW_INVENTORY,
-  Finance: PERMISSIONS.VIEW_LEDGER,
-  Reports: PERMISSIONS.VIEW_REPORTS,
-  Communication: PERMISSIONS.VIEW_INVENTORY,
-  Settings: PERMISSIONS.MANAGE_SETTINGS,
-  Help: PERMISSIONS.VIEW_INVENTORY
-};
-
 /**
- * Filter navItems based on user permissions
+ * Get role icon component
  */
-function filterNavItemsByPermission(
-  items: NavItem[],
-  can: (permission: string) => boolean
-): NavItem[] {
-  return items
-    .map((item) => {
-      // Check if user has permission for this section
-      const requiredPermission = NAV_PERMISSIONS[item.title];
-      if (requiredPermission && !can(requiredPermission)) {
-        return null;
-      }
-
-      // Filter sub-items if present
-      if (item.items && item.items.length > 0) {
-        const filteredSubItems = item.items.filter((subItem) => {
-          // For now, allow all sub-items if the parent is visible
-          return true;
-        });
-
-        // If all sub-items are filtered out, don't show the parent
-        if (filteredSubItems.length === 0) {
-          return null;
-        }
-
-        return { ...item, items: filteredSubItems };
-      }
-
-      return item;
-    })
-    .filter((item): item is NavItem => item !== null);
+function getRoleIcon(iconName: string) {
+  const icons: Record<string, React.ComponentType<{ className?: string }>> = {
+    crown: Crown,
+    shield: Shield,
+    user: User,
+    eye: Eye
+  };
+  return icons[iconName] || User;
 }
 
+/**
+ * Enterprise AppSidebar with full role-based navigation
+ * Provides different sidebar experiences for owner, manager, staff, and viewer
+ */
 export default function AppSidebar() {
   const { user } = useUser();
   const pathname = usePathname();
-  const { role, can, isLoading: isRoleLoading } = useUserRole();
+  const context = useQuery(api.companyAccess.getCallerContext);
+
   const [isHydrated, setIsHydrated] = React.useState(false);
+  const [isCollapsed, setIsCollapsed] = React.useState(false);
 
   React.useEffect(() => {
     setIsHydrated(true);
   }, []);
 
+  // Get user context
   const hydratedUser = isHydrated ? user : null;
   const userName = hydratedUser?.fullName || 'Guest User';
   const userEmail =
@@ -122,34 +110,58 @@ export default function AppSidebar() {
   const userInitials =
     hydratedUser?.fullName?.slice(0, 2)?.toUpperCase() || 'GU';
 
+  // Company name from query
   const companyName =
     useQuery(api.companies.getCompanyName, {
       userId: hydratedUser?.id ?? ''
     }) ?? '';
 
-  // Filter nav items based on permissions (only after role is loaded)
-  const filteredNavItems =
-    !isRoleLoading && can
-      ? filterNavItemsByPermission(navItems, can)
-      : navItems;
+  // Extract role and permissions from context
+  const role = context?.role ?? null;
+  const permissions = context?.permissions ?? [];
+  const isOwner = context?.isOwner ?? false;
+  const isLoading = context === undefined;
 
-  // Determine user role label
-  const roleLabel = role ? getRoleLabel(role) : 'Guest';
+  // Permission check helper
+  const can = React.useCallback(
+    (permission: string): boolean => {
+      return permissions.includes(permission);
+    },
+    [permissions]
+  );
 
-  // Check if user can access billing/settings (managers and owners only)
-  const canAccessBilling = can(PERMISSIONS.MANAGE_SETTINGS);
-  const canManageUsers = can(PERMISSIONS.MANAGE_USERS);
+  // Filter navigation items based on role
+  const filteredNavItems = React.useMemo(() => {
+    if (isLoading) return navItems;
+    return filterNavByRole(navItems, role, can);
+  }, [role, can, isLoading]);
 
-  console.log('AppSidebar - user:', {
-    user,
-    hydratedUser,
-    userName,
-    userEmail,
-    role
-  });
-  console.log('AppSidebar - companyName:', { companyName });
-  console.log('AppSidebar - canAccessBilling:', canAccessBilling);
+  // Get role display information
+  const roleInfo = React.useMemo(() => {
+    return getRoleDisplayInfo(role);
+  }, [role]);
 
+  // Get quick actions for dropdown
+  const quickActions = React.useMemo(() => {
+    return getQuickActions(role, can);
+  }, [role, can]);
+
+  // Get role label
+  const roleLabel = roleInfo.label;
+
+  // Get role hierarchy level for comparison
+  const roleLevel = ROLE_HIERARCHY[role?.toLowerCase() ?? 'viewer'] ?? 0;
+
+  // Permission checks for special items
+  const canAccessBilling = can('manage_settings');
+  const canManageUsers = can('manage_users');
+  const canManageOrganization = can('manage_organization');
+  const canViewAuditLogs = can('view_audit_logs');
+
+  // Role icon component
+  const RoleIconComponent = getRoleIcon(roleInfo.icon);
+
+  // Loading skeleton while hydrating
   if (!isHydrated) {
     return (
       <Sidebar collapsible='icon'>
@@ -172,7 +184,10 @@ export default function AppSidebar() {
   }
 
   return (
-    <Sidebar collapsible='icon'>
+    <Sidebar
+      collapsible='icon'
+      className={isCollapsed ? 'sidebar-collapsed' : ''}
+    >
       <SidebarHeader>
         <div className='flex gap-2 py-2 text-sidebar-accent-foreground'>
           <div className='flex aspect-square size-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground'>
@@ -186,12 +201,22 @@ export default function AppSidebar() {
           </div>
         </div>
       </SidebarHeader>
+
       <SidebarContent className='overflow-x-hidden'>
+        {/* Role-based section visibility */}
         <SidebarGroup>
-          <SidebarGroupLabel>Overview</SidebarGroupLabel>
+          <SidebarGroupLabel>
+            {role === 'owner'
+              ? 'Management'
+              : role === 'manager'
+                ? 'Operations'
+                : 'Overview'}
+          </SidebarGroupLabel>
           <SidebarMenu>
             {filteredNavItems.map((item) => {
               const Icon = item.icon ? Icons[item.icon] : Icons.logo;
+              const isActive = pathname === item.url;
+
               return item?.items && item?.items?.length > 0 ? (
                 <Collapsible
                   key={item.title}
@@ -203,7 +228,7 @@ export default function AppSidebar() {
                     <CollapsibleTrigger asChild>
                       <SidebarMenuButton
                         tooltip={item.title}
-                        isActive={pathname === item.url}
+                        isActive={isActive}
                       >
                         {item.icon && <Icon />}
                         <span>{item.title}</span>
@@ -212,18 +237,24 @@ export default function AppSidebar() {
                     </CollapsibleTrigger>
                     <CollapsibleContent>
                       <SidebarMenuSub>
-                        {item.items?.map((subItem) => (
-                          <SidebarMenuSubItem key={subItem.title}>
-                            <SidebarMenuSubButton
-                              asChild
-                              isActive={pathname === subItem.url}
-                            >
-                              <Link href={subItem.url}>
-                                <span>{subItem.title}</span>
-                              </Link>
-                            </SidebarMenuSubButton>
-                          </SidebarMenuSubItem>
-                        ))}
+                        {item.items?.map((subItem) => {
+                          const SubIcon = subItem.icon
+                            ? Icons[subItem.icon]
+                            : Icons.logo;
+                          return (
+                            <SidebarMenuSubItem key={subItem.title}>
+                              <SidebarMenuSubButton
+                                asChild
+                                isActive={pathname === subItem.url}
+                              >
+                                <Link href={subItem.url}>
+                                  <SubIcon className='mr-2 h-4 w-4' />
+                                  <span>{subItem.title}</span>
+                                </Link>
+                              </SidebarMenuSubButton>
+                            </SidebarMenuSubItem>
+                          );
+                        })}
                       </SidebarMenuSub>
                     </CollapsibleContent>
                   </SidebarMenuItem>
@@ -233,7 +264,7 @@ export default function AppSidebar() {
                   <SidebarMenuButton
                     asChild
                     tooltip={item.title}
-                    isActive={pathname === item.url}
+                    isActive={isActive}
                   >
                     <Link href={item.url}>
                       <Icon />
@@ -246,6 +277,35 @@ export default function AppSidebar() {
           </SidebarMenu>
         </SidebarGroup>
 
+        {/* Quick Actions Section - Role-based */}
+        {quickActions.length > 0 && (
+          <SidebarGroup className='mt-auto'>
+            <SidebarGroupLabel>Quick Actions</SidebarGroupLabel>
+            <SidebarMenu>
+              {quickActions.map((action) => {
+                const ActionIcon =
+                  (
+                    Icons as Record<
+                      string,
+                      React.ComponentType<{ className?: string }>
+                    >
+                  )[action.icon] || Icons.arrowRight;
+                return (
+                  <SidebarMenuItem key={action.href}>
+                    <SidebarMenuButton asChild tooltip={action.label}>
+                      <Link href={action.href}>
+                        <ActionIcon className='mr-2 h-4 w-4' />
+                        <span>{action.label}</span>
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                );
+              })}
+            </SidebarMenu>
+          </SidebarGroup>
+        )}
+
+        {/* Feedback section */}
         <SidebarGroup className='mt-auto'>
           <SidebarMenu>
             <SidebarMenuItem>
@@ -308,40 +368,93 @@ export default function AppSidebar() {
                     </div>
                   </div>
                 </DropdownMenuLabel>
+
+                {/* Role Badge */}
+                <DropdownMenuSeparator />
+                <DropdownMenuItem className='p-0'>
+                  <div
+                    className={`flex w-full items-center gap-2 rounded-md px-2 py-2 ${roleInfo.bgColor}`}
+                  >
+                    <RoleIconComponent
+                      className={`h-4 w-4 ${roleInfo.color}`}
+                    />
+                    <div className='flex flex-col'>
+                      <span className={`text-sm font-medium ${roleInfo.color}`}>
+                        {roleLabel}
+                      </span>
+                      <span className='text-xs text-muted-foreground'>
+                        {roleInfo.description}
+                      </span>
+                    </div>
+                  </div>
+                </DropdownMenuItem>
+
                 <DropdownMenuSeparator />
 
                 <DropdownMenuGroup>
                   <DropdownMenuItem>
                     <BadgeCheck className='mr-2' />
-                    Account
+                    Account Settings
                   </DropdownMenuItem>
-                  <DropdownMenuItem>
-                    <BadgeInfo className='mr-2' />
-                    Role: {roleLabel}
-                  </DropdownMenuItem>
+
+                  {canManageOrganization && (
+                    <DropdownMenuItem>
+                      <GalleryVerticalEnd className='mr-2' />
+                      Organization
+                    </DropdownMenuItem>
+                  )}
+
                   {canAccessBilling && (
                     <DropdownMenuItem>
                       <CreditCard className='mr-2' />
-                      Billing
+                      Billing & Plans
                     </DropdownMenuItem>
                   )}
+
+                  {canViewAuditLogs && (
+                    <DropdownMenuItem>
+                      <Shield className='mr-2' />
+                      Audit Logs
+                    </DropdownMenuItem>
+                  )}
+
                   <DropdownMenuItem>
                     <Bell className='mr-2' />
                     Notifications
                   </DropdownMenuItem>
                 </DropdownMenuGroup>
+
                 <DropdownMenuSeparator />
+
+                {/* Role-based quick links */}
+                {role === 'owner' && canManageUsers && (
+                  <>
+                    <DropdownMenuItem asChild>
+                      <Link
+                        href='/settings/users'
+                        className='flex cursor-pointer gap-2'
+                      >
+                        <Shield className='h-4 w-4' />
+                        Manage Team
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                  </>
+                )}
+
                 <DropdownMenuItem asChild>
                   <Link href='/feedback' className='flex cursor-pointer gap-2'>
                     <MessageSquare className='h-4 w-4' />
                     Send Feedback
                   </Link>
                 </DropdownMenuItem>
+
                 <DropdownMenuSeparator />
+
                 <DropdownMenuItem className='p-0'>
                   {hydratedUser ? (
                     <SignOutButton redirectUrl='/sign-in'>
-                      <div className='flex h-full w-full gap-2 px-2 py-1.5'>
+                      <div className='flex h-full w-full cursor-pointer gap-2 rounded-md px-2 py-1.5 hover:bg-muted'>
                         <LogOut />
                         Log out
                       </div>
@@ -361,6 +474,7 @@ export default function AppSidebar() {
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarFooter>
+
       <SidebarRail />
     </Sidebar>
   );

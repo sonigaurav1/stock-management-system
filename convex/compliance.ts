@@ -1,5 +1,11 @@
 import { query, mutation } from './_generated/server';
 import { v } from 'convex/values';
+import {
+  resolveCallerContext,
+  requirePermission,
+  getDataScopeUserId
+} from './lib/authHelper';
+import { PERMISSIONS } from './lib/permissions';
 
 // ==================== AUDIT TRAIL ====================
 export const getAuditLog = query({
@@ -8,14 +14,23 @@ export const getAuditLog = query({
     entityType: v.optional(v.string())
   },
   handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error('Not authenticated');
+    // FIX: Use proper RBAC for multi-tenant isolation
+    const caller = await resolveCallerContext(ctx);
+    requirePermission(caller, PERMISSIONS.VIEW_AUDIT_LOGS);
 
-    const logs = await ctx.db
+    // Use ownerId for data scope (staff sees owner's audit logs)
+    const userId = getDataScopeUserId(caller);
+
+    let query = ctx.db
       .query('auditLog')
-      .filter((q) => q.eq(q.field('userId'), identity.subject))
-      .order('desc')
-      .take(args.limit || 100);
+      .filter((q) => q.eq(q.field('userId'), userId))
+      .order('desc');
+
+    if (args.entityType) {
+      query = query.filter((q) => q.eq(q.field('entityType'), args.entityType));
+    }
+
+    const logs = await query.take(args.limit || 100);
 
     return logs.map((log: any) => ({
       id: log._id,
@@ -42,16 +57,19 @@ export const logAuditEvent = mutation({
     details: v.optional(v.string())
   },
   handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error('Not authenticated');
+    // FIX: Use proper RBAC for multi-tenant isolation
+    const caller = await resolveCallerContext(ctx);
+
+    // Use ownerId for data scope (staff actions are logged under owner's organization)
+    const userId = getDataScopeUserId(caller);
 
     const logId = await ctx.db.insert('auditLog', {
-      userId: identity.subject,
+      userId,
       entityType: args.entityType,
       entityId: args.entityId,
       action: args.action,
       changes: {
-        changedBy: args.changedBy,
+        changedBy: args.changedBy || caller.callerId, // Record actual user who made the change
         oldValue: args.oldValue,
         newValue: args.newValue,
         details: args.details
@@ -69,12 +87,16 @@ export const getInventoryReconciliations = query({
     limit: v.optional(v.number())
   },
   handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error('Not authenticated');
+    // FIX: Use proper RBAC for multi-tenant isolation
+    const caller = await resolveCallerContext(ctx);
+    requirePermission(caller, PERMISSIONS.MANAGE_STOCK);
+
+    // Use ownerId for data scope (staff sees owner's reconciliations)
+    const userId = getDataScopeUserId(caller);
 
     const reconciliations = await ctx.db
       .query('inventoryReconciliations')
-      .filter((q) => q.eq(q.field('userId'), identity.subject))
+      .filter((q) => q.eq(q.field('userId'), userId))
       .order('desc')
       .take(args.limit || 50);
 
@@ -111,15 +133,19 @@ export const recordInventoryReconciliation = mutation({
     notes: v.optional(v.string())
   },
   handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error('Not authenticated');
+    // FIX: Use proper RBAC for multi-tenant isolation
+    const caller = await resolveCallerContext(ctx);
+    requirePermission(caller, PERMISSIONS.MANAGE_STOCK);
+
+    // Use ownerId for data scope (staff records reconciliations in owner's data)
+    const userId = getDataScopeUserId(caller);
 
     const variance = args.physicalQuantity - args.systemQuantity;
     const variancePercent =
       args.systemQuantity > 0 ? (variance / args.systemQuantity) * 100 : 0;
 
     const reconciliationId = await ctx.db.insert('inventoryReconciliations', {
-      userId: identity.subject,
+      userId,
       productId: args.productId,
       productName: args.productName,
       systemQuantity: args.systemQuantity,
@@ -135,12 +161,12 @@ export const recordInventoryReconciliation = mutation({
 
     // Log audit event
     await ctx.db.insert('auditLog', {
-      userId: identity.subject,
+      userId,
       entityType: 'inventoryReconciliation',
       entityId: reconciliationId,
       action: 'create',
       changes: {
-        changedBy: identity.email || 'system',
+        changedBy: caller.callerId, // Record actual user who made the change
         oldValue: { quantity: args.systemQuantity },
         newValue: { quantity: args.physicalQuantity, variance }
       },
@@ -167,12 +193,16 @@ export const getPriceChangeRequests = query({
     status: v.optional(v.string())
   },
   handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error('Not authenticated');
+    // FIX: Use proper RBAC for multi-tenant isolation
+    const caller = await resolveCallerContext(ctx);
+    requirePermission(caller, PERMISSIONS.VIEW_INVENTORY);
+
+    // Use ownerId for data scope (staff sees owner's price change requests)
+    const userId = getDataScopeUserId(caller);
 
     let query_obj = ctx.db
       .query('priceChangeRequests')
-      .filter((q) => q.eq(q.field('userId'), identity.subject));
+      .filter((q) => q.eq(q.field('userId'), userId));
 
     if (args.status) {
       query_obj = query_obj.filter((q) =>
@@ -216,22 +246,26 @@ export const requestPriceChange = mutation({
     requestedBy: v.string()
   },
   handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error('Not authenticated');
+    // FIX: Use proper RBAC for multi-tenant isolation
+    const caller = await resolveCallerContext(ctx);
+    requirePermission(caller, PERMISSIONS.EDIT_PRODUCT);
+
+    // Use ownerId for data scope (staff requests price changes in owner's data)
+    const userId = getDataScopeUserId(caller);
 
     const priceChangePercent =
       ((args.newPrice - args.oldPrice) / args.oldPrice) * 100;
     const requiresApproval = Math.abs(priceChangePercent) > 10;
 
     const requestId = await ctx.db.insert('priceChangeRequests', {
-      userId: identity.subject,
+      userId,
       productId: args.productId,
       productName: args.productName,
       oldPrice: args.oldPrice,
       newPrice: args.newPrice,
       priceChangePercent,
       reason: args.reason || 'No reason provided',
-      requestedBy: args.requestedBy,
+      requestedBy: caller.callerId, // Record actual user who made the request
       requiresApproval,
       approvalStatus: requiresApproval ? 'pending' : 'auto_approved',
       createdAt: Date.now()
@@ -239,12 +273,12 @@ export const requestPriceChange = mutation({
 
     // Log audit
     await ctx.db.insert('auditLog', {
-      userId: identity.subject,
+      userId,
       entityType: 'priceChange',
       entityId: requestId,
       action: 'create',
       changes: {
-        changedBy: args.requestedBy,
+        changedBy: caller.callerId, // Record actual user who made the request
         oldValue: { price: args.oldPrice },
         newValue: { price: args.newPrice }
       },
@@ -270,25 +304,29 @@ export const approvePriceChange = mutation({
     notes: v.optional(v.string())
   },
   handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error('Not authenticated');
+    // FIX: Use proper RBAC for multi-tenant isolation
+    const caller = await resolveCallerContext(ctx);
+    requirePermission(caller, PERMISSIONS.APPROVE_TRANSACTION);
+
+    // Use ownerId for data scope
+    const userId = getDataScopeUserId(caller);
 
     // Update the price change request
     await ctx.db.patch(args.requestId as any, {
       approvalStatus: 'approved',
-      approvedBy: args.approvedBy,
+      approvedBy: caller.callerId, // Record actual user who approved
       approvalNotes: args.notes,
       approvalDate: Date.now()
     });
 
     // Log audit
     await ctx.db.insert('auditLog', {
-      userId: identity.subject,
+      userId,
       entityType: 'priceChangeApproval',
       entityId: args.requestId,
       action: 'approve',
       changes: {
-        changedBy: args.approvedBy,
+        changedBy: caller.callerId, // Record actual user who approved
         status: 'approved',
         notes: args.notes
       },
@@ -306,25 +344,29 @@ export const rejectPriceChange = mutation({
     reason: v.string()
   },
   handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error('Not authenticated');
+    // FIX: Use proper RBAC for multi-tenant isolation
+    const caller = await resolveCallerContext(ctx);
+    requirePermission(caller, PERMISSIONS.APPROVE_TRANSACTION);
+
+    // Use ownerId for data scope
+    const userId = getDataScopeUserId(caller);
 
     // Update the price change request
     await ctx.db.patch(args.requestId as any, {
       approvalStatus: 'rejected',
-      rejectedBy: args.rejectedBy,
+      rejectedBy: caller.callerId, // Record actual user who rejected
       rejectionReason: args.reason,
       rejectionDate: Date.now()
     });
 
     // Log audit
     await ctx.db.insert('auditLog', {
-      userId: identity.subject,
+      userId,
       entityType: 'priceChangeApproval',
       entityId: args.requestId,
       action: 'reject',
       changes: {
-        changedBy: args.rejectedBy,
+        changedBy: caller.callerId, // Record actual user who rejected
         status: 'rejected',
         reason: args.reason
       },
@@ -342,12 +384,16 @@ export const getDiscountAudit = query({
     minAmount: v.optional(v.number())
   },
   handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error('Not authenticated');
+    // FIX: Use proper RBAC for multi-tenant isolation
+    const caller = await resolveCallerContext(ctx);
+    requirePermission(caller, PERMISSIONS.VIEW_AUDIT_LOGS);
+
+    // Use ownerId for data scope (staff sees owner's discount audit)
+    const userId = getDataScopeUserId(caller);
 
     const discounts = await ctx.db
       .query('discountAudit')
-      .filter((q) => q.eq(q.field('userId'), identity.subject))
+      .filter((q) => q.eq(q.field('userId'), userId))
       .order('desc')
       .take(args.limit || 100);
 

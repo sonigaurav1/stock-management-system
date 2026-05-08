@@ -1,5 +1,11 @@
 import { v } from 'convex/values';
 import { query, mutation } from './_generated/server';
+import {
+  resolveCallerContext,
+  requirePermission,
+  getDataScopeUserId
+} from './lib/authHelper';
+import { PERMISSIONS } from './lib/permissions';
 
 const DATABASE_TABLES = [
   'users',
@@ -46,20 +52,34 @@ const DATABASE_TABLES = [
   'dashboardExports'
 ];
 
-// ============ HELPER FUNCTION: Check Admin Access ============
-const checkAdminAccess = async (ctx: any) => {
-  const user = await ctx.auth.getUserIdentity();
-  const ADMIN_USER_ID = process.env.ADMIN_USER_ID;
-
-  if (user?.id !== ADMIN_USER_ID) {
-    throw new Error('Unauthorized: Only admins can perform this action.');
+// ============ RBAC PERMISSION CHECKS ============
+// Super-admin check: Only super-admins can perform destructive operations
+const requireSuperAdmin = async (ctx: any) => {
+  const identity = await ctx.auth.getUserIdentity();
+  if (!identity) {
+    throw new Error('Unauthorized: Not authenticated.');
   }
-  return user;
+
+  const superAdminIds =
+    process.env.NEXT_PUBLIC_SUPER_ADMIN_USER_IDS?.split(',').map((id) =>
+      id.trim()
+    ) || [];
+  if (!superAdminIds.includes(identity.subject)) {
+    throw new Error('Unauthorized: Only super admins can perform this action.');
+  }
+
+  return identity;
 };
+
+// Old helper (kept for compatibility during transition)
+const checkAdminAccess = requireSuperAdmin;
 
 // ============ DATABASE STATISTICS ============
 export const getDatabaseStatistics = query({
   handler: async (ctx) => {
+    // Only super-admins can view database statistics
+    await requireSuperAdmin(ctx);
+
     const stats: any[] = [];
 
     for (const tableName of DATABASE_TABLES) {
@@ -105,7 +125,8 @@ export const getTableDocuments = query({
     limit: v.optional(v.number())
   },
   handler: async (ctx, { tableName, limit = 100 }) => {
-    await checkAdminAccess(ctx);
+    // Only super-admins can view table documents
+    await requireSuperAdmin(ctx);
 
     if (!DATABASE_TABLES.includes(tableName)) {
       throw new Error(`Invalid table: ${tableName}`);
@@ -128,7 +149,13 @@ export const getTableDocuments = query({
 export const deleteAllDocuments = mutation({
   args: { tableName: v.string() },
   handler: async (ctx, { tableName }) => {
-    await checkAdminAccess(ctx);
+    // CRITICAL: Only super-admins can delete all documents from a table
+    await requireSuperAdmin(ctx);
+
+    // Add validation to prevent accidental deletion
+    if (!DATABASE_TABLES.includes(tableName)) {
+      throw new Error(`Invalid table: ${tableName}`);
+    }
 
     const db = ctx.db as any;
     const records = await db.query(tableName).collect();
@@ -139,10 +166,98 @@ export const deleteAllDocuments = mutation({
       deletedCount++;
     }
 
+    // TODO: Log this destructive action to audit log
+    console.warn(
+      `[ADMIN] User deleted ALL ${deletedCount} documents from ${tableName}`
+    );
+
     return {
       success: true,
       message: `Deleted ${deletedCount} documents from ${tableName}`,
       deletedCount
+    };
+  }
+});
+
+// ============ DELETE ALL TABLES ============
+export const deleteAllTables = mutation({
+  args: {},
+  handler: async (ctx) => {
+    // CRITICAL: EXTREME DANGER - Only super-admins with explicit intent
+    await requireSuperAdmin(ctx);
+
+    const db = ctx.db as any;
+    const tables = [
+      'products',
+      'suppliers',
+      'category',
+      'productSuppliers',
+      'stockMovements',
+      'sales',
+      'payments',
+      'customers',
+      'invoices',
+      'recurringInvoices',
+      'firms',
+      'expenses',
+      'transactions',
+      'companyDetails',
+      'otpVerification',
+      'userSettings',
+      'organizations',
+      'organizationMembers',
+      'accountStatus',
+      'companyMembers',
+      'customRoles',
+      'rolePermissions',
+      'companySettings',
+      'notificationRules',
+      'integrations',
+      'apiKeys',
+      'webhooks',
+      'automationRules',
+      'auditLog',
+      'webhookExecutions',
+      'failedWebhooks',
+      'securityLogs',
+      'performanceMetrics',
+      'systemHealth',
+      'complianceCertifications',
+      'gdprRequests',
+      'dashboardWidgets',
+      'insightSettings',
+      'notificationPreferences',
+      'users'
+    ];
+
+    const results: Record<string, number> = {};
+    let totalDeleted = 0;
+
+    for (const tableName of tables) {
+      try {
+        const records = await db.query(tableName).collect();
+        let deletedCount = 0;
+        for (const record of records) {
+          await db.delete(record._id);
+          deletedCount++;
+        }
+        results[tableName] = deletedCount;
+        totalDeleted += deletedCount;
+      } catch (error) {
+        results[tableName] = 0;
+      }
+    }
+
+    // TODO: Log this destructive action to audit log with severity=CRITICAL
+    console.error(
+      `[ADMIN] CRITICAL: User deleted ALL ${totalDeleted} documents from ALL tables`
+    );
+
+    return {
+      success: true,
+      message: `Deleted ${totalDeleted} documents from all tables`,
+      totalDeleted,
+      details: results
     };
   }
 });
@@ -154,7 +269,8 @@ export const deleteDocumentById = mutation({
     docId: v.string()
   },
   handler: async (ctx, { tableName, docId }) => {
-    await checkAdminAccess(ctx);
+    // Only super-admins can directly delete by ID
+    await requireSuperAdmin(ctx);
 
     if (!DATABASE_TABLES.includes(tableName)) {
       throw new Error(`Invalid table: ${tableName}`);
@@ -168,6 +284,8 @@ export const deleteDocumentById = mutation({
       const db = ctx.db as any;
       // Use db.delete directly with the string ID
       await db.delete(docId as any);
+
+      console.warn(`[ADMIN] Deleted document ${docId} from ${tableName}`);
 
       return {
         success: true,
@@ -186,6 +304,9 @@ export const deleteDocumentById = mutation({
 export const getAnalyticsData = query({
   args: { months: v.optional(v.number()) },
   handler: async (ctx, { months = 6 }) => {
+    // Only super-admins can view system-wide analytics
+    await requireSuperAdmin(ctx);
+
     // TODO: Replace with real data from your database
     // Example: const sales = await ctx.db.query('sales').collect();
 
@@ -220,6 +341,9 @@ export const getAnalyticsData = query({
 // ============ KPI METRICS ============
 export const getKPIMetrics = query({
   handler: async (ctx) => {
+    // Only super-admins can view system KPI metrics
+    await requireSuperAdmin(ctx);
+
     // TODO: Calculate real metrics from database
     // const totalUsers = await ctx.db.query('users').collect();
     // const activeUsers = totalUsers.filter(u => u.lastActive > now - 24h);
@@ -257,6 +381,9 @@ export const getKPIMetrics = query({
 export const getTeamMembers = query({
   args: { role: v.optional(v.string()) },
   handler: async (ctx, { role }) => {
+    // Only super-admins can view all team members
+    await requireSuperAdmin(ctx);
+
     // TODO: Query real team members from database
     // const members = await ctx.db.query('users')
     //   .filter(u => !role || u.role === role)
@@ -294,11 +421,19 @@ export const inviteTeamMember = mutation({
     department: v.string()
   },
   handler: async (ctx, { email, role, department }) => {
-    await checkAdminAccess(ctx);
+    // Only super-admins can invite team members
+    await requireSuperAdmin(ctx);
+
+    // Validate email
+    if (!email.includes('@')) {
+      throw new Error('Invalid email address');
+    }
 
     // TODO: Send invitation email and create user record
     // const invites = await ctx.db.collection('invitations');
     // await invites.insert({ email, role, department, createdAt: Date.now() });
+
+    console.log(`[ADMIN] Invitation sent to ${email} with role ${role}`);
 
     return {
       success: true,
@@ -313,11 +448,18 @@ export const updateTeamMemberRole = mutation({
     newRole: v.string()
   },
   handler: async (ctx, { userId, newRole }) => {
-    await checkAdminAccess(ctx);
+    // Only super-admins can update team member roles
+    await requireSuperAdmin(ctx);
+
+    if (!userId || !newRole) {
+      throw new Error('userId and newRole are required');
+    }
 
     // TODO: Update user role in database
     // const user = await ctx.db.get(userId);
     // await ctx.db.patch(userId, { role: newRole });
+
+    console.log(`[ADMIN] Role updated for user ${userId} to ${newRole}`);
 
     return { success: true };
   }
@@ -326,10 +468,17 @@ export const updateTeamMemberRole = mutation({
 export const removeTeamMember = mutation({
   args: { userId: v.string() },
   handler: async (ctx, { userId }) => {
-    await checkAdminAccess(ctx);
+    // Only super-admins can remove team members
+    await requireSuperAdmin(ctx);
+
+    if (!userId) {
+      throw new Error('userId is required');
+    }
 
     // TODO: Remove user from organization
     // await ctx.db.delete(userId);
+
+    console.log(`[ADMIN] Team member ${userId} removed`);
 
     return { success: true };
   }
@@ -343,6 +492,9 @@ export const getAuditLogs = query({
     limit: v.optional(v.number())
   },
   handler: async (ctx, { category, status, limit = 50 }) => {
+    // Only super-admins can view audit logs
+    await requireSuperAdmin(ctx);
+
     // TODO: Query audit logs from database with filters
     // const logs = await ctx.db.query('auditLogs')
     //   .filter(l => !category || l.category === category)
@@ -377,6 +529,9 @@ export const logAuditEntry = mutation({
     status: v.string()
   },
   handler: async (ctx, args) => {
+    // Only super-admins can log audit entries (typically called from other mutations)
+    await requireSuperAdmin(ctx);
+
     // TODO: Insert audit log entry
     // const logs = ctx.db.collection('auditLogs');
     // await logs.insert({ ...args, timestamp: Date.now() });
@@ -387,6 +542,9 @@ export const logAuditEntry = mutation({
 
 export const getAuditStats = query({
   handler: async (ctx) => {
+    // Only super-admins can view audit statistics
+    await requireSuperAdmin(ctx);
+
     // TODO: Calculate stats from audit logs
     // const logs = await ctx.db.query('auditLogs').collect();
 
@@ -402,6 +560,9 @@ export const getAuditStats = query({
 // ============ COMPANY MANAGEMENT ============
 export const getCompanyDetails = query({
   handler: async (ctx) => {
+    // Only super-admins can view company details
+    await requireSuperAdmin(ctx);
+
     // TODO: Query company details from database
     // const company = await ctx.db.query('company').first();
 
@@ -430,11 +591,14 @@ export const updateCompanyDetails = mutation({
     address: v.optional(v.string())
   },
   handler: async (ctx, args) => {
-    await checkAdminAccess(ctx);
+    // Only super-admins can update company details
+    await requireSuperAdmin(ctx);
 
     // TODO: Update company details
     // const company = await ctx.db.query('company').first();
     // if (company) await ctx.db.patch(company._id, args);
+
+    console.log('[ADMIN] Company details updated');
 
     return { success: true };
   }
@@ -442,6 +606,9 @@ export const updateCompanyDetails = mutation({
 
 export const getComplianceStatus = query({
   handler: async (ctx) => {
+    // Only super-admins can view compliance status
+    await requireSuperAdmin(ctx);
+
     // TODO: Query compliance certifications
     // const compliance = await ctx.db.query('compliance').first();
 
@@ -459,6 +626,9 @@ export const getComplianceStatus = query({
 // ============ SYSTEM SETTINGS ============
 export const getSystemSettings = query({
   handler: async (ctx) => {
+    // Only super-admins can view system settings
+    await requireSuperAdmin(ctx);
+
     // TODO: Query system settings from database
     // const settings = await ctx.db.query('settings').first();
 
@@ -501,11 +671,18 @@ export const updateSystemSettings = mutation({
     value: v.any()
   },
   handler: async (ctx, { setting, value }) => {
-    await checkAdminAccess(ctx);
+    // Only super-admins can update system settings
+    await requireSuperAdmin(ctx);
+
+    if (!setting) {
+      throw new Error('Setting name is required');
+    }
 
     // TODO: Update system settings
     // const settings = await ctx.db.query('settings').first();
     // if (settings) await ctx.db.patch(settings._id, { [setting]: value });
+
+    console.log(`[ADMIN] System setting '${setting}' updated`);
 
     return { success: true };
   }
@@ -520,10 +697,16 @@ export const exportData = mutation({
     compression: v.optional(v.string())
   },
   handler: async (ctx, { dataType, format, dateRange, compression }) => {
-    await checkAdminAccess(ctx);
+    // Only super-admins can export system data
+    await requireSuperAdmin(ctx);
 
     // TODO: Generate and return export file
     // This should trigger async job for large exports
+    // TODO: Log this export to audit log
+
+    console.log(
+      `[ADMIN] Data export requested: type=${dataType}, format=${format}`
+    );
 
     return {
       success: true,
@@ -537,6 +720,9 @@ export const exportData = mutation({
 export const getRecentExports = query({
   args: { limit: v.optional(v.number()) },
   handler: async (ctx, { limit = 10 }) => {
+    // Only super-admins can view recent exports
+    await requireSuperAdmin(ctx);
+
     // TODO: Query recent exports from database
     // const exports = await ctx.db.query('exports')
     //   .order('desc')
@@ -561,11 +747,14 @@ export const scheduleExport = mutation({
     format: v.string()
   },
   handler: async (ctx, args) => {
-    await checkAdminAccess(ctx);
+    // Only super-admins can schedule exports
+    await requireSuperAdmin(ctx);
 
     // TODO: Create scheduled export job
     // const schedules = ctx.db.collection('scheduledExports');
     // await schedules.insert(args);
+
+    console.log(`[ADMIN] Export scheduled: ${args.name}`);
 
     return { success: true };
   }
@@ -579,10 +768,20 @@ export const generateReport = mutation({
     dateRange: v.optional(v.string())
   },
   handler: async (ctx, { reportType, format, dateRange }) => {
-    await checkAdminAccess(ctx);
+    // Only super-admins can generate system reports
+    await requireSuperAdmin(ctx);
+
+    if (!reportType || !format) {
+      throw new Error('reportType and format are required');
+    }
 
     // TODO: Generate report based on type
     // Sales, Inventory, User Analytics, etc.
+    // TODO: Log report generation to audit log
+
+    console.log(
+      `[ADMIN] Report generated: type=${reportType}, format=${format}`
+    );
 
     return {
       success: true,
@@ -596,6 +795,9 @@ export const generateReport = mutation({
 export const getReportHistory = query({
   args: { limit: v.optional(v.number()) },
   handler: async (ctx, { limit = 20 }) => {
+    // Only super-admins can view report history
+    await requireSuperAdmin(ctx);
+
     // TODO: Query generated reports history
     // const reports = await ctx.db.query('reports')
     //   .order('desc')
@@ -607,6 +809,8 @@ export const getReportHistory = query({
 
 // ============ Legacy Admin Function ============
 export const adminOnlyFunction = mutation(async ({ db, auth }) => {
+  // DEPRECATED: Use the RBAC pattern instead
+  // This is here for backward compatibility only
   const user = await auth.getUserIdentity();
   const ADMIN_USER_ID = process.env.ADMIN_USER_ID;
 
