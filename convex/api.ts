@@ -59,7 +59,7 @@ export const createApiKey = mutation({
 
     const key = `sk_live_${createRandomSecret()}`;
     const displayKey = key.slice(-8);
-    const keyHash = hashApiKey(key);
+    const keyHash = await hashApiKey(key);
 
     const id = await ctx.db.insert('apiKeys', {
       userId: dataOwner,
@@ -129,7 +129,7 @@ export const createWebhook = mutation({
     // 3. Use caller context for data scope
     const dataOwner = getDataScopeUserId(caller);
 
-    const secret = encryptSecret(createRandomSecret());
+    const secret = await encryptSecret(createRandomSecret());
 
     return await ctx.db.insert('webhooks', {
       userId: dataOwner,
