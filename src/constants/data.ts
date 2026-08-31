@@ -27,37 +27,37 @@ export const navItems: NavItem[] = [
     items: [
       {
         title: 'Products',
-        url: '/dashboard/product',
+        url: '/inventory/products',
         icon: 'product'
         // Manage all products: create, edit, delete, track quantities
       },
       {
         title: 'Categories',
-        url: '/dashboard/product/category',
+        url: '/inventory/categories',
         icon: 'category'
         // Organize products into logical groups for easier management
       },
       {
-        title: 'Stock & Restock',
-        url: '/restock',
+        title: 'Sales',
+        url: '/sales',
         icon: 'refresh'
         // Update stock levels, restock items, manage warehouses
       },
       {
         title: 'Warehouses',
-        url: '/locations',
+        url: '/inventory/warehouses',
         icon: 'locations'
         // Multi-site inventory, transfers, location dashboards and reporting
       },
       {
         title: 'Inventory Audit',
-        url: '/inventory-audit',
+        url: '/inventory/audit',
         icon: 'search'
         // Verify physical stock vs system records, identify discrepancies
       },
       {
         title: 'Inventory Forecast',
-        url: '/inventory-forecast',
+        url: '/inventory/forecast',
         icon: 'trendingUp'
         // Predict future stock needs, prevent stockouts
       }
@@ -75,7 +75,7 @@ export const navItems: NavItem[] = [
     items: [
       {
         title: 'Suppliers',
-        url: '/dashboard/product/supplier',
+        url: '/procurement/suppliers',
         icon: 'supplier'
         // Source for products, track performance metrics, vendor profiles, ratings, contact info, payment terms
       }
@@ -251,16 +251,10 @@ export const navItems: NavItem[] = [
         // Plans, usage, invoices, payment methods
       },
       {
-        title: 'API & Webhooks',
+        title: 'API',
         url: '/settings/api',
         icon: 'key'
-        // API keys, webhook configuration, rate limits
-      },
-      {
-        title: 'Automation',
-        url: '/settings/automation',
-        icon: 'zap'
-        // Workflows, triggers, automated actions
+        // API keys, rate limits
       },
       {
         title: 'Import / Export',
@@ -291,8 +285,47 @@ export const navItems: NavItem[] = [
         title: 'API Documentation',
         url: '/api-docs',
         icon: 'book'
-        // Developer resources, webhook guides
+        // Developer resources, API guides
+      }
+    ]
+  },
+
+  // ============================================
+  // 👨‍💼 ADMIN & MANAGEMENT (Roles: Owner/Manager)
+  // ============================================
+  {
+    title: 'Admin',
+    url: '/admin',
+    icon: 'shield',
+    isActive: false,
+    shortcut: ['a', 'a'],
+    items: [
+      {
+        title: 'Dashboard',
+        url: '/admin',
+        icon: 'dashboard'
+        // Organization admin dashboard, team management
+      }
+    ]
+  },
+
+  // ============================================
+  // 🌐 PLATFORM ADMIN (Roles: Super-Admin/Developer)
+  // ============================================
+  {
+    title: 'Platform Admin',
+    url: '/platform',
+    icon: 'building',
+    isActive: false,
+    items: [
+      {
+        title: 'Dashboard',
+        url: '/platform',
+        icon: 'dashboard'
+        // Platform management, all companies, system health
       }
     ]
   }
 ];
+
+export const projectName = 'Invento'; // Used in the app title, meta tags, and branding

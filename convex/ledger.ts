@@ -59,7 +59,7 @@ export const createFirm = mutation({
       type: 'firm',
       name,
       owner,
-      businessType: 'firm',
+      businessType: 'wholesaler',
       address: address || '',
       email: '',
       taxNumber: '',

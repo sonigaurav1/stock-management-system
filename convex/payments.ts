@@ -18,7 +18,13 @@ export const createPayment = mutation({
     paymentMode: v.string(),
     paymentReference: v.optional(v.string()),
     notes: v.optional(v.string()),
-    paymentStatus: v.optional(v.string()), // "paid", "unpaid", "partially_paid"
+    paymentStatus: v.optional(
+      v.union(
+        v.literal('paid'),
+        v.literal('unpaid'),
+        v.literal('partially_paid')
+      )
+    ),
     invoiceNumber: v.string(),
     paidAt: v.number(),
     dueDate: v.optional(v.number())
@@ -48,7 +54,13 @@ export const updatePayment = mutation({
     paymentMode: v.string(),
     paymentReference: v.optional(v.string()),
     notes: v.optional(v.string()),
-    paymentStatus: v.optional(v.string()), // "paid", "unpaid", "partially_paid"
+    paymentStatus: v.optional(
+      v.union(
+        v.literal('paid'),
+        v.literal('unpaid'),
+        v.literal('partially_paid')
+      )
+    ),
     invoiceNumber: v.string(),
     paidAt: v.number(),
     dueDate: v.optional(v.number())

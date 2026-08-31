@@ -1,5 +1,17 @@
 import { defineSchema, defineTable } from 'convex/server';
 import { v } from 'convex/values';
+import {
+  UNIT_VALUES,
+  FREQUENCY_VALUES,
+  COMPANY_TYPE_VALUES,
+  BUSINESS_TYPE_VALUES,
+  PAYMENT_STATUS_VALUES,
+  ACCOUNT_STATUS_VALUES,
+  ORGANIZATION_STATUS_VALUES,
+  EXPENSE_STATUS_VALUES,
+  TASK_STATUS_VALUES,
+  ROLE_VALUES
+} from './lib/schemaConstants';
 
 export default defineSchema({
   products: defineTable({
@@ -105,7 +117,8 @@ export default defineSchema({
       v.literal('purchase'),
       v.literal('sale'),
       v.literal('damage'),
-      v.literal('return')
+      v.literal('return'),
+      v.literal('transfer')
     ),
     quantity: v.number(), // Amount of stock added/removed
     reason: v.optional(v.string()), // Why stock changed
@@ -211,7 +224,7 @@ export default defineSchema({
         hsCode: v.string(),
         description: v.string(),
         quantity: v.number(),
-        unit: v.string(),
+        unit: v.union(...UNIT_VALUES.map(v.literal)),
         rate: v.number(),
         amount: v.number()
       })
@@ -258,7 +271,7 @@ export default defineSchema({
         hsCode: v.string(),
         description: v.string(),
         quantity: v.number(),
-        unit: v.string(),
+        unit: v.union(...UNIT_VALUES.map(v.literal)),
         rate: v.number(),
         amount: v.number()
       })
@@ -268,7 +281,7 @@ export default defineSchema({
     vatAmount: v.optional(v.number()),
     discount: v.optional(v.number()),
     amountInWords: v.optional(v.string()),
-    frequency: v.string(), // "daily", "weekly", "biweekly", "monthly", "quarterly", "yearly"
+    frequency: v.union(...FREQUENCY_VALUES.map(v.literal)),
     startDate: v.number(),
     nextDueDate: v.number(),
     lastGeneratedAt: v.optional(v.number()),
@@ -301,8 +314,8 @@ export default defineSchema({
     // Basic Info
     name: v.string(), // Company/firm name
     owner: v.optional(v.string()), // Owner's name (from firms)
-    businessType: v.string(), // "retailer", "wholesaler", "distributor", etc.
-    type: v.string(), // "company" | "firm" (to distinguish if needed during migration)
+    businessType: v.union(...BUSINESS_TYPE_VALUES.map(v.literal)),
+    type: v.union(...COMPANY_TYPE_VALUES.map(v.literal)),
 
     // Address
     address: v.string(),
@@ -355,7 +368,9 @@ export default defineSchema({
 
     createdAt: v.number(), // Timestamp when the transaction was created
     updatedAt: v.optional(v.number()) // Timestamp when the transaction was last updated
-  }).index('by_user_firm_isDeleted', ['userId', 'firmId', 'isDeleted']),
+  })
+    .index('by_user_firm_isDeleted', ['userId', 'firmId', 'isDeleted'])
+    .index('by_user_and_isDeleted', ['userId', 'isDeleted']),
 
   companyDetails: defineTable({
     userId: v.string(), // Reference to the user
@@ -425,6 +440,66 @@ export default defineSchema({
     .index('by_organization', ['organizationId'])
     .index('by_user', ['userId'])
     .index('by_org_and_user', ['organizationId', 'userId']),
+
+  // ==================== Subscription Management ====================
+
+  // User Subscriptions - Track user plan and subscription status
+  userSubscriptions: defineTable({
+    userId: v.string(), // Clerk user ID
+    planType: v.union(v.literal('free'), v.literal('premium')), // Current plan
+    status: v.union(
+      v.literal('active'),
+      v.literal('trial'),
+      v.literal('expired'),
+      v.literal('cancelled')
+    ),
+    startDate: v.number(), // When subscription started
+    endDate: v.optional(v.number()), // When subscription ends/renews
+    trialEndDate: v.optional(v.number()), // Trial end date if on trial
+    cancelledAt: v.optional(v.number()), // When subscription was cancelled
+    cancellationReason: v.optional(v.string()), // Reason for cancellation
+    autoRenew: v.boolean(), // Whether to auto-renew
+    createdAt: v.number(),
+    updatedAt: v.optional(v.number())
+  })
+    .index('by_user', ['userId'])
+    .index('by_status', ['status'])
+    .index('by_plan', ['planType']),
+
+  // Subscription Payments - Track manual QR payments for subscription
+  subscriptionPayments: defineTable({
+    userId: v.string(), // Clerk user ID
+    subscriptionId: v.id('userSubscriptions'), // Link to subscription
+    amount: v.number(), // Payment amount (999 for monthly, 9999 for yearly)
+    period: v.union(v.literal('monthly'), v.literal('yearly')), // Payment period
+    paymentMethod: v.union(
+      v.literal('fonepay'),
+      v.literal('nepalpay'),
+      v.literal('esewa'),
+      v.literal('imepay'),
+      v.literal('khalti'),
+      v.literal('other')
+    ), // Payment method
+    paymentStatus: v.union(
+      v.literal('pending'),
+      v.literal('verified'),
+      v.literal('rejected')
+    ), // Payment verification status
+    transactionId: v.optional(v.string()), // Transaction ID from payment screenshot
+    receiptImageUrl: v.optional(v.string()), // URL to uploaded receipt screenshot
+    notes: v.optional(v.string()), // Additional notes from user
+    rejectionReason: v.optional(v.string()), // Reason if payment rejected
+    verifiedBy: v.optional(v.string()), // Admin user ID who verified
+    verifiedAt: v.optional(v.number()), // When payment was verified
+    rejectedBy: v.optional(v.string()), // Admin user ID who rejected
+    rejectedAt: v.optional(v.number()), // When payment was rejected
+    createdAt: v.number(),
+    updatedAt: v.optional(v.number())
+  })
+    .index('by_user', ['userId'])
+    .index('by_subscription', ['subscriptionId'])
+    .index('by_status', ['paymentStatus'])
+    .index('by_created', ['createdAt']),
 
   // ==================== Enterprise Account Management ====================
 
@@ -548,7 +623,6 @@ export default defineSchema({
     enabled: v.boolean(), // Changed from isConnected
     apiKey: v.string(),
     apiSecret: v.optional(v.string()),
-    webhookUrl: v.optional(v.string()),
     lastSyncAt: v.optional(v.number()),
     syncStatus: v.optional(v.string()),
     config: v.optional(v.any()),
@@ -567,33 +641,6 @@ export default defineSchema({
     rateLimit: v.optional(v.number()),
     createdAt: v.number(),
     expiresAt: v.optional(v.number())
-  }).index('by_user', ['userId']),
-
-  // Webhooks
-  webhooks: defineTable({
-    userId: v.string(),
-    url: v.string(),
-    events: v.array(v.string()),
-    isActive: v.boolean(),
-    secret: v.string(),
-    lastTriggeredAt: v.optional(v.number()),
-    failureCount: v.number(),
-    createdAt: v.number(),
-    updatedAt: v.number()
-  }).index('by_user', ['userId']),
-
-  // Automation Rules
-  automationRules: defineTable({
-    userId: v.string(),
-    name: v.string(),
-    trigger: v.string(),
-    action: v.string(),
-    threshold: v.optional(v.string()),
-    isActive: v.boolean(),
-    lastExecutedAt: v.optional(v.number()),
-    executionCount: v.number(),
-    createdAt: v.number(),
-    updatedAt: v.number()
   }).index('by_user', ['userId']),
 
   // Audit Log
@@ -968,25 +1015,34 @@ export default defineSchema({
         direction: v.string() // "asc", "desc"
       })
     ),
+    isDeleted: v.boolean(),
     createdAt: v.number(),
     updatedAt: v.optional(v.number())
-  }).index('by_user_and_type', ['userId', 'type']),
+  })
+    .index('by_user_and_type', ['userId', 'type'])
+    .index('by_user_and_isDeleted', ['userId', 'isDeleted']),
 
   // Phase 3.2: Advanced Reporting - Scheduled Report Automation
   scheduledReports: defineTable({
     userId: v.string(),
     reportId: v.string(), // Reference to custom report
+    reportName: v.optional(v.string()), // Name of the report
     schedule: v.string(), // "daily", "weekly", "monthly"
+    dayOfWeek: v.optional(v.string()), // Day of week for weekly schedules
+    dayOfMonth: v.optional(v.number()), // Day of month for monthly schedules
     timeOfDay: v.string(), // HH:MM format
     recipients: v.array(v.string()), // Email addresses
     format: v.string(), // "pdf", "excel", "pptx"
     includeCharts: v.boolean(),
+    isDeleted: v.boolean(), // Soft delete flag
     lastExecutionTime: v.optional(v.number()),
     nextExecutionTime: v.number(),
     isActive: v.boolean(),
     createdAt: v.number(),
     updatedAt: v.optional(v.number())
-  }).index('by_user_and_isActive', ['userId', 'isActive']),
+  })
+    .index('by_user_and_isActive', ['userId', 'isActive'])
+    .index('by_user_and_isDeleted', ['userId', 'isDeleted']),
 
   // Phase 3.2: Advanced Reporting - Report Execution History
   reportExecutions: defineTable({
@@ -1044,8 +1100,6 @@ export default defineSchema({
     paymentTerms: v.optional(v.string()), // "net30", "net60", "cash", etc.
     expectedDeliveryDate: v.optional(v.number()),
     notes: v.optional(v.string()),
-    isAutomatic: v.boolean(), // true if created by automation rule
-    automationRuleId: v.optional(v.string()),
     createdAt: v.number(),
     sentAt: v.optional(v.number()),
     confirmedAt: v.optional(v.number()),

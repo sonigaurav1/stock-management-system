@@ -409,7 +409,7 @@ export function IntelligentDashboard({
             <TabsTrigger
               value='advanced'
               className='flex items-center justify-center gap-2'
-              aria-label='Advanced - Reports, automation, and help'
+              aria-label='Advanced - Reports and help'
             >
               <Zap className='h-4 w-4' aria-hidden='true' />
               <span className='hidden sm:inline'>Advanced</span>
@@ -644,19 +644,13 @@ export function IntelligentDashboard({
             </Tabs>
           </TabsContent>
 
-          {/* ADVANCED TAB - Automation, Reports & Help */}
+          {/* ADVANCED TAB - Reports & Help */}
           <TabsContent
             value='advanced'
             className='w-full space-y-6 duration-300 animate-in fade-in-50'
           >
-            <Tabs defaultValue='automation' className='w-full'>
-              <TabsList className='grid w-full grid-cols-5'>
-                <TabsTrigger
-                  value='automation'
-                  aria-label='Automation workflows'
-                >
-                  Auto
-                </TabsTrigger>
+            <Tabs defaultValue='reports' className='w-full'>
+              <TabsList className='grid w-full grid-cols-4'>
                 <TabsTrigger value='reports' aria-label='Advanced reporting'>
                   Reports
                 </TabsTrigger>
@@ -673,37 +667,6 @@ export function IntelligentDashboard({
                   Help
                 </TabsTrigger>
               </TabsList>
-
-              <TabsContent value='automation' className='space-y-4'>
-                <Tabs defaultValue='reorder'>
-                  <TabsList className='grid w-full grid-cols-5'>
-                    <TabsTrigger value='reorder'>Auto Reorder</TabsTrigger>
-                    <TabsTrigger value='reconciliation'>
-                      Reconciliation
-                    </TabsTrigger>
-                    <TabsTrigger value='duplicates'>Duplicates</TabsTrigger>
-                    <TabsTrigger value='categorization'>
-                      Categorization
-                    </TabsTrigger>
-                    <TabsTrigger value='bulk'>Bulk Ops</TabsTrigger>
-                  </TabsList>
-                  <TabsContent value='reorder'>
-                    <AutomaticReorder />
-                  </TabsContent>
-                  <TabsContent value='reconciliation'>
-                    <AutoReconciliation />
-                  </TabsContent>
-                  <TabsContent value='duplicates'>
-                    <DuplicateDetection />
-                  </TabsContent>
-                  <TabsContent value='categorization'>
-                    <AutoCategorization />
-                  </TabsContent>
-                  <TabsContent value='bulk'>
-                    <BulkOperations />
-                  </TabsContent>
-                </Tabs>
-              </TabsContent>
 
               <TabsContent value='reports' className='space-y-4'>
                 <Tabs defaultValue='build'>

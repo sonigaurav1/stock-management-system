@@ -1,5 +1,39 @@
 import { mutation } from './_generated/server';
 import { v } from 'convex/values';
+import { resolveCallerContext, getDataScopeUserId } from './lib/authHelper';
+import {
+  BUSINESS_TYPE_VALUES,
+  COMPANY_TYPE_VALUES
+} from './lib/schemaConstants';
+
+/**
+ * Validate and normalize business type
+ */
+function validateBusinessType(
+  businessType: string
+): (typeof BUSINESS_TYPE_VALUES)[number] {
+  const normalized = businessType.toLowerCase().replace(/[^a-z_]/g, '_');
+
+  // Map common variations to standard values
+  const typeMap: Record<string, (typeof BUSINESS_TYPE_VALUES)[number]> = {
+    retail: 'retailer',
+    retailer: 'retailer',
+    wholesale: 'wholesaler',
+    wholesaler: 'wholesaler',
+    distributor: 'distributor',
+    manufacturer: 'manufacturer',
+    service: 'service_provider',
+    service_provider: 'service_provider',
+    ecommerce: 'e_commerce',
+    e_commerce: 'e_commerce',
+    corporate: 'corporate',
+    nonprofit: 'nonprofit',
+    non_profit: 'nonprofit',
+    other: 'other'
+  };
+
+  return typeMap[normalized] || 'other';
+}
 
 /**
  * ATOMIC OWNER REGISTRATION
@@ -35,15 +69,16 @@ export const completeOwnerRegistration = mutation({
     theme: v.optional(v.string())
   },
   handler: async (ctx, args) => {
-    // Authentication check
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) {
-      throw new Error('Not authenticated');
-    }
+    // RBAC: Use resolveCallerContext for proper authentication
+    const caller = await resolveCallerContext(ctx);
 
-    if (identity.subject !== args.userId) {
+    // Users can only complete registration for themselves
+    if (caller.callerId !== args.userId) {
       throw new Error('Can only complete registration for yourself');
     }
+
+    // Get the correct userId for data scope
+    const userId = getDataScopeUserId(caller);
 
     const now = Date.now();
     const results = {
@@ -56,15 +91,15 @@ export const completeOwnerRegistration = mutation({
     // STEP 1: Create account status (idempotent - returns existing if present)
     const existingAccountStatus = await ctx.db
       .query('accountStatus')
-      .withIndex('by_user', (q) => q.eq('userId', args.userId))
+      .withIndex('by_user', (q) => q.eq('userId', userId))
       .first();
 
     if (existingAccountStatus) {
       results.accountStatusId = existingAccountStatus._id.toString();
     } else {
       results.accountStatusId = await ctx.db.insert('accountStatus', {
-        userId: args.userId,
-        businessType: args.businessType,
+        userId: userId,
+        businessType: validateBusinessType(args.businessType),
         status: 'approved',
         approvedBy: 'system:auto-signup',
         approvedAt: now,
@@ -76,7 +111,7 @@ export const completeOwnerRegistration = mutation({
     // STEP 2: Create/update user profile
     const existingUser = await ctx.db
       .query('users')
-      .withIndex('by_userId', (q) => q.eq('userId', args.userId))
+      .withIndex('by_userId', (q) => q.eq('userId', userId))
       .first();
 
     if (existingUser) {
@@ -90,7 +125,7 @@ export const completeOwnerRegistration = mutation({
       results.userProfileId = existingUser._id.toString();
     } else {
       results.userProfileId = await ctx.db.insert('users', {
-        userId: args.userId,
+        userId: userId,
         email: args.email,
         firstName: args.firstName,
         lastName: args.lastName,
@@ -104,12 +139,12 @@ export const completeOwnerRegistration = mutation({
     const existingCompany = await ctx.db
       .query('companies')
       .withIndex('by_user_and_isDeleted', (q) =>
-        q.eq('userId', args.userId).eq('isDeleted', false)
+        q.eq('userId', userId).eq('isDeleted', false)
       )
       .first();
 
     const companyData = {
-      userId: args.userId,
+      userId: userId,
       name: args.companyName,
       address: args.address,
       city: args.city,
@@ -120,8 +155,8 @@ export const completeOwnerRegistration = mutation({
       email: args.email,
       taxNumber: args.taxNumber || '',
       website: args.website || '',
-      businessType: args.businessType,
-      type: 'company',
+      businessType: validateBusinessType(args.businessType),
+      type: 'company' as const,
       urls: args.website ? [{ id: 1, value: args.website }] : [],
       isVerified: false,
       isDeleted: false,
@@ -139,11 +174,11 @@ export const completeOwnerRegistration = mutation({
     // STEP 4: Create/update user settings
     const existingSettings = await ctx.db
       .query('userSettings')
-      .withIndex('by_user', (q) => q.eq('userId', args.userId))
+      .withIndex('by_user', (q) => q.eq('userId', userId))
       .first();
 
     const settingsData = {
-      userId: args.userId,
+      userId: userId,
       language: 'en',
       currencyCode: args.currencyCode,
       dateFormat: args.dateFormat || 'DD/MM/YYYY',
@@ -165,7 +200,7 @@ export const completeOwnerRegistration = mutation({
 
     // Log successful registration
     await ctx.db.insert('auditLog', {
-      userId: args.userId,
+      userId: userId,
       action: 'owner_registration_completed',
       entityType: 'user',
       entityId: args.userId,
@@ -207,17 +242,19 @@ export const completeStaffRegistration = mutation({
     currencyCode: v.string()
   },
   handler: async (ctx, args) => {
-    // Authentication check
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) {
-      throw new Error('Not authenticated');
-    }
+    // RBAC: Use resolveCallerContext for proper authentication
+    const caller = await resolveCallerContext(ctx);
 
-    if (identity.subject !== args.userId) {
+    // Users can only complete registration for themselves
+    if (caller.callerId !== args.userId) {
       throw new Error('Can only complete registration for yourself');
     }
 
+    // Get the correct userId for data scope
+    const userId = getDataScopeUserId(caller);
+
     // Validate invitation email matches authenticated email
+    const identity = await ctx.auth.getUserIdentity();
     const identityEmail =
       (identity as any).email || (identity as any).claims?.email;
     if (
@@ -242,15 +279,15 @@ export const completeStaffRegistration = mutation({
     // STEP 1: Create account status
     const existingAccountStatus = await ctx.db
       .query('accountStatus')
-      .withIndex('by_user', (q) => q.eq('userId', args.userId))
+      .withIndex('by_user', (q) => q.eq('userId', userId))
       .first();
 
     if (existingAccountStatus) {
       results.accountStatusId = existingAccountStatus._id.toString();
     } else {
       results.accountStatusId = await ctx.db.insert('accountStatus', {
-        userId: args.userId,
-        businessType: args.businessType || 'retailer',
+        userId: userId,
+        businessType: validateBusinessType(args.businessType || 'retailer'),
         status: 'approved',
         approvedBy: 'system:auto-signup',
         approvedAt: now,
@@ -262,7 +299,7 @@ export const completeStaffRegistration = mutation({
     // STEP 2: Create/update user profile
     const existingUser = await ctx.db
       .query('users')
-      .withIndex('by_userId', (q) => q.eq('userId', args.userId))
+      .withIndex('by_userId', (q) => q.eq('userId', userId))
       .first();
 
     if (existingUser) {
@@ -276,7 +313,7 @@ export const completeStaffRegistration = mutation({
       results.userProfileId = existingUser._id.toString();
     } else {
       results.userProfileId = await ctx.db.insert('users', {
-        userId: args.userId,
+        userId: userId,
         email: args.email,
         firstName: args.firstName,
         lastName: args.lastName,
@@ -298,7 +335,7 @@ export const completeStaffRegistration = mutation({
     }
 
     await ctx.db.patch(invitation._id, {
-      userId: args.userId,
+      userId: userId,
       status: 'accepted',
       acceptedAt: now,
       updatedAt: now
@@ -315,7 +352,7 @@ export const completeStaffRegistration = mutation({
       entityType: 'companyMember',
       entityId: invitation._id.toString(),
       changes: {
-        acceptedBy: args.userId,
+        acceptedBy: userId,
         acceptedEmail: args.invitationEmail,
         role: invitation.role
       },
@@ -325,11 +362,11 @@ export const completeStaffRegistration = mutation({
     // STEP 4: Create user settings
     const existingSettings = await ctx.db
       .query('userSettings')
-      .withIndex('by_user', (q) => q.eq('userId', args.userId))
+      .withIndex('by_user', (q) => q.eq('userId', userId))
       .first();
 
     const settingsData = {
-      userId: args.userId,
+      userId: userId,
       language: 'en',
       currencyCode: args.currencyCode,
       dateFormat: 'DD/MM/YYYY',
@@ -354,7 +391,7 @@ export const completeStaffRegistration = mutation({
       userId: invitation.companyOwnerId,
       action: 'staff_registration_completed',
       entityType: 'user',
-      entityId: args.userId,
+      entityId: userId,
       changes: {
         accountStatusId: results.accountStatusId,
         role: results.role,

@@ -17,6 +17,10 @@ import {
   getDataScopeUserId
 } from './lib/authHelper';
 import { PERMISSIONS } from './lib/permissions';
+import {
+  COMPANY_TYPE_VALUES,
+  BUSINESS_TYPE_VALUES
+} from './lib/schemaConstants';
 
 /**
  * Get company by user (single company per user model)
@@ -27,41 +31,17 @@ import { PERMISSIONS } from './lib/permissions';
 export const getCompany = query({
   args: { userId: v.string() },
   handler: async (ctx, args) => {
-    const { userId } = args;
+    const caller = await resolveCallerContext(ctx);
+    requirePermission(caller, PERMISSIONS.VIEW_ORGANIZATION);
 
-    // First, check if user has their own company
-    const company = await ctx.db
+    const userId = getDataScopeUserId(caller);
+
+    return await ctx.db
       .query('companies')
       .withIndex('by_user_and_isDeleted', (q) =>
         q.eq('userId', userId).eq('isDeleted', false)
       )
       .first();
-
-    if (company) {
-      return company;
-    }
-
-    // User doesn't have their own company - check if they're a team member
-    const teamMembership = await ctx.db
-      .query('teamMembers')
-      .withIndex('by_user', (q) => q.eq('userId', userId))
-      .first();
-
-    if (teamMembership) {
-      // Get the owner's company through the team
-      const ownerCompany = await ctx.db
-        .query('companies')
-        .withIndex('by_user_and_isDeleted', (q) =>
-          q.eq('userId', teamMembership.userId).eq('isDeleted', false)
-        )
-        .first();
-
-      if (ownerCompany) {
-        return ownerCompany;
-      }
-    }
-
-    return null;
   }
 });
 
@@ -71,7 +51,15 @@ export const getCompany = query({
 export const getCompanyById = query({
   args: { companyId: v.id('companies') },
   handler: async (ctx, args) => {
-    return await ctx.db.get(args.companyId);
+    const caller = await resolveCallerContext(ctx);
+    requirePermission(caller, PERMISSIONS.VIEW_ORGANIZATION);
+
+    const company = await ctx.db.get(args.companyId);
+    if (!company || company.userId !== getDataScopeUserId(caller)) {
+      throw new Error('Company not found or access denied');
+    }
+
+    return company;
   }
 });
 
@@ -119,9 +107,10 @@ export const resolveEffectiveUserId = query({
 export const getCompanyName = query({
   args: { userId: v.string() },
   handler: async (ctx, args) => {
-    const { userId } = args;
+    const caller = await resolveCallerContext(ctx);
+    requirePermission(caller, PERMISSIONS.VIEW_ORGANIZATION);
 
-    // First, check if user has their own company
+    const userId = getDataScopeUserId(caller);
     const company = await ctx.db
       .query('companies')
       .withIndex('by_user_and_isDeleted', (q) =>
@@ -129,32 +118,7 @@ export const getCompanyName = query({
       )
       .first();
 
-    if (company) {
-      return company?.name ?? null;
-    }
-
-    // User doesn't have their own company - check if they're a staff member (companyMembers)
-    // Use filter since companyMembers has index by_company_and_userId (companyOwnerId, userId)
-    const membership = await ctx.db
-      .query('companyMembers')
-      .filter((q) => q.eq(q.field('userId'), userId))
-      .first();
-
-    if (membership && membership.status === 'accepted') {
-      // Get the owner's company
-      const ownerCompany = await ctx.db
-        .query('companies')
-        .withIndex('by_user_and_isDeleted', (q) =>
-          q.eq('userId', membership.companyOwnerId).eq('isDeleted', false)
-        )
-        .first();
-
-      if (ownerCompany) {
-        return ownerCompany.name;
-      }
-    }
-
-    return null;
+    return company?.name ?? null;
   }
 });
 
@@ -165,9 +129,14 @@ export const getCompanyName = query({
 export const listAllCompanies = query({
   args: { userId: v.string() },
   handler: async (ctx, args) => {
+    const caller = await resolveCallerContext(ctx);
+    requirePermission(caller, PERMISSIONS.VIEW_ORGANIZATION);
+
+    const userId = getDataScopeUserId(caller);
+
     return await ctx.db
       .query('companies')
-      .withIndex('by_user', (q) => q.eq('userId', args.userId))
+      .withIndex('by_user', (q) => q.eq('userId', userId))
       .collect();
   }
 });
@@ -177,12 +146,20 @@ export const listAllCompanies = query({
  * Useful during migration when both types exist
  */
 export const listCompaniesByType = query({
-  args: { userId: v.string(), type: v.string() },
+  args: {
+    userId: v.string(),
+    type: v.union(...COMPANY_TYPE_VALUES.map(v.literal))
+  },
   handler: async (ctx, args) => {
+    const caller = await resolveCallerContext(ctx);
+    requirePermission(caller, PERMISSIONS.VIEW_ORGANIZATION);
+
+    const userId = getDataScopeUserId(caller);
+
     return await ctx.db
       .query('companies')
       .withIndex('by_user_and_type', (q) =>
-        q.eq('userId', args.userId).eq('type', args.type)
+        q.eq('userId', userId).eq('type', args.type)
       )
       .collect();
   }
@@ -199,7 +176,7 @@ export const listCompaniesByType = query({
 export const createCompany = mutation({
   args: {
     name: v.string(),
-    businessType: v.string(),
+    businessType: v.union(...BUSINESS_TYPE_VALUES.map(v.literal)),
     address: v.string(),
     city: v.optional(v.string()),
     state: v.optional(v.string()),
@@ -214,7 +191,7 @@ export const createCompany = mutation({
     description: v.optional(v.string()),
     urls: v.optional(v.array(v.object({ id: v.number(), value: v.string() }))),
     owner: v.optional(v.string()),
-    type: v.string(), // "company" | "firm"
+    type: v.union(...COMPANY_TYPE_VALUES.map(v.literal)),
     processedBy: v.optional(v.string())
   },
   handler: async (ctx, args) => {
@@ -243,7 +220,7 @@ export const createCompany = mutation({
     // Create new
     return await ctx.db.insert('companies', {
       userId,
-      isVerified: false,
+      isVerified: true,
       isDeleted: false,
       createdAt: Date.now(),
       ...restArgs,
@@ -258,7 +235,7 @@ export const createCompany = mutation({
 export const updateCompany = mutation({
   args: {
     name: v.optional(v.string()),
-    businessType: v.optional(v.string()),
+    businessType: v.optional(v.union(...BUSINESS_TYPE_VALUES.map(v.literal))),
     address: v.optional(v.string()),
     city: v.optional(v.string()),
     state: v.optional(v.string()),
@@ -331,8 +308,12 @@ export const updateVerificationStatus = mutation({
 export const isBusinessProfileComplete = query({
   args: { userId: v.string() },
   handler: async (ctx, args) => {
-    const { userId } = args;
+    const caller = await resolveCallerContext(ctx);
+    requirePermission(caller, PERMISSIONS.VIEW_ORGANIZATION);
 
+    const userId = getDataScopeUserId(caller);
+
+    // First check if user has their own company
     const company = await ctx.db
       .query('companies')
       .withIndex('by_user_and_isDeleted', (q) =>
@@ -340,23 +321,23 @@ export const isBusinessProfileComplete = query({
       )
       .first();
 
-    if (!company) {
-      return false;
+    if (company) {
+      // User owns a company - check if it's complete
+      const isComplete =
+        company.name &&
+        company.businessType &&
+        company.address &&
+        company.city &&
+        company.state &&
+        company.country &&
+        company.phone?.length > 0 &&
+        company.email &&
+        company.taxNumber;
+
+      return !!isComplete;
     }
 
-    // Check all required fields
-    const isComplete =
-      company.name &&
-      company.businessType &&
-      company.address &&
-      company.city &&
-      company.state &&
-      company.country &&
-      company.phone?.length > 0 &&
-      company.email &&
-      company.taxNumber;
-
-    return !!isComplete;
+    return false;
   }
 });
 
@@ -415,7 +396,7 @@ export const createCompanyFromRegistration = mutation({
   args: {
     userId: v.string(),
     name: v.string(),
-    businessType: v.optional(v.string()),
+    businessType: v.optional(v.union(...BUSINESS_TYPE_VALUES.map(v.literal))),
     address: v.string(),
     city: v.string(),
     state: v.string(),
@@ -455,10 +436,11 @@ export const createCompanyFromRegistration = mutation({
       email: args.email,
       taxNumber: args.taxNumber || '',
       website: args.website || '',
-      businessType: args.businessType || 'retailer',
-      type: 'company',
+      businessType: (args.businessType ||
+        'retailer') as (typeof BUSINESS_TYPE_VALUES)[number],
+      type: 'company' as (typeof COMPANY_TYPE_VALUES)[number],
       urls: args.website ? [{ id: 1, value: args.website }] : [],
-      isVerified: false,
+      isVerified: true,
       isDeleted: false,
       createdAt: Date.now(),
       updatedAt: Date.now()

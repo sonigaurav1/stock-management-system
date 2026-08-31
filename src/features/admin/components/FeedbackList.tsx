@@ -43,7 +43,7 @@ export function FeedbackList() {
   const [respondingId, setRespondingId] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
-  const feedbackList = useQuery(api.feedback.getAllFeedback, {
+  const feedbackList = useQuery(api.feedback.getFeedback, {
     sortBy: 'date',
     filter
   });
@@ -64,7 +64,6 @@ export function FeedbackList() {
       await respondToFeedback({
         feedbackId: feedbackId as any,
         response: response.trim(),
-        respondedBy: 'admin',
         isResolved: true
       });
 

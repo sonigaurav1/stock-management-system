@@ -154,7 +154,7 @@ export default function CategoryForm({
       if (onSuccess) {
         onSuccess();
       } else {
-        router.push('/dashboard/product/category');
+        router.push('/inventory/categories');
       }
     });
     setProgress(0);

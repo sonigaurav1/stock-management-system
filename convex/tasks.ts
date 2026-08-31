@@ -115,7 +115,14 @@ export const createTask = mutation({
     title: v.string(),
     description: v.optional(v.string()),
     assigneeId: v.string(),
-    priority: v.optional(v.string()), // "low", "medium", "high", "urgent"
+    priority: v.optional(
+      v.union(
+        v.literal('low'),
+        v.literal('medium'),
+        v.literal('high'),
+        v.literal('urgent')
+      )
+    ), // "low", "medium", "high", "urgent"
     dueDate: v.optional(v.number()),
     relatedEntityType: v.optional(v.string()),
     relatedEntityId: v.optional(v.string()),
@@ -177,7 +184,12 @@ export const createTask = mutation({
 export const updateTaskStatus = mutation({
   args: {
     taskId: v.id('tasks'),
-    status: v.string() // "assigned", "in_progress", "completed", "cancelled"
+    status: v.union(
+      v.literal('assigned'),
+      v.literal('in_progress'),
+      v.literal('completed'),
+      v.literal('cancelled')
+    ) // "assigned", "in_progress", "completed", "cancelled"
   },
   async handler(ctx, args) {
     const caller = await resolveCallerContext(ctx);

@@ -42,9 +42,6 @@ const BUSINESS_TYPES = [
   { value: 'e_commerce', label: 'E-Commerce' },
   { value: 'corporate', label: 'Corporate' },
   { value: 'nonprofit', label: 'Non-Profit' },
-  { value: 'retailer_wholesaler', label: 'Retailer + Wholesaler' },
-  { value: 'manufacturer_retailer', label: 'Manufacturer + Retailer' },
-  { value: 'retailer_ecommerce', label: 'Retailer + E-Commerce' },
   { value: 'other', label: 'Other' }
 ];
 
@@ -52,7 +49,20 @@ const businessFormSchema = z.object({
   companyName: z
     .string()
     .min(2, { message: 'Company name must be at least 2 characters' }),
-  businessType: z.string({ message: 'Please select a business type' }),
+  businessType: z.enum(
+    [
+      'retailer',
+      'wholesaler',
+      'manufacturer',
+      'distributor',
+      'service_provider',
+      'e_commerce',
+      'corporate',
+      'nonprofit',
+      'other'
+    ],
+    { message: 'Please select a business type' }
+  ),
   phone: z.string().min(10, { message: 'Please enter a valid phone number' }),
   address: z.string().min(5, { message: 'Please enter a valid address' }),
   city: z.string().min(2, { message: 'Please enter a city' }),
@@ -92,7 +102,7 @@ export function BusinessRegistrationForm({
     resolver: zodResolver(businessFormSchema),
     defaultValues: {
       companyName: '',
-      businessType: '',
+      businessType: undefined,
       phone: '',
       address: '',
       city: '',
@@ -137,33 +147,8 @@ export function BusinessRegistrationForm({
         });
       }
 
-      const clerkUsername = user?.username || user?.firstName?.toLowerCase();
-      if (clerkUsername && process.env.NEXT_PUBLIC_API_URL) {
-        try {
-          const usernameResponse = await fetch(
-            `${process.env.NEXT_PUBLIC_API_URL}/api/user-metadata`,
-            {
-              method: 'PATCH',
-              headers: {
-                'Content-Type': 'application/json'
-              },
-              body: JSON.stringify({
-                userId,
-                username: clerkUsername
-              })
-            }
-          );
-
-          if (!usernameResponse.ok) {
-            console.warn('Failed to store username in Clerk metadata');
-          }
-        } catch (usernameErr) {
-          console.warn(
-            'Error storing username in Clerk metadata:',
-            usernameErr
-          );
-        }
-      }
+      // Username is already stored in Convex via upsertUserProfile
+      // No need to store in Clerk metadata
 
       // 3. Create company details entry (replaces organizationSettings)
       await createCompanyFromRegistration({
@@ -195,35 +180,6 @@ export function BusinessRegistrationForm({
 
       setPreferredCurrencyCode(currencyCode);
 
-      // Mark company details as submitted in Clerk metadata
-      console.log('Marking company details as submitted for OAuth user...');
-      if (process.env.NEXT_PUBLIC_API_URL) {
-        try {
-          const companyDetailsResponse = await fetch(
-            `${process.env.NEXT_PUBLIC_API_URL}/api/company-details-submitted`,
-            {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json'
-              },
-              body: JSON.stringify({
-                userId
-              })
-            }
-          );
-          if (!companyDetailsResponse.ok) {
-            console.warn(
-              'Failed to mark company details as submitted in Clerk'
-            );
-          }
-        } catch (metadataErr) {
-          console.warn(
-            'Error updating company details status in Clerk:',
-            metadataErr
-          );
-        }
-      }
-
       toast.success('Business registered successfully!');
       // Clear any registration markers from sessionStorage
       if (typeof window !== 'undefined') {
@@ -232,11 +188,8 @@ export function BusinessRegistrationForm({
       }
 
       setStep(2);
-      // Go directly to dashboard - all data has been created and verified
-      // Middleware will handle any additional checks needed
-      setTimeout(() => {
-        router.push('/dashboard/overview');
-      }, 1500);
+      // Go directly to dashboard - all data has been created
+      router.push('/dashboard/overview');
     } catch (error) {
       console.error('Registration error:', error);
       toast.error(

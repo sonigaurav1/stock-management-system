@@ -54,9 +54,24 @@ export default function DatabasePage() {
     if (!deletingTable) return;
 
     setIsDeleting(true);
+    let totalDeleted = 0;
+
     try {
-      await deleteAllDocuments({ tableName: deletingTable });
-      toast.success(`All documents deleted from ${deletingTable}`);
+      let hasMore = true;
+      while (hasMore) {
+        const result = await deleteAllDocuments({
+          tableName: deletingTable,
+          limit: 50
+        });
+        totalDeleted += result.deletedCount;
+        hasMore = result.hasMore;
+
+        if (hasMore) {
+          await new Promise((resolve) => setTimeout(resolve, 50));
+        }
+      }
+
+      toast.success(`Deleted ${totalDeleted} documents from ${deletingTable}`);
       setDeletingTable(null);
     } catch (error) {
       console.error('Error deleting documents:', error);
@@ -70,9 +85,24 @@ export default function DatabasePage() {
 
   const handleDeleteAllTables = async () => {
     setIsDeleting(true);
+    let totalDeleted = 0;
+
     try {
-      const result = await deleteAllTables({});
-      toast.success(`Deleted ${result.totalDeleted} documents from all tables`);
+      let hasMore = true;
+      let tableIndex = 0;
+
+      while (hasMore) {
+        const result = await deleteAllTables({ tableIndex, limit: 50 });
+        totalDeleted += result.deletedCount;
+        hasMore = result.hasMore;
+        tableIndex = result.nextTableIndex;
+
+        if (hasMore) {
+          await new Promise((resolve) => setTimeout(resolve, 50));
+        }
+      }
+
+      toast.success(`Deleted ${totalDeleted} documents from all tables`);
       setIsDeletingAllTables(false);
     } catch (error) {
       console.error('Error deleting all tables:', error);

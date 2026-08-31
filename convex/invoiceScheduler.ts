@@ -6,6 +6,7 @@ import {
   getDataScopeUserId
 } from './lib/authHelper';
 import { PERMISSIONS } from './lib/permissions';
+import { UNIT_VALUES, FREQUENCY_VALUES } from './lib/schemaConstants';
 
 /**
  * STEP 7.1 & 7.5: Recurring Invoices & Payment Reminders
@@ -33,7 +34,7 @@ export const createRecurringInvoice = mutation({
         hsCode: v.string(),
         description: v.string(),
         quantity: v.number(),
-        unit: v.string(),
+        unit: v.union(...UNIT_VALUES.map(v.literal)),
         rate: v.number(),
         amount: v.number()
       })
@@ -43,7 +44,7 @@ export const createRecurringInvoice = mutation({
     vatAmount: v.optional(v.number()),
     discount: v.optional(v.number()),
     amountInWords: v.optional(v.string()),
-    frequency: v.string(), // daily, weekly, biweekly, monthly, quarterly, yearly
+    frequency: v.union(...FREQUENCY_VALUES.map(v.literal)),
     startDate: v.number(),
     defaultPaymentMode: v.optional(v.string())
   },

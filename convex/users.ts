@@ -32,9 +32,13 @@ export const upsertUserProfile = mutation({
     // Allow users to create their own profile during sign-up.
     // Staff members sign up AFTER accepting an invitation, so they should always be allowed
     // to create their own profile when it doesn't exist yet.
-    // Require manage_users permission for UPDATING existing profiles (prevents staff from editing others).
+    // Allow staff to update their OWN profile without manage_users permission.
     const isCreatingOwnProfile = !existingUser;
-    if (!isCreatingOwnProfile) {
+    const isUpdatingOwnProfile =
+      existingUser && existingUser.userId === caller.callerId;
+
+    // Only require manage_users permission if updating someone else's profile
+    if (!isCreatingOwnProfile && !isUpdatingOwnProfile) {
       requirePermission(caller, PERMISSIONS.MANAGE_USERS);
     }
 

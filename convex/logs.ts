@@ -6,6 +6,7 @@ import {
   getDataScopeUserId
 } from './lib/authHelper';
 import { PERMISSIONS } from './lib/permissions';
+import { redactSecretLikeValues } from './lib/secretStorage';
 
 /**
  * Unified System Logging Module (Phase 2B)
@@ -36,7 +37,7 @@ export const logWebhookExecution = mutation({
     const userId = getDataScopeUserId(caller);
 
     return await ctx.db.insert('systemLog', {
-      userId: userId,
+      userId,
       logType: 'webhook',
       status: args.error
         ? 'failure'
@@ -46,7 +47,7 @@ export const logWebhookExecution = mutation({
       webhookId: args.webhookId,
       url: args.url,
       event: args.event,
-      payload: args.payload,
+      payload: redactSecretLikeValues(args.payload),
       statusCode: args.statusCode,
       response: args.response,
       error: args.error,
@@ -126,7 +127,7 @@ export const logDuplicateDetection = mutation({
     const userId = getDataScopeUserId(caller);
 
     return await ctx.db.insert('systemLog', {
-      userId: userId,
+      userId,
       logType: 'duplicate_detection',
       status: args.status,
       entityType: args.entityType,
@@ -277,8 +278,7 @@ export const getSystemLogs = query({
       status: log.status,
       timestamp: log.timestamp,
       description: log.description,
-      metadata: log.metadata,
-      // Include type-specific fields
+      metadata: redactSecretLikeValues(log.metadata),
       ...(log.logType === 'webhook' && {
         webhookId: log.webhookId,
         event: log.event,
@@ -316,7 +316,6 @@ export const getSystemLogStats = query({
       return true;
     });
 
-    // Calculate statistics
     const stats = {
       totalLogs: filtered.length,
       byType: {

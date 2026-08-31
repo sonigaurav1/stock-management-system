@@ -81,8 +81,8 @@ export default function ProfilePage() {
       phone: phoneArray,
       email: formData.email,
       description: formData.bio,
-      type: 'company',
-      businessType: 'retail',
+      type: 'company' as const,
+      businessType: 'retailer' as const,
       taxNumber: formData.vatNumber,
       urls
     };

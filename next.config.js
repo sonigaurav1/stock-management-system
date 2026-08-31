@@ -35,7 +35,12 @@ const nextConfig = {
     ]
   },
   allowedDevOrigins: ['192.168.1.69'],
-  transpilePackages: ['geist']
+  transpilePackages: ['geist'],
+  // Turbopack configuration for Next.js 16
+  turbopack: {
+    // Empty config to silence the webpack conflict error
+    root: __dirname
+  }
 
   // // Enable PWA
   // reactStrictMode: true,

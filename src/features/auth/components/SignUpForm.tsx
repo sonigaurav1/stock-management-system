@@ -104,7 +104,20 @@ const businessInfoSchema = z.object({
   companyName: z
     .string()
     .min(2, { message: 'Company name must be at least 2 characters' }),
-  businessType: z.string({ message: 'Please select a business type' }),
+  businessType: z.enum(
+    [
+      'retailer',
+      'wholesaler',
+      'manufacturer',
+      'distributor',
+      'service_provider',
+      'e_commerce',
+      'corporate',
+      'nonprofit',
+      'other'
+    ],
+    { message: 'Please select a business type' }
+  ),
   phone: z.string().min(10, { message: 'Please enter a valid phone number' }),
   address: z.string().min(5, { message: 'Please enter a valid address' }),
   city: z.string().min(2, { message: 'Please enter a city' }),
@@ -204,9 +217,6 @@ const BUSINESS_TYPES = [
   { value: 'e_commerce', label: 'E-Commerce' },
   { value: 'corporate', label: 'Corporate' },
   { value: 'nonprofit', label: 'Non-Profit' },
-  { value: 'retailer_wholesaler', label: 'Retailer + Wholesaler' },
-  { value: 'manufacturer_retailer', label: 'Manufacturer + Retailer' },
-  { value: 'retailer_ecommerce', label: 'Retailer + E-Commerce' },
   { value: 'other', label: 'Other' }
 ];
 
@@ -479,7 +489,7 @@ export default function SignUpForm({
     resolver: zodResolver(businessInfoSchema),
     defaultValues: {
       companyName: invitation?.companyName || '',
-      businessType: invitation?.businessType || '',
+      businessType: (invitation?.businessType as any) || undefined,
       phone: invitation?.businessPhone || '',
       address: invitation?.businessAddress || '',
       city: invitation?.businessCity || '',
@@ -495,7 +505,22 @@ export default function SignUpForm({
   useEffect(() => {
     if (!invitation) return;
     businessForm.setValue('companyName', invitation.companyName || '');
-    businessForm.setValue('businessType', invitation.businessType || '');
+    if (
+      invitation.businessType &&
+      [
+        'retailer',
+        'wholesaler',
+        'manufacturer',
+        'distributor',
+        'service_provider',
+        'e_commerce',
+        'corporate',
+        'nonprofit',
+        'other'
+      ].includes(invitation.businessType)
+    ) {
+      businessForm.setValue('businessType', invitation.businessType as any);
+    }
     businessForm.setValue('phone', invitation.businessPhone || '');
     businessForm.setValue('address', invitation.businessAddress || '');
     businessForm.setValue('city', invitation.businessCity || '');
@@ -739,7 +764,8 @@ export default function SignUpForm({
           setPreferredCurrencyCode(currencyCode);
 
           console.log('Business details saved successfully');
-          toast.success('Account created! Setting up your workspace...');
+
+          toast.success('Account created! Redirecting to dashboard...');
 
           if (typeof window !== 'undefined') {
             sessionStorage.removeItem('userJustSignedUp');
@@ -747,7 +773,8 @@ export default function SignUpForm({
             sessionStorage.removeItem('currentSignUpAttempt');
           }
 
-          router.push('/onboarding/setup');
+          // Go directly to dashboard - all data has been created
+          router.push('/dashboard/overview');
         }
       } catch (businessError) {
         console.error('Error saving business details:', businessError);
@@ -824,7 +851,7 @@ export default function SignUpForm({
                 name='firstName'
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className='text-xs font-semibold'>
+                    <FormLabel className='text-xs font-semibold after:ml-0.5 after:text-red-500 after:content-["*"]'>
                       First Name
                     </FormLabel>
                     <FormControl>
@@ -839,7 +866,7 @@ export default function SignUpForm({
                 name='lastName'
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className='text-xs font-semibold'>
+                    <FormLabel className='text-xs font-semibold after:ml-0.5 after:text-red-500 after:content-["*"]'>
                       Last Name
                     </FormLabel>
                     <FormControl>
@@ -856,7 +883,7 @@ export default function SignUpForm({
               name='email'
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className='text-xs font-semibold'>
+                  <FormLabel className='text-xs font-semibold after:ml-0.5 after:text-red-500 after:content-["*"]'>
                     Email Address
                   </FormLabel>
                   <FormControl>
@@ -920,7 +947,7 @@ export default function SignUpForm({
 
                 return (
                   <FormItem>
-                    <FormLabel className='text-xs font-semibold'>
+                    <FormLabel className='text-xs font-semibold after:ml-0.5 after:text-red-500 after:content-["*"]'>
                       Password
                     </FormLabel>
                     <FormControl>
@@ -1058,7 +1085,7 @@ export default function SignUpForm({
 
                 return (
                   <FormItem>
-                    <FormLabel className='text-xs font-semibold'>
+                    <FormLabel className='text-xs font-semibold after:ml-0.5 after:text-red-500 after:content-["*"]'>
                       Confirm Password
                     </FormLabel>
                     <FormControl>
@@ -1223,7 +1250,7 @@ export default function SignUpForm({
               name='companyName'
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className='text-xs font-semibold'>
+                  <FormLabel className='after:text-md text-xs font-semibold after:ml-0.5 after:text-red-500 after:content-["*"]'>
                     Company Name
                   </FormLabel>
                   <FormControl>
@@ -1245,7 +1272,7 @@ export default function SignUpForm({
               name='businessType'
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className='text-xs font-semibold'>
+                  <FormLabel className='after:text-md text-xs font-semibold after:ml-0.5 after:text-red-500 after:content-["*"]'>
                     Business Type
                   </FormLabel>
                   <Select
@@ -1260,7 +1287,11 @@ export default function SignUpForm({
                     </FormControl>
                     <SelectContent>
                       {BUSINESS_TYPES.map((type) => (
-                        <SelectItem key={type.value} value={type.value}>
+                        <SelectItem
+                          className='cursor-pointer'
+                          key={type.value}
+                          value={type.value}
+                        >
                           {type.label}
                         </SelectItem>
                       ))}
@@ -1276,7 +1307,7 @@ export default function SignUpForm({
               name='phone'
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className='text-xs font-semibold'>
+                  <FormLabel className='after:text-md text-xs font-semibold after:ml-0.5 after:text-red-500 after:content-["*"]'>
                     Phone Number *
                   </FormLabel>
                   <FormControl>
@@ -1297,7 +1328,7 @@ export default function SignUpForm({
               name='address'
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className='text-xs font-semibold'>
+                  <FormLabel className='after:text-md text-xs font-semibold after:ml-0.5 after:text-red-500 after:content-["*"]'>
                     Address
                   </FormLabel>
                   <FormControl>
@@ -1320,7 +1351,7 @@ export default function SignUpForm({
                 name='city'
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className='text-xs font-semibold'>
+                    <FormLabel className='after:text-md text-xs font-semibold after:ml-0.5 after:text-red-500 after:content-["*"]'>
                       City
                     </FormLabel>
                     <FormControl>
@@ -1341,7 +1372,7 @@ export default function SignUpForm({
                 name='state'
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className='text-xs font-semibold'>
+                    <FormLabel className='after:text-md text-xs font-semibold after:ml-0.5 after:text-red-500 after:content-["*"]'>
                       State
                     </FormLabel>
                     <FormControl>
@@ -1370,7 +1401,7 @@ export default function SignUpForm({
 
                   return (
                     <FormItem>
-                      <FormLabel className='text-xs font-semibold'>
+                      <FormLabel className='after:text-md text-xs font-semibold after:ml-0.5 after:text-red-500 after:content-["*"]'>
                         Country
                       </FormLabel>
                       <Popover>
@@ -1421,7 +1452,7 @@ export default function SignUpForm({
                 name='postalCode'
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className='text-xs font-semibold'>
+                    <FormLabel className='after:text-md text-xs font-semibold after:ml-0.5 after:text-red-500 after:content-["*"]'>
                       Postal Code
                     </FormLabel>
                     <FormControl>

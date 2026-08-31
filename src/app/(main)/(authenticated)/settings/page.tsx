@@ -5,7 +5,6 @@ import {
   User,
   Building2,
   Users,
-  Plug,
   Lock,
   CreditCard,
   Download,
@@ -13,8 +12,7 @@ import {
   Palette,
   Bell,
   Monitor,
-  Key,
-  Zap
+  Key
 } from 'lucide-react';
 
 const settingsCategories = [
@@ -50,7 +48,7 @@ const settingsCategories = [
   // Organization Settings
   {
     title: 'Organization',
-    description: 'Company details, GST, business registration, automation',
+    description: 'Company details, GST, business registration',
     href: '/settings/organization',
     icon: Building2,
     section: 'organization'
@@ -78,17 +76,10 @@ const settingsCategories = [
   },
   // Developer Settings
   {
-    title: 'API & Webhooks',
-    description: 'API keys, webhook configuration, rate limits',
+    title: 'API',
+    description: 'API keys, rate limits',
     href: '/settings/api',
     icon: Key,
-    section: 'developer'
-  },
-  {
-    title: 'Integrations',
-    description: 'Connected apps, payment gateways, e-commerce',
-    href: '/settings/integrations',
-    icon: Plug,
     section: 'developer'
   },
   {
@@ -96,13 +87,6 @@ const settingsCategories = [
     description: 'Backup, restore, and data management',
     href: '/settings/data',
     icon: Download,
-    section: 'developer'
-  },
-  {
-    title: 'Automation',
-    description: 'Workflows, triggers, and automated actions',
-    href: '/settings/automation',
-    icon: Zap,
     section: 'developer'
   }
 ];

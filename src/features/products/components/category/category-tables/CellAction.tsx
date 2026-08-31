@@ -79,7 +79,7 @@ export const CellAction: React.FC<CellActionProps> = ({ data }) => {
       />
       <div className='flex gap-3'>
         <Edit
-          onClick={() => router.push(`/dashboard/product/category/${data._id}`)}
+          onClick={() => router.push(`/inventory/categories/${data._id}`)}
           className='mr-2 h-4 w-4 cursor-pointer hover:text-primary-foreground dark:hover:text-primary'
         />
         <Trash

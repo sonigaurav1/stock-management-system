@@ -31,7 +31,7 @@ import {
   useReactTable
 } from '@tanstack/react-table';
 import { ChevronLeftIcon, ChevronRightIcon } from 'lucide-react';
-import { useSidebar } from '../sidebar';
+import { useSidebar } from '../../layout/SidebarContext';
 
 interface DataTableProps<TData extends { _id: string }, TValue> {
   columns: ColumnDef<TData, TValue>[];
@@ -57,7 +57,7 @@ export function DataTable<TData extends { _id: string }, TValue>({
   const { page, pageSize, totalPages, onPageChange, onPageSizeChange } =
     pagination;
 
-  const { state } = useSidebar();
+  const { isCollapsed } = useSidebar();
 
   const paginationState = {
     pageIndex: page - 1,
@@ -95,7 +95,7 @@ export function DataTable<TData extends { _id: string }, TValue>({
     <div
       className={cn(
         'flex max-w-[95vw] flex-col space-y-4 sm:max-w-[96vw] md:max-w-[89vw] md:flex-1',
-        state === 'collapsed' ? 'lg:max-w-full' : 'lg:max-w-[77vw]'
+        isCollapsed ? 'lg:max-w-full' : 'lg:max-w-[77vw]'
       )}
     >
       <div className='relative rounded-md border'>

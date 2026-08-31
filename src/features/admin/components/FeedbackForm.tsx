@@ -131,7 +131,6 @@ export function FeedbackForm({ onSubmitSuccess }: FeedbackFormProps) {
         .join('\n\n');
 
       await createFeedback({
-        userId: user.id,
         title: title.trim(),
         message: message,
         category,

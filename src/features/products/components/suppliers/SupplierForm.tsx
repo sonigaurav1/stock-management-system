@@ -149,7 +149,7 @@ export default function SupplierForm({
       if (onSuccess) {
         onSuccess();
       } else {
-        router.push('/dashboard/product/supplier');
+        router.push('/procurement/suppliers');
       }
     });
 

@@ -35,25 +35,34 @@ export default clerkMiddleware(async (auth, request) => {
         return new NextResponse('Not Found', { status: 404 });
       }
 
-      // In dev/staging: require authentication
-      if (!userId) {
-        return NextResponse.redirect(
-          new URL(RedirectDestination.SIGN_IN, request.url)
-        );
+      // Check if database route authentication is disabled via environment variable
+      const isDevAuthDisabled =
+        process.env.NEXT_PUBLIC_DEV_ONLY_ROUTE_NO_AUTH === 'true';
+
+      // If auth is disabled for dev routes, allow access without authentication
+      if (isDevAuthDisabled) {
+        return NextResponse.next();
       }
+
+      // In dev/staging: require authentication
+      // if (!userId) {
+      //   return NextResponse.redirect(
+      //     new URL(RedirectDestination.SIGN_IN, request.url)
+      //   );
+      // }
 
       // Require super admin access
-      const superAdminIds =
-        process.env.NEXT_PUBLIC_SUPER_ADMIN_USER_IDS?.split(',').map((id) =>
-          id.trim()
-        ) || [];
-      const userIdFromClaims = sessionClaims?.sub;
+      // const superAdminIds =
+      //   process.env.NEXT_PUBLIC_SUPER_ADMIN_USER_IDS?.split(',').map((id) =>
+      //     id.trim()
+      //   ) || [];
+      // const userIdFromClaims = sessionClaims?.sub;
 
-      if (!superAdminIds.includes(userIdFromClaims || '')) {
-        return new NextResponse('Forbidden: Super Admin access required', {
-          status: 403
-        });
-      }
+      // if (!superAdminIds.includes(userIdFromClaims || '')) {
+      //   return new NextResponse('Forbidden: Super Admin access required', {
+      //     status: 403
+      //   });
+      // }
     }
 
     // Redirect authenticated users from home, sign-in, and sign-up to dashboard
@@ -90,15 +99,6 @@ export default clerkMiddleware(async (auth, request) => {
       const claims = JSON.parse(atob(token.split('.')[1]));
       const currentTime = Math.floor(Date.now() / 1000);
 
-      // Debug: Log claims structure
-      console.log('[PROXY DEBUG] JWT Claims Structure:', {
-        sub: claims.sub,
-        metadata: claims.metadata,
-        publicMetadata: claims.publicMetadata,
-        hasMetadata: !!claims.metadata,
-        hasPublicMetadata: !!claims.publicMetadata
-      });
-
       // Redirect if the token has expired
       if (claims.exp < currentTime) {
         return NextResponse.redirect(
@@ -106,12 +106,10 @@ export default clerkMiddleware(async (auth, request) => {
         );
       }
 
-      // NOTE: publicMetadata is NOT included in the convex JWT template by default
-      // The client-side guards (BusinessProfileGuard, AccountStatusGuard) will verify:
-      // 1. accountStatus in Convex (via checkUserAccess)
-      // 2. organizationSettings in Convex (via isBusinessProfileComplete)
-      // 3. Clerk publicMetadata.companyDetailsSubmitted
-      // So we skip the check here and let client-side guards handle it
+      // NOTE: We skip the company details check in middleware because:
+      // 1. JWT tokens don't automatically refresh when metadata is updated via API
+      // 2. Client-side guards (BusinessProfileGuard, AccountStatusGuard) will handle this check
+      // 3. They can query both Convex data and fresh Clerk metadata
       console.log(
         '[PROXY DEBUG] Skipping company details check in middleware (handled by client-side guards)'
       );

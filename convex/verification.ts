@@ -1,6 +1,7 @@
 // File: convex/verification.js
 import { mutation, query } from './_generated/server';
 import { v } from 'convex/values';
+import { resolveCallerContext, getDataScopeUserId } from './lib/authHelper';
 
 // Generate a 6-digit OTP
 function generateRandomOtp() {
@@ -11,7 +12,12 @@ function generateRandomOtp() {
 export const generateOtp = mutation({
   args: { userId: v.string() },
   handler: async (ctx, args) => {
-    const { userId } = args;
+    const caller = await resolveCallerContext(ctx);
+    if (caller.callerId !== args.userId) {
+      throw new Error('Can only generate OTP for yourself');
+    }
+
+    const userId = caller.callerId;
 
     // Generate a random 6-digit OTP
     const otp = generateRandomOtp();
@@ -61,7 +67,16 @@ export const generateOtp = mutation({
 export const verifyOtp = mutation({
   args: { userId: v.string(), otp: v.string() },
   handler: async (ctx, args) => {
-    const { userId, otp } = args;
+    // RBAC: Use resolveCallerContext for proper authentication
+    const caller = await resolveCallerContext(ctx);
+    const userId = getDataScopeUserId(caller);
+
+    // Users can only verify OTP for themselves
+    if (caller.callerId !== args.userId) {
+      throw new Error('Can only verify OTP for yourself');
+    }
+
+    const { otp } = args;
 
     // Get the stored OTP
     const storedOtp = await ctx.db
@@ -109,7 +124,12 @@ export const verifyOtp = mutation({
 export const getOtpByUserId = query({
   args: { userId: v.string() },
   handler: async (ctx, args) => {
-    const { userId } = args;
+    const caller = await resolveCallerContext(ctx);
+    if (caller.callerId !== args.userId) {
+      throw new Error('Can only view your own OTP');
+    }
+
+    const userId = caller.callerId;
 
     // Fetch OTP details by User ID
     const otpDetails = await ctx.db

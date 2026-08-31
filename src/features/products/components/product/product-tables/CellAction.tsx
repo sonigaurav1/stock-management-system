@@ -67,11 +67,11 @@ export const CellAction: React.FC<CellActionProps> = ({ data }) => {
       />
       <div className='flex gap-3'>
         <Eye
-          onClick={() => router.push(`/dashboard/product/view/${data._id}`)}
+          onClick={() => router.push(`/inventory/products/${data._id}`)}
           className='mr-2 h-4 w-4 cursor-pointer hover:text-primary-foreground dark:hover:text-primary'
         />
         <Edit
-          onClick={() => router.push(`/dashboard/product/${data._id}`)}
+          onClick={() => router.push(`/inventory/products/${data._id}`)}
           className='mr-2 h-4 w-4 cursor-pointer hover:text-primary-foreground dark:hover:text-primary'
         />
         <Trash

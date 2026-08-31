@@ -25,7 +25,7 @@ export default function MobileNavigation() {
     },
     {
       name: 'Products',
-      href: '/dashboard/product',
+      href: '/inventory/products',
       icon: ShoppingCart
     },
     {

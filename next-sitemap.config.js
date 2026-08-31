@@ -18,10 +18,9 @@ const dynamicSlugs = [
   '/dashboard/invoices',
   '/dashboard/overview',
   '/dashboard/payments',
-  '/dashboard/product',
-  '/dashboard/product/view',
-  '/dashboard/product/category',
-  '/dashboard/product/supplier',
+  '/inventory/products',
+  '/inventory/categories',
+  '/procurement/suppliers',
   '/dashboard/sales',
   '/dashboard/transactions',
 
@@ -35,16 +34,16 @@ const dynamicSlugs = [
   '/ledger/entries',
   '/ledger/entry/view',
 
-  // Organization
-  '/organization',
-  '/organization/members',
-  '/organization/roles',
-  '/organization/invitations',
+  // Organization (moved to settings)
+  // '/organization', - REMOVED (now /settings/organization)
 
-  // Restock
-  '/restock',
-  '/restock/orders',
-  '/restock/suppliers',
+  // Sales (was /restock - now properly named)
+  '/sales',
+
+  // Inventory Management
+  '/inventory/warehouses',
+  '/inventory/audit',
+  '/inventory/forecast',
 
   // Settings
   '/settings',

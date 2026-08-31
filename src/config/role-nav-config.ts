@@ -160,13 +160,12 @@ export const ROLE_NAV_CONFIG: Record<
   },
   staff: {
     visibleSections: [
-      'Dashboard',
       'Inventory',
       'Purchasing',
       'Communication',
       'Help & Support'
     ],
-    restrictedSections: ['Finance', 'Reports', 'Settings'],
+    restrictedSections: ['Finance', 'Reports', 'Settings', 'Dashboard'],
     canSeeSubItems: true
   },
   viewer: {

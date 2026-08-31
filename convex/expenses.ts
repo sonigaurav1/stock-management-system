@@ -18,7 +18,7 @@ export const createExpense = mutation({
     description: v.string(),
     date: v.number(),
     paymentMethod: v.string(),
-    type: v.string(), // "business" | "personal"
+    type: v.union(v.literal('business'), v.literal('personal')),
     vendor: v.optional(v.string()),
     invoice: v.optional(v.string()),
     isTaxDeductible: v.optional(v.boolean()),
@@ -553,11 +553,12 @@ export const getRecurringExpenses = query({
     activeOnly: v.optional(v.boolean())
   },
   async handler(ctx, args) {
-    const userId = (await ctx.auth.getUserIdentity())?.tokenIdentifier || '';
+    // FIX: Use proper RBAC for multi-tenant isolation
+    const caller = await resolveCallerContext(ctx);
+    requirePermission(caller, PERMISSIONS.VIEW_FINANCIAL_REPORTS);
 
-    if (!userId) {
-      throw new Error('Unauthorized');
-    }
+    // Use ownerId for data scope (staff sees owner's recurring expenses)
+    const userId = getDataScopeUserId(caller);
 
     let query = ctx.db
       .query('recurringExpenses')

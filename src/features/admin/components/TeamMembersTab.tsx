@@ -117,7 +117,10 @@ export function TeamMembersTab() {
     }
   };
 
-  const handleRoleChange = async (memberId: string, newRole: string) => {
+  const handleRoleChange = async (
+    memberId: string,
+    newRole: 'manager' | 'staff' | 'viewer'
+  ) => {
     try {
       await updateMemberRole({
         memberId: memberId as any,
@@ -281,7 +284,10 @@ export function TeamMembersTab() {
                         <Select
                           value={member.role}
                           onValueChange={(newRole) =>
-                            handleRoleChange(member._id, newRole)
+                            handleRoleChange(
+                              member._id,
+                              newRole as 'manager' | 'staff' | 'viewer'
+                            )
                           }
                         >
                           <SelectTrigger className='w-40'>

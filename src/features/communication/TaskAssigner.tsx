@@ -61,7 +61,7 @@ export default function TaskAssigner({
         title: formData.title,
         description: formData.description || undefined,
         assigneeId: formData.assigneeId,
-        priority: formData.priority,
+        priority: formData.priority as 'low' | 'medium' | 'high' | 'urgent',
         dueDate: formData.dueDate
           ? new Date(formData.dueDate).getTime()
           : undefined,

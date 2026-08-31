@@ -11,29 +11,33 @@ import { PERMISSIONS } from './lib/permissions';
 
 const DEFAULT_PERMISSIONS = {
   admin: [
-    'view_inventory',
-    'create_transaction',
-    'edit_transaction',
-    'delete_transaction',
-    'export_data',
-    'view_reports',
-    'manage_users',
-    'view_audit_logs',
-    'manage_settings',
-    'view_compliance',
-    'approve_transaction'
+    PERMISSIONS.VIEW_INVENTORY,
+    PERMISSIONS.CREATE_TRANSACTION,
+    PERMISSIONS.EDIT_TRANSACTION,
+    PERMISSIONS.DELETE_TRANSACTION,
+    PERMISSIONS.EXPORT_DATA,
+    PERMISSIONS.VIEW_REPORTS,
+    PERMISSIONS.MANAGE_USERS,
+    PERMISSIONS.VIEW_AUDIT_LOGS,
+    PERMISSIONS.MANAGE_SETTINGS,
+    PERMISSIONS.VIEW_COMPLIANCE,
+    PERMISSIONS.APPROVE_TRANSACTION
   ],
   manager: [
-    'view_inventory',
-    'create_transaction',
-    'edit_transaction',
-    'export_data',
-    'view_reports',
-    'view_audit_logs',
-    'approve_transaction'
+    PERMISSIONS.VIEW_INVENTORY,
+    PERMISSIONS.CREATE_TRANSACTION,
+    PERMISSIONS.EDIT_TRANSACTION,
+    PERMISSIONS.EXPORT_DATA,
+    PERMISSIONS.VIEW_REPORTS,
+    PERMISSIONS.VIEW_AUDIT_LOGS,
+    PERMISSIONS.APPROVE_TRANSACTION
   ],
-  operator: ['view_inventory', 'create_transaction', 'edit_transaction'],
-  viewer: ['view_inventory', 'view_reports']
+  operator: [
+    PERMISSIONS.VIEW_INVENTORY,
+    PERMISSIONS.CREATE_TRANSACTION,
+    PERMISSIONS.EDIT_TRANSACTION
+  ],
+  viewer: [PERMISSIONS.VIEW_INVENTORY, PERMISSIONS.VIEW_REPORTS]
 } as const;
 
 async function requireIdentity(ctx: {
@@ -1131,9 +1135,10 @@ export const getInvitationByToken = query({
     const businessCountry = company?.country || 'NP';
     const businessPostalCode = company?.postalCode || '';
     const businessType = company?.businessType || 'retailer'; // Default
+    const { token, ...safeInvitation } = inv;
 
     return {
-      ...inv,
+      ...safeInvitation,
       // Business details from server (read-only on client)
       companyName:
         company?.name ||
@@ -1259,13 +1264,13 @@ export const acceptInvitation = mutation({
           name: 'Team Member',
           description: 'Default role for team members',
           permissions: [
-            'view_dashboard',
-            'view_products',
-            'view_sales',
-            'view_customers',
-            'view_suppliers',
-            'create_sales',
-            'view_inventory'
+            PERMISSIONS.VIEW_REPORTS, // view_dashboard
+            PERMISSIONS.VIEW_INVENTORY, // view_products
+            PERMISSIONS.VIEW_REPORTS, // view_sales
+            PERMISSIONS.VIEW_REPORTS, // view_customers
+            PERMISSIONS.MANAGE_SUPPLIERS, // view_suppliers
+            PERMISSIONS.CREATE_TRANSACTION, // create_sales
+            PERMISSIONS.VIEW_INVENTORY
           ],
           isSystem: true,
           createdAt: now,

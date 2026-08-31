@@ -4,6 +4,7 @@ import { useUser, useClerk } from '@clerk/nextjs';
 import { useQuery } from 'convex/react';
 import { api } from '@/convex/_generated/api';
 import { useEffect, ReactNode, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { Loader2, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
@@ -14,6 +15,7 @@ interface AccountStatusGuardProps {
 export function AccountStatusGuard({ children }: AccountStatusGuardProps) {
   const { user, isLoaded } = useUser();
   const { signOut } = useClerk();
+  const router = useRouter();
   const [showAccessDenied, setShowAccessDenied] = useState(false);
 
   const accessCheck = useQuery(
@@ -29,12 +31,16 @@ export function AccountStatusGuard({ children }: AccountStatusGuardProps) {
       return;
     }
 
-    // Only show access denied for actual blocks/suspensions
-    // "Account not found" is handled by middleware, not here
+    // Handle "Account not found" - redirect to company registration
+    if (!accessCheck.hasAccess && accessCheck.reason === 'Account not found') {
+      router.push('/company-registration');
+    }
+
+    // Show access denied for actual blocks/suspensions
     if (!accessCheck.hasAccess && accessCheck.reason !== 'Account not found') {
       setShowAccessDenied(true);
     }
-  }, [isLoaded, user, accessCheck]);
+  }, [isLoaded, user, accessCheck, router]);
 
   // Still loading authentication
   if (!isLoaded) {
@@ -59,7 +65,7 @@ export function AccountStatusGuard({ children }: AccountStatusGuardProps) {
     );
   }
 
-  // User blocked or suspended (but not a "not found" error)
+  // User blocked or suspended
   if (showAccessDenied && !accessCheck.hasAccess) {
     return (
       <div className='flex min-h-screen items-center justify-center bg-red-50 p-4 dark:bg-red-950/10'>

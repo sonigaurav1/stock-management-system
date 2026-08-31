@@ -40,22 +40,6 @@ export const settingsSchema = {
     updatedAt: v.number()
   }).index('by_user', ['userId']),
 
-  // Integrations
-  integrations: defineTable({
-    userId: v.string(),
-    name: v.string(), // e.g., "tally", "quickbooks", "shopify"
-    category: v.string(), // e.g., "accounting", "ecommerce"
-    isConnected: v.boolean(),
-    apiKey: v.string(), // Encrypted
-    apiSecret: v.optional(v.string()), // Encrypted
-    webhookUrl: v.optional(v.string()),
-    lastSyncAt: v.optional(v.number()),
-    syncStatus: v.optional(v.string()), // "success", "failed", "in_progress"
-    config: v.optional(v.any()), // Additional configuration
-    createdAt: v.number(),
-    updatedAt: v.number()
-  }).index('by_user', ['userId']),
-
   // API Keys
   apiKeys: defineTable({
     userId: v.string(),
@@ -69,33 +53,6 @@ export const settingsSchema = {
     expiresAt: v.optional(v.number())
   }).index('by_user', ['userId']),
 
-  // Webhooks
-  webhooks: defineTable({
-    userId: v.string(),
-    url: v.string(),
-    events: v.array(v.string()), // e.g., ["product.created", "stock.updated"]
-    isActive: v.boolean(),
-    secret: v.string(), // For HMAC signing
-    lastTriggeredAt: v.optional(v.number()),
-    failureCount: v.number(),
-    createdAt: v.number(),
-    updatedAt: v.number()
-  }).index('by_user', ['userId']),
-
-  // Automation Rules
-  automationRules: defineTable({
-    userId: v.string(),
-    name: v.string(),
-    trigger: v.string(), // e.g., "stock_below_reorder"
-    action: v.string(), // e.g., "send_email", "create_po"
-    threshold: v.optional(v.string()), // e.g., "7 days", "50 units"
-    isActive: v.boolean(),
-    lastExecutedAt: v.optional(v.number()),
-    executionCount: v.number(),
-    createdAt: v.number(),
-    updatedAt: v.number()
-  }).index('by_user', ['userId']),
-
   // Audit Log
   auditLog: defineTable({
     userId: v.string(),
@@ -106,28 +63,6 @@ export const settingsSchema = {
     ipAddress: v.optional(v.string()),
     userAgent: v.optional(v.string()),
     createdAt: v.number()
-  }).index('by_user', ['userId']),
-
-  // Webhook Execution Log
-  webhookExecutionLog: defineTable({
-    userId: v.string(),
-    webhookId: v.string(),
-    url: v.string(),
-    event: v.string(),
-    payload: v.any(),
-    statusCode: v.optional(v.number()),
-    response: v.optional(v.string()),
-    error: v.optional(v.string()),
-    retryCount: v.number(),
-    executedAt: v.number()
-  }).index('by_webhook', ['webhookId']),
-
-  // Feature Usage Analytics
-  featureUsage: defineTable({
-    userId: v.string(),
-    feature: v.string(), // e.g., "automation_rule_created", "webhook_triggered"
-    metadata: v.optional(v.any()),
-    timestamp: v.number()
   }).index('by_user', ['userId']),
 
   // Dashboard Configuration - Widget customization per user

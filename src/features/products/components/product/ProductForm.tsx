@@ -218,7 +218,7 @@ export default function ProductForm({
       if (onSuccess) {
         onSuccess();
       } else {
-        router.push('/dashboard/product');
+        router.push('/inventory/products');
       }
     });
 

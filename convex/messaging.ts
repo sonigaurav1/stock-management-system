@@ -100,8 +100,18 @@ export const getSentMessages = query({
 export const getMessageThread = query({
   args: { messageId: v.id('messages') },
   async handler(ctx, args) {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) throw new Error('Not authenticated');
+
     const rootMessage = await ctx.db.get(args.messageId);
     if (!rootMessage) throw new Error('Message not found');
+
+    if (
+      rootMessage.senderId !== identity.subject &&
+      rootMessage.recipientId !== identity.subject
+    ) {
+      throw new Error('Message not found');
+    }
 
     // Get root message and all replies
     const allThreadMessages = await ctx.db
@@ -125,7 +135,9 @@ export const sendMessage = mutation({
     recipientId: v.string(),
     content: v.string(),
     subject: v.optional(v.string()),
-    priority: v.optional(v.string()),
+    priority: v.optional(
+      v.union(v.literal('low'), v.literal('normal'), v.literal('high'))
+    ),
     replyToId: v.optional(v.id('messages')),
     tags: v.optional(v.array(v.string()))
   },

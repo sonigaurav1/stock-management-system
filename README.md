@@ -1,6 +1,15 @@
-# Inventory Management System
+# Invento - Inventory Management System
 
 Effortlessly manage your business inventory with our intuitive and powerful tools.
+
+## 📚 Documentation
+
+👉 **[See Documentation/README.md](./Documentation/README.md)** for complete documentation guide.
+
+- **Quick Start**: [Getting Started](./Documentation/getting-started/QUICK_START.md)
+- **Full Index**: [Documentation Index](./Documentation/INDEX.md)
+- **Architecture**: [System Design](./Documentation/reference/ARCHITECTURE.md)
+- **Code Patterns**: [Common Patterns](./Documentation/reference/CODE-PATTERNS.md)
 
 ## Features
 

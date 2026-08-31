@@ -6,6 +6,12 @@ import {
   getDataScopeUserId
 } from './lib/authHelper';
 import { PERMISSIONS } from './lib/permissions';
+import {
+  createRandomSecret,
+  encryptSecret,
+  hashApiKey,
+  redactSecretLikeValues
+} from './lib/secretStorage';
 
 /**
  * API Keys & Webhooks Management
@@ -51,14 +57,14 @@ export const createApiKey = mutation({
     // 3. Use caller context for data scope
     const dataOwner = getDataScopeUserId(caller);
 
-    // Generate API key (in production, use a proper key generation library)
-    const key = `sk_live_${Math.random().toString(36).substring(2, 50)}`;
+    const key = `sk_live_${createRandomSecret()}`;
     const displayKey = key.slice(-8);
+    const keyHash = hashApiKey(key);
 
     const id = await ctx.db.insert('apiKeys', {
       userId: dataOwner,
       name: args.name,
-      key, // Will be hashed before storage
+      key: keyHash,
       displayKey,
       revoked: false,
       createdAt: Date.now()
@@ -95,13 +101,16 @@ export const deleteApiKey = mutation({
 export const getWebhooks = query({
   args: {},
   async handler(ctx) {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error('Not authenticated');
+    const caller = await resolveCallerContext(ctx);
+    requirePermission(caller, PERMISSIONS.VIEW_ORGANIZATION);
+    const userId = getDataScopeUserId(caller);
 
-    return await ctx.db
+    const webhooks = await ctx.db
       .query('webhooks')
-      .withIndex('by_user', (q) => q.eq('userId', identity.subject))
+      .withIndex('by_user', (q) => q.eq('userId', userId))
       .collect();
+
+    return webhooks.map(({ secret, ...webhook }) => webhook);
   }
 });
 
@@ -120,7 +129,7 @@ export const createWebhook = mutation({
     // 3. Use caller context for data scope
     const dataOwner = getDataScopeUserId(caller);
 
-    const secret = Math.random().toString(36).substring(2);
+    const secret = encryptSecret(createRandomSecret());
 
     return await ctx.db.insert('webhooks', {
       userId: dataOwner,

@@ -147,6 +147,105 @@ export const calculateOptimalStockLevel = query({
 });
 
 /**
+ * Get Reorder Recommendations
+ * Returns products that need reordering with priority levels
+ */
+export const getReorderRecommendations = query({
+  args: {},
+  async handler(ctx) {
+    const caller = await resolveCallerContext(ctx);
+    requirePermission(caller, PERMISSIONS.VIEW_INVENTORY);
+    const userId = getDataScopeUserId(caller);
+
+    // Get products with stock information
+    const products = await ctx.db
+      .query('products')
+      .withIndex('by_user_and_isDeleted', (q) =>
+        q.eq('userId', userId).eq('isDeleted', false)
+      )
+      .collect();
+
+    // Generate reorder recommendations
+    const recommendations = products
+      .filter(
+        (p) =>
+          p.reorderLevel &&
+          p.stockLevel !== undefined &&
+          p.stockLevel < p.reorderLevel
+      )
+      .map((p) => {
+        const stockGap = p.reorderLevel! - p.stockLevel!;
+        const daysUntilStockout =
+          p.stockLevel! > 0
+            ? Math.ceil(p.stockLevel! / (p.stockLevel! / 30))
+            : 0;
+
+        let priority = 'low';
+        if (daysUntilStockout <= 7 || stockGap > p.reorderLevel! * 0.5)
+          priority = 'urgent';
+        else if (daysUntilStockout <= 14 || stockGap > p.reorderLevel! * 0.3)
+          priority = 'high';
+        else if (daysUntilStockout <= 30) priority = 'medium';
+
+        const purchasePrice =
+          typeof p.purchasePrice === 'string' ? parseFloat(p.purchasePrice) : 0;
+        const recommendedQuantity = Math.ceil(
+          p.reorderLevel! * 1.5 - p.stockLevel!
+        );
+        const reorderCost = recommendedQuantity * purchasePrice;
+
+        return {
+          productId: p._id,
+          productName: p.name,
+          currentStock: p.stockLevel,
+          reorderLevel: p.reorderLevel,
+          recommendedQuantity,
+          daysUntilStockout,
+          priority,
+          supplier: p.supplierName,
+          lastRestocked: p.lastRestockedAt,
+          reorderCost
+        };
+      })
+      .sort((a, b) => {
+        const priorityOrder = { urgent: 0, high: 1, medium: 2, low: 3 };
+        return (
+          (priorityOrder[a.priority as keyof typeof priorityOrder] || 999) -
+          (priorityOrder[b.priority as keyof typeof priorityOrder] || 999)
+        );
+      });
+
+    const totalReorderCost = recommendations.reduce(
+      (sum, r) => sum + r.reorderCost,
+      0
+    );
+    const estimatedInventoryCost = recommendations.reduce(
+      (sum, r) =>
+        sum +
+        (r.currentStock || 0) * (typeof r.currentStock === 'number' ? 0 : 0),
+      0
+    );
+    const urgentCount = recommendations.filter(
+      (r) => r.priority === 'urgent'
+    ).length;
+
+    return {
+      recommendations,
+      summary: {
+        totalRecommendations: recommendations.length,
+        urgentCount,
+        totalReorderCost,
+        estimatedInventoryCost,
+        totalProducts: products.length,
+        needsReorder: recommendations.length,
+        urgent: recommendations.filter((r) => r.priority === 'urgent').length,
+        high: recommendations.filter((r) => r.priority === 'high').length
+      }
+    };
+  }
+});
+
+/**
  * Reorder Recommendations Query
  * Get products that need reordering now or soon
  */

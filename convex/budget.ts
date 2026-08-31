@@ -66,7 +66,7 @@ export const updateBudgetSpent = internalMutation({
 
     if (budget) {
       const percentage = (spent / budget.amount) * 100;
-      let status = 'on_track';
+      let status: 'on_track' | 'warning' | 'exceeded' = 'on_track';
       if (percentage > 100) status = 'exceeded';
       else if (percentage > budget.alertThreshold * 100) status = 'warning';
 

@@ -21,7 +21,6 @@ import {
   loadTrackingScripts
 } from '@/lib/cookies';
 import { CookiePreferences } from '@/types/cookies';
-import { cn } from '@/lib/utils';
 
 export function CookieConsentBanner() {
   const [showBanner, setShowBanner] = useState(false);

@@ -62,7 +62,11 @@ export default function TaskList() {
     try {
       await updateTaskStatus({
         taskId: taskId as any,
-        status: newStatus
+        status: newStatus as
+          | 'assigned'
+          | 'in_progress'
+          | 'completed'
+          | 'cancelled'
       });
       toast.success(`Task marked as ${newStatus}`);
     } catch (err) {

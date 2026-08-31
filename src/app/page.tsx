@@ -1,4 +1,4 @@
-import InventoryManagementLanding from '@/app/(marketing)/(landing-page)/page';
+import InventoryManagementLanding from '@/app/(landing-page)/page';
 
 export default function Home() {
   return <InventoryManagementLanding />;

@@ -60,7 +60,6 @@ export interface Integration {
   isConnected: boolean;
   apiKey: string; // Encrypted
   apiSecret?: string;
-  webhookUrl?: string;
   lastSyncAt?: number;
   syncStatus?: 'success' | 'failed' | 'in_progress';
   config?: Record<string, any>;
@@ -122,21 +121,6 @@ export interface AuditLogEntry {
   ipAddress?: string;
   userAgent?: string;
   createdAt: number;
-}
-
-// Webhook Execution
-export interface WebhookExecution {
-  _id: string;
-  userId: string;
-  webhookId: string;
-  url: string;
-  event: string;
-  payload: Record<string, any>;
-  statusCode?: number;
-  response?: string;
-  error?: string;
-  retryCount: number;
-  executedAt: number;
 }
 
 // Feature Usage

@@ -150,28 +150,8 @@ export const useAuth = () => {
         }
       }
 
-      if (process.env.NEXT_PUBLIC_API_URL && username && username.trim()) {
-        try {
-          const usernameResponse = await fetch(
-            `${process.env.NEXT_PUBLIC_API_URL}/api/user-metadata`,
-            {
-              method: 'PATCH',
-              headers: {
-                'Content-Type': 'application/json'
-              },
-              body: JSON.stringify({
-                userId: signUpAttempt.createdUserId,
-                username: username.trim()
-              })
-            }
-          );
-          if (!usernameResponse.ok) {
-            console.warn('Failed to set username in metadata');
-          }
-        } catch (usernameErr) {
-          console.warn('Error setting username:', usernameErr);
-        }
-      }
+      // Username is already stored in Convex via upsertUserProfile
+      // No need to store in Clerk metadata
 
       if (signUpAttempt.status === 'complete') {
         console.log('Sign-up completed successfully');

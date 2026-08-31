@@ -285,6 +285,7 @@ export const createProduct = mutation({
     imageUrl: v.optional(v.string()),
     supplierName: v.optional(v.string()),
     supplierId: v.optional(v.string()),
+    hsnsacCode: v.optional(v.string()), // HSN/SAC code for tax purposes
     lastRestockedAt: v.optional(v.number())
   },
   handler: async (ctx, args) => {
@@ -354,6 +355,22 @@ export const createProduct = mutation({
       //     productName: args.name
       //   }
       // );
+
+      // Log product creation for audit
+      await ctx.db.insert('auditLog', {
+        userId: userId,
+        action: 'product_created',
+        entityType: 'product',
+        entityId: productId.toString(),
+        changes: {
+          productName: args.name,
+          sku: args.sku,
+          categoryName: args.categoryName,
+          createdBy: caller.callerId,
+          createdAt: Date.now()
+        },
+        createdAt: Date.now()
+      });
 
       return productId;
     } catch (error) {
@@ -443,10 +460,27 @@ export const updateProduct = mutation({
 
     let updates = { ...args.updates };
 
-    return await ctx.db.patch(args.id, {
+    const updatedProduct = await ctx.db.patch(args.id, {
       ...updates,
       updatedAt: Date.now()
     });
+
+    // Log product update for audit
+    await ctx.db.insert('auditLog', {
+      userId: userId,
+      action: 'product_updated',
+      entityType: 'product',
+      entityId: args.id.toString(),
+      changes: {
+        productName: existingProduct.name,
+        updatedFields: Object.keys(updates),
+        updatedBy: caller.callerId,
+        updatedAt: Date.now()
+      },
+      createdAt: Date.now()
+    });
+
+    return updatedProduct;
   }
 });
 
@@ -466,10 +500,27 @@ export const deleteProduct = mutation({
       throw new Error('Product not found or access denied');
     }
 
-    return await ctx.db.patch(args.id, {
+    const deletedProduct = await ctx.db.patch(args.id, {
       isDeleted: true, // Soft delete instead of actual deletion
       updatedAt: Date.now() // Track deletion time
     });
+
+    // Log product deletion for audit
+    await ctx.db.insert('auditLog', {
+      userId: userId,
+      action: 'product_deleted',
+      entityType: 'product',
+      entityId: args.id.toString(),
+      changes: {
+        productName: existingProduct.name,
+        sku: existingProduct.sku,
+        deletedBy: caller.callerId,
+        deletedAt: Date.now()
+      },
+      createdAt: Date.now()
+    });
+
+    return deletedProduct;
   }
 });
 
@@ -489,10 +540,27 @@ export const restoreProduct = mutation({
       throw new Error('Product not found or access denied');
     }
 
-    return await ctx.db.patch(args.id, {
+    const restoredProduct = await ctx.db.patch(args.id, {
       isDeleted: false,
       updatedAt: Date.now()
     });
+
+    // Log product restoration for audit
+    await ctx.db.insert('auditLog', {
+      userId: userId,
+      action: 'product_restored',
+      entityType: 'product',
+      entityId: args.id.toString(),
+      changes: {
+        productName: existingProduct.name,
+        sku: existingProduct.sku,
+        restoredBy: caller.callerId,
+        restoredAt: Date.now()
+      },
+      createdAt: Date.now()
+    });
+
+    return restoredProduct;
   }
 });
 

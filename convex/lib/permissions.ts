@@ -33,6 +33,7 @@ export const PERMISSIONS = {
   // Users & Access Control
   MANAGE_USERS: 'manage_users',
   MANAGE_ROLES: 'manage_roles',
+  ADMIN_MANAGE_USERS: 'admin_manage_users',
 
   // Settings
   MANAGE_SETTINGS: 'manage_settings',
@@ -74,6 +75,7 @@ export const ROLE_PRESETS: Record<string, (typeof PERMISSIONS)[Permission][]> =
       PERMISSIONS.MANAGE_SUPPLIERS,
       PERMISSIONS.MANAGE_USERS,
       PERMISSIONS.MANAGE_ROLES,
+      PERMISSIONS.ADMIN_MANAGE_USERS,
       PERMISSIONS.MANAGE_SETTINGS,
       PERMISSIONS.VIEW_ORGANIZATION,
       PERMISSIONS.MANAGE_ORGANIZATION,

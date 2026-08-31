@@ -23,9 +23,7 @@ export const getCustomReports = query({
 
     const reports = await ctx.db
       .query('customReports')
-      .withIndex('by_user_and_isDeleted', (q) =>
-        q.eq('userId', userId).eq('isDeleted', false)
-      )
+      .withIndex('by_user_and_type', (q) => q.eq('userId', userId))
       .collect();
     return reports.map((r: any) => ({
       id: r._id,

@@ -59,7 +59,7 @@ export function ExpenseEntryForm({ onSuccess }: ExpenseEntryFormProps) {
 
   // Get expense categories
   const categories = useQuery(api.expenses.getExpenseCategories, {
-    type: formData.type
+    type: formData.type as 'business' | 'personal'
   });
 
   // Create expense mutation
@@ -107,7 +107,7 @@ export function ExpenseEntryForm({ onSuccess }: ExpenseEntryFormProps) {
         description: formData.description,
         date: new Date(formData.date).getTime(),
         paymentMethod: formData.paymentMethod,
-        type: formData.type,
+        type: formData.type as 'business' | 'personal',
         vendor: formData.vendor || undefined,
         invoice: formData.invoice || undefined,
         isTaxDeductible: formData.isTaxDeductible,

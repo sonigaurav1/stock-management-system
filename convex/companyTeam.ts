@@ -76,7 +76,11 @@ export const listCompanyTeamMembers = query({
 export const inviteCompanyMember = mutation({
   args: {
     email: v.string(),
-    role: v.string(), // 'manager' | 'staff' | 'viewer'
+    role: v.union(
+      v.literal('manager'),
+      v.literal('staff'),
+      v.literal('viewer')
+    ),
     displayName: v.optional(v.string())
   },
   handler: async (ctx, args) => {
@@ -194,7 +198,7 @@ export const removeCompanyMember = mutation({
 export const updateCompanyMemberRole = mutation({
   args: {
     memberId: v.id('companyMembers'),
-    role: v.string()
+    role: v.union(v.literal('manager'), v.literal('staff'), v.literal('viewer'))
   },
   handler: async (ctx, args) => {
     // RBAC: Use resolveCallerContext for proper owner/staff separation

@@ -104,7 +104,7 @@ export const inviteMember = mutation({
         companyOwnerId: caller.ownerId,
         email: args.email,
         displayName: args.displayName,
-        role: args.role,
+        role: args.role as 'manager' | 'staff' | 'viewer',
         status: 'invited',
         token, // Add unique token
         expiresAt, // Add expiry
@@ -308,7 +308,7 @@ export const updateMemberRole = mutation({
     }
 
     await ctx.db.patch(args.membershipId, {
-      role: args.role,
+      role: args.role as 'manager' | 'staff' | 'viewer',
       updatedAt: Date.now()
     });
 
@@ -337,19 +337,19 @@ export const getPendingInvitations = query({
     return invitations.map((inv) => {
       const now = Date.now();
       const isExpired = inv.expiresAt && now > inv.expiresAt;
+      const { token, ...invitation } = inv;
 
       return {
-        _id: inv._id,
-        email: inv.email,
-        displayName: inv.displayName,
-        role: inv.role,
-        invitedAt: inv.invitedAt,
-        invitedBy: inv.invitedBy,
-        token: inv.token,
-        expiresAt: inv.expiresAt,
+        _id: invitation._id,
+        email: invitation.email,
+        displayName: invitation.displayName,
+        role: invitation.role,
+        invitedAt: invitation.invitedAt,
+        invitedBy: invitation.invitedBy,
+        expiresAt: invitation.expiresAt,
         isExpired,
-        resendCount: inv.resendCount ?? 0,
-        inviteLink: inv.token ? getInviteLink(inv.token) : null
+        resendCount: invitation.resendCount ?? 0,
+        inviteLink: token ? getInviteLink(token) : null
       };
     });
   }
@@ -515,55 +515,23 @@ export const getInvitationByToken = query({
   args: { token: v.string() },
   handler: async (ctx, args) => {
     try {
-      console.log(
-        '[getInvitationByToken] Query called with token:',
-        args.token
-      );
-
-      // Fetch all members to see what's in the database
       const allMembers = await ctx.db.query('companyMembers').collect();
-      console.log(
-        '[getInvitationByToken] Total members in DB:',
-        allMembers.length
-      );
-
-      // Log all tokens
-      const allTokens = allMembers
-        .filter((m: any) => m.token)
-        .map((m: any) => ({
-          token: m.token,
-          email: m.email,
-          status: m.status
-        }));
-      console.log('[getInvitationByToken] All tokens in DB:', allTokens);
 
       // Find matching token
       const invitation = allMembers.find((m: any) => m.token === args.token);
-      console.log('[getInvitationByToken] Match found:', !!invitation);
 
       if (!invitation) {
-        console.log(
-          '[getInvitationByToken] No invitation found for token:',
-          args.token
-        );
         return null;
       }
 
       if (invitation.status !== 'invited') {
-        console.log(
-          '[getInvitationByToken] Status is not "invited":',
-          invitation.status
-        );
         return null;
       }
 
       const now = Date.now();
       if (invitation.expiresAt && now > invitation.expiresAt) {
-        console.log('[getInvitationByToken] Invitation expired');
         return null;
       }
-
-      console.log('[getInvitationByToken] Returning valid invitation');
 
       // Fetch owner's company details to pre-fill signup form
       // Try companies table first, then fall back to organizationSettings
@@ -580,8 +548,6 @@ export const getInvitationByToken = query({
           )
           .first();
       }
-
-      console.log('[getInvitationByToken] Owner details:', ownerDetails);
 
       return {
         _id: invitation._id,
@@ -603,7 +569,6 @@ export const getInvitationByToken = query({
         companyGST: ownerDetails?.taxNumber
       };
     } catch (error) {
-      console.error('[getInvitationByToken] Error:', error);
       throw error;
     }
   }

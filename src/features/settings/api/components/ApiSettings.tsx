@@ -9,25 +9,7 @@ import {
   CardTitle
 } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
-import { Textarea } from '@/components/ui/textarea';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue
-} from '@/components/ui/select';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger
-} from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
 import {
   Code,
@@ -36,8 +18,6 @@ import {
   EyeOff,
   Plus,
   Trash2,
-  CheckCircle2,
-  Zap,
   AlertCircle
 } from 'lucide-react';
 
@@ -49,15 +29,6 @@ interface ApiKey {
   createdAt: string;
   lastUsed?: string;
   isActive: boolean;
-}
-
-interface Webhook {
-  id: string;
-  url: string;
-  events: string[];
-  isActive: boolean;
-  createdAt: string;
-  lastTriggered?: string;
 }
 
 const ApiSettings = () => {
@@ -74,22 +45,6 @@ const ApiSettings = () => {
       isActive: true
     }
   ]);
-
-  const [webhooks, setWebhooks] = useState<Webhook[]>([
-    {
-      id: '1',
-      url: 'https://api.example.com/webhooks/inventory',
-      events: ['product.created', 'product.updated', 'stock.low'],
-      isActive: true,
-      createdAt: '2025-02-05',
-      lastTriggered: '30 mins ago'
-    }
-  ]);
-
-  const [newWebhook, setNewWebhook] = useState({
-    url: '',
-    events: [] as string[]
-  });
 
   const handleCopyKey = (key: string) => {
     navigator.clipboard.writeText(key);
@@ -122,54 +77,6 @@ const ApiSettings = () => {
       description: 'API key has been removed'
     });
   };
-
-  const handleAddWebhook = () => {
-    if (!newWebhook.url || newWebhook.events.length === 0) {
-      toast({
-        title: 'Error',
-        description: 'Please enter URL and select at least one event',
-        variant: 'destructive'
-      });
-      return;
-    }
-
-    const webhook: Webhook = {
-      id: Date.now().toString(),
-      url: newWebhook.url,
-      events: newWebhook.events,
-      isActive: true,
-      createdAt: new Date().toLocaleDateString()
-    };
-
-    setWebhooks([...webhooks, webhook]);
-    setNewWebhook({ url: '', events: [] });
-
-    toast({
-      title: 'Success',
-      description: 'Webhook endpoint added'
-    });
-  };
-
-  const handleDeleteWebhook = (id: string) => {
-    setWebhooks(webhooks.filter((w) => w.id !== id));
-    toast({
-      title: 'Deleted',
-      description: 'Webhook has been removed'
-    });
-  };
-
-  const availableEvents = [
-    'product.created',
-    'product.updated',
-    'product.deleted',
-    'stock.updated',
-    'stock.low',
-    'order.created',
-    'order.completed',
-    'invoice.created',
-    'payment.received',
-    'payment.failed'
-  ];
 
   return (
     <div className='space-y-6'>
@@ -300,155 +207,6 @@ const ApiSettings = () => {
         </CardContent>
       </Card>
 
-      {/* Webhooks */}
-      <Card>
-        <CardHeader>
-          <div className='mb-4 flex items-center gap-2'>
-            <Zap className='h-5 w-5' />
-            <div>
-              <CardTitle>Webhooks</CardTitle>
-              <CardDescription>
-                Receive real-time event notifications
-              </CardDescription>
-            </div>
-          </div>
-          <Dialog>
-            <DialogTrigger asChild>
-              <Button size='sm'>
-                <Plus className='mr-1 h-4 w-4' />
-                Add Webhook
-              </Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Add Webhook Endpoint</DialogTitle>
-                <DialogDescription>
-                  Receive real-time notifications for events
-                </DialogDescription>
-              </DialogHeader>
-              <div className='space-y-4'>
-                <div>
-                  <Label>Endpoint URL *</Label>
-                  <Input
-                    placeholder='https://api.example.com/webhooks'
-                    value={newWebhook.url}
-                    onChange={(e) =>
-                      setNewWebhook({ ...newWebhook, url: e.target.value })
-                    }
-                  />
-                  <p className='mt-1 text-xs text-muted-foreground'>
-                    Must be a valid HTTPS URL
-                  </p>
-                </div>
-                <div>
-                  <Label>Events to subscribe to *</Label>
-                  <div className='max-h-48 space-y-2 overflow-y-auto rounded-lg border bg-slate-50 p-3 dark:bg-slate-900'>
-                    {availableEvents.map((event) => (
-                      <div key={event} className='flex items-center'>
-                        <input
-                          type='checkbox'
-                          id={event}
-                          checked={newWebhook.events.includes(event)}
-                          onChange={(e) => {
-                            if (e.target.checked) {
-                              setNewWebhook({
-                                ...newWebhook,
-                                events: [...newWebhook.events, event]
-                              });
-                            } else {
-                              setNewWebhook({
-                                ...newWebhook,
-                                events: newWebhook.events.filter(
-                                  (ev) => ev !== event
-                                )
-                              });
-                            }
-                          }}
-                          className='h-4 w-4'
-                        />
-                        <label
-                          htmlFor={event}
-                          className='ml-2 cursor-pointer text-sm'
-                        >
-                          {event}
-                        </label>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-                <div className='flex gap-2'>
-                  <Button variant='outline' className='flex-1'>
-                    Cancel
-                  </Button>
-                  <Button onClick={handleAddWebhook} className='flex-1'>
-                    Add Webhook
-                  </Button>
-                </div>
-              </div>
-            </DialogContent>
-          </Dialog>
-        </CardHeader>
-
-        <CardContent className='space-y-4'>
-          {webhooks.length > 0 ? (
-            <div className='space-y-3'>
-              {webhooks.map((webhook) => (
-                <div
-                  key={webhook.id}
-                  className='rounded-lg border bg-slate-50 p-4 dark:bg-slate-900'
-                >
-                  <div className='mb-3 flex items-center justify-between'>
-                    <div className='flex items-center gap-2'>
-                      <CheckCircle2 className='h-5 w-5 text-green-600' />
-                      <p className='font-mono text-sm'>{webhook.url}</p>
-                    </div>
-                    <Button
-                      variant='ghost'
-                      size='icon'
-                      onClick={() => handleDeleteWebhook(webhook.id)}
-                    >
-                      <Trash2 className='h-4 w-4' />
-                    </Button>
-                  </div>
-
-                  <div className='mb-2'>
-                    <p className='mb-2 text-xs font-medium'>
-                      Subscribed events:
-                    </p>
-                    <div className='flex flex-wrap gap-1'>
-                      {webhook.events.map((event) => (
-                        <Badge
-                          key={event}
-                          variant='secondary'
-                          className='text-xs'
-                        >
-                          {event}
-                        </Badge>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div className='grid grid-cols-2 text-xs text-muted-foreground'>
-                    <div>Created: {webhook.createdAt}</div>
-                    <div>
-                      Last triggered: {webhook.lastTriggered || 'Never'}
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div className='py-8 text-center text-muted-foreground'>
-              <Zap className='mx-auto mb-2 h-8 w-8 opacity-50' />
-              <p>No webhooks configured</p>
-              <p className='text-sm'>
-                Add a webhook to receive real-time events
-              </p>
-            </div>
-          )}
-        </CardContent>
-      </Card>
-
       {/* Rate Limits */}
       <Card>
         <CardHeader>
@@ -494,7 +252,6 @@ const ApiSettings = () => {
               <p className='mb-1 font-medium'>Quick Links</p>
               <ul className='space-y-1 text-purple-900 dark:text-purple-100'>
                 <li>→ API Reference Documentation</li>
-                <li>→ Webhook Event Types</li>
                 <li>→ Authentication Guide</li>
                 <li>→ Error Codes Reference</li>
               </ul>

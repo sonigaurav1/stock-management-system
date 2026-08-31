@@ -52,7 +52,7 @@ const ROLES = [
 export function InviteMemberModal({ isOpen, onClose }: InviteMemberModalProps) {
   const [email, setEmail] = useState('');
   const [displayName, setDisplayName] = useState('');
-  const [role, setRole] = useState('staff');
+  const [role, setRole] = useState<'manager' | 'staff' | 'viewer'>('staff');
   const [isLoading, setIsLoading] = useState(false);
 
   const inviteMember = useMutation(api.companyTeam.inviteCompanyMember);
@@ -142,7 +142,13 @@ export function InviteMemberModal({ isOpen, onClose }: InviteMemberModalProps) {
           {/* Role Selection */}
           <div className='space-y-3'>
             <Label className='font-medium'>Role *</Label>
-            <Select value={role} onValueChange={setRole} disabled={isLoading}>
+            <Select
+              value={role}
+              onValueChange={(value) =>
+                setRole(value as 'manager' | 'staff' | 'viewer')
+              }
+              disabled={isLoading}
+            >
               <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>

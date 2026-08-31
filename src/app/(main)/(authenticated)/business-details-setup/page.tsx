@@ -309,7 +309,16 @@ export default function BusinessDetailsSetupPage() {
       // Save business details to Convex
       await createCompany({
         name: data.companyName,
-        businessType: data.businessType,
+        businessType: data.businessType as
+          | 'retailer'
+          | 'wholesaler'
+          | 'manufacturer'
+          | 'distributor'
+          | 'service_provider'
+          | 'e_commerce'
+          | 'corporate'
+          | 'nonprofit'
+          | 'other',
         address: data.address,
         city: data.city,
         state: data.state,

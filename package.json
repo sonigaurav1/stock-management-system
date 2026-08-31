@@ -8,6 +8,7 @@
   },
   "scripts": {
     "dev": "next dev --turbopack",
+    "dev:webpack": "next dev --webpack",
     "sitemap": "next-sitemap",
     "exp": "next dev --experimental-https",
     "convex": "npx convex dev",
@@ -18,7 +19,9 @@
     "lint:strict": "eslint --max-warnings=0 src",
     "format": "prettier --write .",
     "format:check": "prettier -c -w .",
-    "prepare": "husky"
+    "prepare": "husky",
+    "clean": "rm -rf .next && rm -rf node_modules/.cache",
+    "clean:cache": "rm -rf .next/dev/cache/turbopack"
   },
   "lint-staged": {
     "**/*.{js,jsx,tsx,ts,css,less,scss,sass}": [
@@ -131,6 +134,12 @@
     "prettier": "3.4.2",
     "prettier-plugin-tailwindcss": "^0.6.9"
   },
+  "browserslist": [
+    ">0.3%",
+    "not ie 11",
+    "not dead",
+    "not op_mini all"
+  ],
   "overrides": {
     "@types/react": "19.0.1",
     "@types/react-dom": "19.0.2"

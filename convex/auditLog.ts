@@ -6,6 +6,7 @@ import {
   getDataScopeUserId
 } from './lib/authHelper';
 import { PERMISSIONS } from './lib/permissions';
+import { redactSecretLikeValues } from './lib/secretStorage';
 
 /**
  * Audit Log API
@@ -24,11 +25,16 @@ export const getAuditLogs = query({
     const userId = getDataScopeUserId(caller);
     const limit = args.limit || 100;
 
-    return await ctx.db
+    const logs = await ctx.db
       .query('auditLog')
       .withIndex('by_user', (q) => q.eq('userId', userId))
       .order('desc')
       .take(limit);
+
+    return logs.map((log) => ({
+      ...log,
+      changes: redactSecretLikeValues(log.changes)
+    }));
   }
 });
 
@@ -45,12 +51,17 @@ export const logAuditEntry = mutation({
     userAgent: v.optional(v.string())
   },
   async handler(ctx, args) {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error('Not authenticated');
+    const caller = await resolveCallerContext(ctx);
+    const userId = getDataScopeUserId(caller);
 
     return await ctx.db.insert('auditLog', {
-      userId: identity.subject,
-      ...args,
+      userId,
+      action: args.action,
+      entityType: args.entityType,
+      entityId: args.entityId,
+      changes: redactSecretLikeValues(args.changes),
+      ipAddress: args.ipAddress,
+      userAgent: args.userAgent,
       createdAt: Date.now()
     });
   }

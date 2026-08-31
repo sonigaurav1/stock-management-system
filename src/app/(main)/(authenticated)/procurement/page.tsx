@@ -44,7 +44,7 @@ const ProcurementPage = () => {
             </CardHeader>
             <CardContent>
               <Link
-                href='/dashboard/product/supplier'
+                href='/procurement/suppliers'
                 className={cn(buttonVariants(), 'w-fit')}
               >
                 Open Suppliers <ArrowRight className='ml-2 size-4' />

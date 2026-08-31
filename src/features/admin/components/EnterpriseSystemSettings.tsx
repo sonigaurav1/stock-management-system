@@ -144,16 +144,6 @@ export function EnterpriseSystemSettings() {
                 </div>
                 <Switch defaultChecked />
               </div>
-              <Separator />
-              <div className='flex items-center justify-between'>
-                <div>
-                  <p className='font-medium'>Webhooks</p>
-                  <p className='text-sm text-muted-foreground'>
-                    Enable webhook integrations
-                  </p>
-                </div>
-                <Switch />
-              </div>
             </CardContent>
           </Card>
         </TabsContent>

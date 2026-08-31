@@ -1,12 +1,13 @@
 import { mutation, query, action } from './_generated/server';
 import { v } from 'convex/values';
 import { resolveCallerContext, getDataScopeUserId } from './lib/authHelper';
+import { BUSINESS_TYPE_VALUES } from './lib/schemaConstants';
 
 // Create account status for new user
 export const createAccountStatus = mutation({
   args: {
     userId: v.string(),
-    businessType: v.string()
+    businessType: v.union(...BUSINESS_TYPE_VALUES.map(v.literal))
   },
   handler: async (ctx, args) => {
     // Authentication check: verify the caller is authenticated
@@ -247,7 +248,12 @@ export const getAllAccounts = query({
 // Get accounts by status (super admin only)
 export const getAccountsByStatus = query({
   args: {
-    status: v.string()
+    status: v.union(
+      v.literal('pending'),
+      v.literal('approved'),
+      v.literal('blocked'),
+      v.literal('suspended')
+    )
   },
   handler: async (ctx, args) => {
     // RBAC: Use resolveCallerContext for proper owner/staff separation
@@ -271,7 +277,7 @@ export const getAccountsByStatus = query({
 export const updateBusinessType = mutation({
   args: {
     userId: v.string(),
-    businessType: v.string()
+    businessType: v.union(...BUSINESS_TYPE_VALUES.map(v.literal))
   },
   handler: async (ctx, args) => {
     // RBAC: Use resolveCallerContext for proper owner/staff separation

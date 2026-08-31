@@ -15,7 +15,7 @@
     --card-foreground: 253 31% 99%;
     --border: 253 13% 20%;
     --input: 253 13% 20%;
-    --primary: 89 78% 46%;
+    --primary: 20 48% 12%;
     --primary-foreground: 253 43% 3%;
     --secondary: 253 7% 9%;
     --secondary-foreground: 253 7% 69%;
@@ -23,11 +23,11 @@
     --accent-foreground: 253 13% 74%;
     --destructive: 339.2 90.36% 51.18%;
     --destructive-foreground: 0 0% 100%;
-    --ring: 89 78% 46%;
+    --ring: 20 48% 12%;
     --radius: 0.5rem;
 
     /* Chart colors */
-    --chart-1: 89 78% 46%;
+    --chart-1: 20 48% 12%;
     --chart-2: 253 91% 58%;
     --chart-3: 30 80% 55%;
     --chart-4: 280 65% 60%;
@@ -36,12 +36,12 @@
     /* Sidebar colors */
     --sidebar-background: 253 43% 4%;
     --sidebar-foreground: 240 4.8% 95.9%;
-    --sidebar-primary: 89 78% 46%;
+    --sidebar-primary: 20 48% 12%;
     --sidebar-primary-foreground: 0 0% 100%;
     --sidebar-accent: 240 3.7% 15.9%;
     --sidebar-accent-foreground: 240 4.8% 95.9%;
     --sidebar-border: 240 3.7% 15.9%;
-    --sidebar-ring: 89 78% 46%;
+    --sidebar-ring: 20 48% 12%;
   }
 
   /* Light mode variant (optional) */
@@ -170,6 +170,126 @@
   .animate-shimmer {
     animation: shimmer 2s infinite;
     background-size: 200% 100%;
+  }
+
+  /* Count up animation */
+  @keyframes countUp {
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .animate-count-up {
+    animation: countUp 0.5s ease-out forwards;
+  }
+
+  /* Fade in up animation */
+  @keyframes fadeInUp {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .animate-fade-in-up {
+    animation: fadeInUp 0.5s ease-out forwards;
+  }
+
+  /* Scale in animation */
+  @keyframes scaleIn {
+    from {
+      opacity: 0;
+      transform: scale(0.9);
+    }
+    to {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+
+  .animate-scale-in {
+    animation: scaleIn 0.3s ease-out forwards;
+  }
+
+  /* Pulse glow animation */
+  @keyframes pulseGlow {
+    0%,
+    100% {
+      box-shadow: 0 0 0 0 rgba(99, 102, 241, 0.4);
+    }
+    50% {
+      box-shadow: 0 0 0 10px rgba(99, 102, 241, 0);
+    }
+  }
+
+  .animate-pulse-glow {
+    animation: pulseGlow 2s ease-in-out infinite;
+  }
+
+  /* Glass morphism utility */
+  .glass {
+    background: rgba(255, 255, 255, 0.8);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+  }
+
+  .dark .glass {
+    background: rgba(15, 23, 42, 0.8);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+  }
+
+  /* Card hover lift effect */
+  .card-hover {
+    transition:
+      transform 0.3s ease-out,
+      box-shadow 0.3s ease-out;
+  }
+
+  .card-hover:hover {
+    transform: translateY(-2px);
+    box-shadow:
+      0 10px 40px -10px rgba(0, 0, 0, 0.1),
+      0 4px 12px -4px rgba(0, 0, 0, 0.05);
+  }
+
+  .dark .card-hover:hover {
+    box-shadow:
+      0 10px 40px -10px rgba(0, 0, 0, 0.3),
+      0 4px 12px -4px rgba(0, 0, 0, 0.2);
+  }
+
+  /* Gradient text utility */
+  .text-gradient {
+    background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  /* Brand colors as CSS variables */
+  :root {
+    --color-brand-primary: #4f46e5;
+    --color-brand-secondary: #6366f1;
+    --color-brand-accent: #8b5cf6;
+    --color-success: #10b981;
+    --color-warning: #f59e0b;
+    --color-error: #f43f5e;
+    --radius-card: 12px;
+    --shadow-card: 0 1px 3px 0 rgba(0, 0, 0, 0.1),
+      0 1px 2px -1px rgba(0, 0, 0, 0.1);
+    --shadow-card-hover: 0 20px 25px -5px rgba(0, 0, 0, 0.1),
+      0 8px 10px -6px rgba(0, 0, 0, 0.1);
+    --shadow-floating: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
   }
 }
 

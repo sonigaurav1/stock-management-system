@@ -14,7 +14,11 @@ export const createSale = mutation({
     customerName: v.string(),
     customerPhone: v.array(v.string()),
     quantitySold: v.number(),
-    paymentStatus: v.string(),
+    paymentStatus: v.union(
+      v.literal('paid'),
+      v.literal('unpaid'),
+      v.literal('partially_paid')
+    ),
     sellingPrice: v.number(),
     totalAmount: v.number(),
     soldAt: v.number(),
