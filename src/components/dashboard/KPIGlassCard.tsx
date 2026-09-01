@@ -6,7 +6,7 @@
 'use client';
 
 import { useEffect, useState, useRef } from 'react';
-import { motion, useSpring, useTransform, useInView } from 'framer-motion';
+import { motion, useSpring, useTransform, useInView } from 'motion/react';
 import { LucideIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';

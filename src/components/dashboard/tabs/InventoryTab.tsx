@@ -5,7 +5,7 @@
 
 'use client';
 
-import { motion } from 'framer-motion';
+import { motion } from 'motion/react';
 import { useQuery } from 'convex/react';
 import { api } from '@/../convex/_generated/api';
 import {
@@ -38,7 +38,6 @@ import { DeadStockIdentification } from '../DeadStockIdentification';
 import { ReorderRecommendations } from '../ReorderRecommendations';
 import { StockLevelCalculator } from '../StockLevelCalculator';
 import { SupplierLeadTimeTracker } from '../SupplierLeadTimeTracker';
-import { AutomaticReorder } from '../AutomaticReorder';
 
 export default function InventoryTab() {
   // Real data queries
@@ -183,7 +182,7 @@ export default function InventoryTab() {
         </TabsContent>
 
         <TabsContent value='reorder' className='mt-0'>
-          <motion.div variants={fadeInUp} className='grid gap-6 lg:grid-cols-2'>
+          <motion.div variants={fadeInUp}>
             <Card className='border-slate-200/50 bg-white/80 backdrop-blur-md dark:border-slate-700/50 dark:bg-slate-900/80'>
               <CardHeader>
                 <CardTitle className='text-lg font-semibold'>
@@ -195,20 +194,6 @@ export default function InventoryTab() {
               </CardHeader>
               <CardContent>
                 <ReorderRecommendations />
-              </CardContent>
-            </Card>
-
-            <Card className='border-slate-200/50 bg-white/80 backdrop-blur-md dark:border-slate-700/50 dark:bg-slate-900/80'>
-              <CardHeader>
-                <CardTitle className='text-lg font-semibold'>
-                  Automatic Reorder
-                </CardTitle>
-                <CardDescription>
-                  Set up automated purchase orders
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <AutomaticReorder />
               </CardContent>
             </Card>
           </motion.div>

@@ -6,7 +6,7 @@
 'use client';
 
 import { useState, Suspense, lazy } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence } from 'motion/react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import {
   LayoutDashboard,

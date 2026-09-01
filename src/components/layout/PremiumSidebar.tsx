@@ -7,7 +7,7 @@
 
 import { useState, useCallback } from 'react';
 import { useSidebar } from './SidebarContext';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence } from 'motion/react';
 import { useUser } from '@clerk/nextjs';
 import { useQuery } from 'convex/react';
 import { api } from '@/../convex/_generated/api';

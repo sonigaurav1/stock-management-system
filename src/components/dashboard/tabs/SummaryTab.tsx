@@ -8,7 +8,7 @@
 import { useUser } from '@clerk/nextjs';
 import { useQuery } from 'convex/react';
 import { api } from '@/../convex/_generated/api';
-import { motion } from 'framer-motion';
+import { motion } from 'motion/react';
 import {
   DollarSign,
   ShoppingCart,

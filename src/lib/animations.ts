@@ -3,7 +3,7 @@
  * Enterprise dashboard animation system
  */
 
-import { Variants, Transition } from 'framer-motion';
+import { Variants, Transition } from 'motion/react';
 
 // Easing curves
 export const easings = {

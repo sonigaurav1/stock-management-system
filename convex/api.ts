@@ -6,16 +6,11 @@ import {
   getDataScopeUserId
 } from './lib/authHelper';
 import { PERMISSIONS } from './lib/permissions';
-import {
-  createRandomSecret,
-  encryptSecret,
-  hashApiKey,
-  redactSecretLikeValues
-} from './lib/secretStorage';
+import { createRandomSecret, hashApiKey } from './lib/secretStorage';
 
 /**
- * API Keys & Webhooks Management
- * Handles API key generation and webhook configuration
+ * API Keys Management
+ * Handles API key generation
  */
 
 // ==================== API Keys ====================
@@ -89,76 +84,6 @@ export const deleteApiKey = mutation({
 
     if (!key || key.userId !== dataOwner) {
       throw new Error('API key not found or access denied');
-    }
-
-    await ctx.db.delete(args.id);
-    return args.id;
-  }
-});
-
-// ==================== Webhooks ====================
-
-export const getWebhooks = query({
-  args: {},
-  async handler(ctx) {
-    const caller = await resolveCallerContext(ctx);
-    requirePermission(caller, PERMISSIONS.VIEW_ORGANIZATION);
-    const userId = getDataScopeUserId(caller);
-
-    const webhooks = await ctx.db
-      .query('webhooks')
-      .withIndex('by_user', (q) => q.eq('userId', userId))
-      .collect();
-
-    return webhooks.map(({ secret, ...webhook }) => webhook);
-  }
-});
-
-export const createWebhook = mutation({
-  args: {
-    url: v.string(),
-    events: v.array(v.string())
-  },
-  async handler(ctx, args) {
-    // 1. Resolve caller context
-    const caller = await resolveCallerContext(ctx);
-
-    // 2. Require permission
-    requirePermission(caller, PERMISSIONS.MANAGE_ORGANIZATION);
-
-    // 3. Use caller context for data scope
-    const dataOwner = getDataScopeUserId(caller);
-
-    const secret = await encryptSecret(createRandomSecret());
-
-    return await ctx.db.insert('webhooks', {
-      userId: dataOwner,
-      url: args.url,
-      events: args.events,
-      isActive: true,
-      secret,
-      failureCount: 0,
-      createdAt: Date.now(),
-      updatedAt: Date.now()
-    });
-  }
-});
-
-export const deleteWebhook = mutation({
-  args: { id: v.id('webhooks') },
-  async handler(ctx, args) {
-    // 1. Resolve caller context
-    const caller = await resolveCallerContext(ctx);
-
-    // 2. Require permission
-    requirePermission(caller, PERMISSIONS.MANAGE_ORGANIZATION);
-
-    // 3. Validate data access
-    const dataOwner = getDataScopeUserId(caller);
-    const webhook = await ctx.db.get(args.id);
-
-    if (!webhook || webhook.userId !== dataOwner) {
-      throw new Error('Webhook not found or access denied');
     }
 
     await ctx.db.delete(args.id);
