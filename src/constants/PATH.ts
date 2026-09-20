@@ -1,8 +1,15 @@
 export const PATH = {
   DASHBOARD: '/dashboard',
-  PRODUCT: '/dashboard/product',
-  PROFILE: '/dashboard/profile',
-  KANBAN: '/dashboard/kanban',
+  PRODUCT: '/inventory/products',
+  CATEGORY: '/inventory/categories',
+  SUPPLIER: '/inventory/suppliers',
+  REPORT: '/reports',
+  BILLING: '/billing',
+  LEDGER: '/ledger',
+  EXPENSES: '/expenses',
+  INVOICE: '/invoice',
+  STOCK: '/inventory/stock',
+  PROFILE: '/settings/profile',
   OVERVIEW: '/dashboard/overview',
   LOGIN: '/',
   SIGNIN: '/sign-in',
@@ -17,5 +24,6 @@ export const PATH = {
   LOCK_SCREEN: '/lock-screen',
   CHAT: '/chat',
   MAIL: '/mail',
-  CALENDAR: '/calendar'
+  CALENDAR: '/calendar',
+  ADMIN: '/admin'
 };

@@ -1,6 +1,7 @@
 'use client';
 
 import { ReactNode } from 'react';
+import { OnboardingStateProvider } from '@/features/auth/providers/OnboardingStateProvider';
 
 export default function OnboardingLayout({
   children
@@ -9,5 +10,5 @@ export default function OnboardingLayout({
 }) {
   // Onboarding is in the public (auth) route group
   // Authentication check happens in the page itself
-  return <>{children}</>;
+  return <OnboardingStateProvider>{children}</OnboardingStateProvider>;
 }

@@ -8,6 +8,6 @@ export { TaxCompliance } from './TaxCompliance';
 // Dashboard Components
 export { KPIGlassCard } from './KPIGlassCard';
 export { AnalyticsSection } from './AnalyticsSection';
-export { SetupGuide } from './SetupGuide';
+// export { SetupGuide } from './SetupGuide';
 export { ActivityFeed } from './ActivityFeed';
 export { QuickActions } from './QuickActions';

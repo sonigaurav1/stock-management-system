@@ -17,12 +17,11 @@ export const createAccountStatus = mutation({
     }
 
     // Authorization check: user can only create their own account status
-    // OR super admins can create for anyone
-    const superAdminIds =
-      process.env.NEXT_PUBLIC_SUPER_ADMIN_USER_IDS?.split(',') || [];
-    const isSuperAdmin = superAdminIds.includes(identity.subject);
+    // OR admins can create for anyone
+    const adminIds = process.env.NEXT_PUBLIC_ADMIN_USER_IDS?.split(',') || [];
+    const isAdmin = adminIds.includes(identity.subject);
 
-    if (identity.subject !== args.userId && !isSuperAdmin) {
+    if (identity.subject !== args.userId && !isAdmin) {
       throw new Error('Can only create account status for yourself');
     }
 
@@ -64,7 +63,7 @@ export const getAccountStatus = query({
   }
 });
 
-// Check if user can access dashboard/admin (super admin only)
+// Check if user can access dashboard/admin (admin only)
 export const checkUserAccess = query({
   args: {
     userId: v.string()
@@ -115,7 +114,7 @@ export const checkUserAccess = query({
   }
 });
 
-// Block user account (super admin only)
+// Block user account (admin only)
 export const blockAccount = mutation({
   args: {
     userId: v.string(),
@@ -125,11 +124,10 @@ export const blockAccount = mutation({
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) throw new Error('Unauthorized');
 
-    // Verify super admin
-    const superAdminIds =
-      process.env.NEXT_PUBLIC_SUPER_ADMIN_USER_IDS?.split(',') || [];
-    if (!superAdminIds.includes(identity.subject)) {
-      throw new Error('Only super admins can block accounts');
+    // Verify admin
+    const adminIds = process.env.NEXT_PUBLIC_ADMIN_USER_IDS?.split(',') || [];
+    if (!adminIds.includes(identity.subject)) {
+      throw new Error('Only admins can block accounts');
     }
 
     const accountStatus = await ctx.db
@@ -153,7 +151,7 @@ export const blockAccount = mutation({
   }
 });
 
-// Unblock user account (super admin only)
+// Unblock user account (admin only)
 export const unblockAccount = mutation({
   args: {
     userId: v.string()
@@ -162,11 +160,10 @@ export const unblockAccount = mutation({
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) throw new Error('Unauthorized');
 
-    // Verify super admin
-    const superAdminIds =
-      process.env.NEXT_PUBLIC_SUPER_ADMIN_USER_IDS?.split(',') || [];
-    if (!superAdminIds.includes(identity.subject)) {
-      throw new Error('Only super admins can unblock accounts');
+    // Verify admin
+    const adminIds = process.env.NEXT_PUBLIC_ADMIN_USER_IDS?.split(',') || [];
+    if (!adminIds.includes(identity.subject)) {
+      throw new Error('Only admins can unblock accounts');
     }
 
     const accountStatus = await ctx.db
@@ -190,7 +187,7 @@ export const unblockAccount = mutation({
   }
 });
 
-// Suspend account (super admin only)
+// Suspend account (admin only)
 export const suspendAccount = mutation({
   args: {
     userId: v.string(),
@@ -200,11 +197,10 @@ export const suspendAccount = mutation({
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) throw new Error('Unauthorized');
 
-    // Verify super admin
-    const superAdminIds =
-      process.env.NEXT_PUBLIC_SUPER_ADMIN_USER_IDS?.split(',') || [];
-    if (!superAdminIds.includes(identity.subject)) {
-      throw new Error('Only super admins can suspend accounts');
+    // Verify admin
+    const adminIds = process.env.NEXT_PUBLIC_ADMIN_USER_IDS?.split(',') || [];
+    if (!adminIds.includes(identity.subject)) {
+      throw new Error('Only admins can suspend accounts');
     }
 
     const accountStatus = await ctx.db
@@ -228,24 +224,23 @@ export const suspendAccount = mutation({
   }
 });
 
-// Get all accounts for super admin dashboard
+// Get all accounts for admin dashboard
 export const getAllAccounts = query({
   handler: async (ctx) => {
     // RBAC: Use resolveCallerContext for proper owner/staff separation
     const caller = await resolveCallerContext(ctx);
 
-    // Verify super admin
-    const superAdminIds =
-      process.env.NEXT_PUBLIC_SUPER_ADMIN_USER_IDS?.split(',') || [];
-    if (!superAdminIds.includes(caller.callerId)) {
-      throw new Error('Only super admins can view all accounts');
+    // Verify admin
+    const adminIds = process.env.NEXT_PUBLIC_ADMIN_USER_IDS?.split(',') || [];
+    if (!adminIds.includes(caller.callerId)) {
+      throw new Error('Only admins can view all accounts');
     }
 
     return await ctx.db.query('accountStatus').collect();
   }
 });
 
-// Get accounts by status (super admin only)
+// Get accounts by status (admin only)
 export const getAccountsByStatus = query({
   args: {
     status: v.union(
@@ -259,11 +254,10 @@ export const getAccountsByStatus = query({
     // RBAC: Use resolveCallerContext for proper owner/staff separation
     const caller = await resolveCallerContext(ctx);
 
-    // Verify super admin
-    const superAdminIds =
-      process.env.NEXT_PUBLIC_SUPER_ADMIN_USER_IDS?.split(',') || [];
-    if (!superAdminIds.includes(caller.callerId)) {
-      throw new Error('Only super admins can view accounts');
+    // Verify admin
+    const adminIds = process.env.NEXT_PUBLIC_ADMIN_USER_IDS?.split(',') || [];
+    if (!adminIds.includes(caller.callerId)) {
+      throw new Error('Only admins can view accounts');
     }
 
     return await ctx.db
@@ -273,7 +267,7 @@ export const getAccountsByStatus = query({
   }
 });
 
-// Update business type (user can update their own, or super admin)
+// Update business type (user can update their own, or admin)
 export const updateBusinessType = mutation({
   args: {
     userId: v.string(),
@@ -284,12 +278,11 @@ export const updateBusinessType = mutation({
     const caller = await resolveCallerContext(ctx);
 
     // Users can only update their own business type
-    // OR super admins can update any user's business type
-    const superAdminIds =
-      process.env.NEXT_PUBLIC_SUPER_ADMIN_USER_IDS?.split(',') || [];
-    const isSuperAdmin = superAdminIds.includes(caller.callerId);
+    // OR admins can update any user's business type
+    const adminIds = process.env.NEXT_PUBLIC_ADMIN_USER_IDS?.split(',') || [];
+    const isAdmin = adminIds.includes(caller.callerId);
 
-    if (caller.callerId !== args.userId && !isSuperAdmin) {
+    if (caller.callerId !== args.userId && !isAdmin) {
       throw new Error('Can only update your own account');
     }
 
@@ -321,12 +314,11 @@ export const verifyOnboardingComplete = query({
     const caller = await resolveCallerContext(ctx);
 
     // Users can only check their own onboarding status
-    // OR super admins can check any user's status
-    const superAdminIds =
-      process.env.NEXT_PUBLIC_SUPER_ADMIN_USER_IDS?.split(',') || [];
-    const isSuperAdmin = superAdminIds.includes(caller.callerId);
+    // OR admins can check any user's status
+    const adminIds = process.env.NEXT_PUBLIC_ADMIN_USER_IDS?.split(',') || [];
+    const isAdmin = adminIds.includes(caller.callerId);
 
-    if (caller.callerId !== args.userId && !isSuperAdmin) {
+    if (caller.callerId !== args.userId && !isAdmin) {
       throw new Error('Can only check your own onboarding status');
     }
 

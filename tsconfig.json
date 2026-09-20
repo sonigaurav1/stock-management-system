@@ -14,10 +14,11 @@
     "resolveJsonModule": true,
     "isolatedModules": true,
     "jsx": "react-jsx",
-    "baseUrl": ".",
     "paths": {
       "@/*": ["./src/*"],
       "@/convex/*": ["./convex/*"],
+      "convex/*": ["./convex/*"],
+      "tailwind.config": ["./tailwind.config.js"],
       "~/*": ["./public/*"]
     },
     "incremental": true,

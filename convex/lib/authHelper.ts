@@ -39,6 +39,8 @@ export async function resolveCallerContext(
   ctx: QueryCtx | MutationCtx
 ): Promise<MemberContext> {
   const identity = await ctx.auth.getUserIdentity();
+  console.log('identity', identity);
+
   if (!identity) {
     throw new Error('Not authenticated');
   }
@@ -85,6 +87,8 @@ export async function resolveCallerContext(
   };
 }
 
+import { ConvexError } from 'convex/values';
+
 /**
  * Check if user has a specific permission
  * Throws error if permission is denied
@@ -94,9 +98,10 @@ export function requirePermission(
   permission: Permission | string
 ): void {
   if (!hasPermission(ctx.permissions, permission)) {
-    throw new Error(
-      `Access denied: missing permission '${permission}'. Your role '${ctx.role}' does not have this permission.`
-    );
+    throw new ConvexError({
+      type: 'PermissionError',
+      message: `Access denied: missing permission '${permission}'. Your role '${ctx.role}' does not have this permission.`
+    });
   }
 }
 
@@ -110,9 +115,10 @@ export function requireAnyPermission(
 ): void {
   const hasAny = permissions.some((p) => hasPermission(ctx.permissions, p));
   if (!hasAny) {
-    throw new Error(
-      `Access denied: your role '${ctx.role}' does not have any of the required permissions.`
-    );
+    throw new ConvexError({
+      type: 'PermissionError',
+      message: `Access denied: your role '${ctx.role}' does not have any of the required permissions.`
+    });
   }
 }
 

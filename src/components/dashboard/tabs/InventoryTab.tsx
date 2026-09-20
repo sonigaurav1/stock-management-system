@@ -31,6 +31,7 @@ import { Progress } from '@/components/ui/progress';
 import { cn } from '@/lib/utils';
 import { fadeInUp, staggerContainer } from '@/lib/animations';
 import { CardSkeleton } from '@/components/skeletons';
+import { useAuthenticatedQuery } from '@/features/auth/utils/auth';
 
 // Import existing components
 import { ABCAnalysis } from '../ABCAnalysis';
@@ -38,12 +39,18 @@ import { DeadStockIdentification } from '../DeadStockIdentification';
 import { ReorderRecommendations } from '../ReorderRecommendations';
 import { StockLevelCalculator } from '../StockLevelCalculator';
 import { SupplierLeadTimeTracker } from '../SupplierLeadTimeTracker';
-import { AutomaticReorder } from '../AutomaticReorder';
+// import { AutomaticReorder } from '../AutomaticReorder';
 
 export default function InventoryTab() {
-  // Real data queries
-  const lowStockProducts = useQuery(api.products.getLowStockProducts, {});
-  const topProducts = useQuery(api.dashboard.getTopSellingProducts, {});
+  // Real data queries - only execute when user is authenticated
+  const lowStockProducts = useAuthenticatedQuery(
+    api.products.getLowStockProducts,
+    {}
+  );
+  const topProducts = useAuthenticatedQuery(
+    api.dashboard.getTopSellingProducts,
+    {}
+  );
 
   const isLoading = lowStockProducts === undefined || topProducts === undefined;
 
@@ -207,9 +214,7 @@ export default function InventoryTab() {
                   Set up automated purchase orders
                 </CardDescription>
               </CardHeader>
-              <CardContent>
-                <AutomaticReorder />
-              </CardContent>
+              <CardContent>{/* <AutomaticReorder /> */}</CardContent>
             </Card>
           </motion.div>
         </TabsContent>

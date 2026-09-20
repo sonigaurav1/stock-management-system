@@ -48,3 +48,7 @@ next-env.d.ts
 certificates
 # Added by code-review-graph
 .code-review-graph/
+
+/graphify-out
+/venv
+/.claude

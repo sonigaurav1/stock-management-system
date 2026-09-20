@@ -112,7 +112,7 @@ export function ExpenseReporting() {
 
   const handleDownload = (report: any) => {
     // In production, this would fetch the file from the server
-    console.debug('Downloading:', report.fileName);
+    console.log('Downloading:', report.fileName);
   };
 
   return (

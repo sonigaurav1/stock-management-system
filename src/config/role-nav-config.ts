@@ -99,10 +99,6 @@ export const MENU_PERMISSIONS: Record<
       Notifications: 'manage_settings',
       Organization: 'manage_organization',
       'Users & Permissions': 'manage_users',
-      Integrations: 'manage_settings',
-      'Security & Compliance': 'view_compliance',
-      'Billing & Subscription': 'manage_settings',
-      'API & Webhooks': 'manage_settings',
       Automation: 'manage_settings',
       'Import / Export': 'export_data'
     }

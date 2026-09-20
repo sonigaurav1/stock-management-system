@@ -32,9 +32,9 @@ import { fadeInUp, staggerContainer } from '@/lib/animations';
 import { CardSkeleton } from '@/components/skeletons';
 
 // Import existing components
-import { AutoReconciliation } from '../AutoReconciliation';
-import { DuplicateDetection } from '../DuplicateDetection';
-import { BulkOperations } from '../BulkOperations';
+// import { AutoReconciliation } from '../AutoReconciliation';
+// import { DuplicateDetection } from '../DuplicateDetection';
+// import { BulkOperations } from '../BulkOperations';
 import { StockReconciliation } from '../StockReconciliation';
 
 export default function OperationsTab() {
@@ -176,9 +176,7 @@ export default function OperationsTab() {
                   </Badge>
                 </div>
               </CardHeader>
-              <CardContent>
-                <AutoReconciliation />
-              </CardContent>
+              <CardContent>{/* <AutoReconciliation /> */}</CardContent>
             </Card>
 
             <Card className='border-slate-200/50 bg-white/80 backdrop-blur-md dark:border-slate-700/50 dark:bg-slate-900/80'>
@@ -245,9 +243,7 @@ export default function OperationsTab() {
                   </Badge>
                 </div>
               </CardHeader>
-              <CardContent>
-                <DuplicateDetection />
-              </CardContent>
+              <CardContent>{/* <DuplicateDetection /> */}</CardContent>
             </Card>
           </motion.div>
         </TabsContent>
@@ -271,9 +267,7 @@ export default function OperationsTab() {
                   </Badge>
                 </div>
               </CardHeader>
-              <CardContent>
-                <BulkOperations />
-              </CardContent>
+              <CardContent>{/* <BulkOperations /> */}</CardContent>
             </Card>
           </motion.div>
         </TabsContent>

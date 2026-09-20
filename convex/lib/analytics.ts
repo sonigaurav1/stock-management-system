@@ -30,12 +30,6 @@ export const TRACKED_FEATURES = {
   AUTOMATION_RULE_EXECUTED: 'automation_rule.executed',
   AUTOMATION_RULE_DELETED: 'automation_rule.deleted',
 
-  // API & Webhooks
-  API_KEY_GENERATED: 'api_key.generated',
-  WEBHOOK_CREATED: 'webhook.created',
-  WEBHOOK_TRIGGERED: 'webhook.triggered',
-  WEBHOOK_FAILED: 'webhook.failed',
-
   // Products
   PRODUCT_CREATED: 'product.created',
   PRODUCT_UPDATED: 'product.updated',
@@ -114,12 +108,6 @@ export class AnalyticsClient {
     this.track(TRACKED_FEATURES.AUTOMATION_RULE_EXECUTED, 'execute', {
       ruleName,
       result
-    });
-
-  trackWebhookEvent = (event: string, statusCode: number) =>
-    this.track(TRACKED_FEATURES.WEBHOOK_TRIGGERED, 'trigger', {
-      event,
-      statusCode
     });
 
   trackProductAction = (action: string, productId: string, metadata?: any) =>

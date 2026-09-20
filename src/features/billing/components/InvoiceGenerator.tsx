@@ -36,7 +36,7 @@ const InvoiceGenerator = () => {
     try {
       setIsGenerating(true);
       // Handle invoice generation logic here
-      console.debug('Invoice data:', values);
+      console.log('Invoice data:', values);
       // TODO: Call API to create invoice and handle response
     } catch (error) {
       console.error('Error generating invoice:', error);

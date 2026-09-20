@@ -4,13 +4,13 @@ import { Lato } from 'next/font/google';
 import NextTopLoader from 'nextjs-toploader';
 import './globals.css';
 import { ConvexClientProvider } from '@/features/auth/providers/ConvexProvider';
-import { OnboardingStateProvider } from '@/features/auth/providers/OnboardingStateProvider';
+import { EdgeStoreProvider } from '@/lib/edgestore';
 import { SpeedInsights } from '@vercel/speed-insights/next';
 import { Analytics } from '@vercel/analytics/react';
 import { Toaster } from '@/components/ui/sonner';
 import ThemeProvider from '@/components/layout/ThemeToggle/theme-provider';
 import { CookieConsentBanner } from '@/components/cookies/CookieConsentBanner';
-import { RoleSyncProvider } from '@/components/RoleSyncProvider';
+import { RootErrorBoundary } from '@/components/errors/RootErrorBoundary';
 
 const lato = Lato({
   subsets: ['latin'],
@@ -175,20 +175,24 @@ export default function RootLayout({
         <AppHead />
       </head>
       <body className='bg-background text-foreground antialiased'>
-        <ConvexClientProvider>
-          <OnboardingStateProvider>
-            <ThemeProvider attribute='class' defaultTheme='light' enableSystem>
-              <RoleSyncProvider>
+        <RootErrorBoundary>
+          <ConvexClientProvider>
+            <EdgeStoreProvider>
+              <ThemeProvider
+                attribute='class'
+                defaultTheme='light'
+                enableSystem
+              >
                 <SpeedInsights />
                 <Analytics />
                 <NextTopLoader showSpinner={false} />
                 <Toaster richColors />
                 <CookieConsentBanner />
                 {children}
-              </RoleSyncProvider>
-            </ThemeProvider>
-          </OnboardingStateProvider>
-        </ConvexClientProvider>
+              </ThemeProvider>
+            </EdgeStoreProvider>
+          </ConvexClientProvider>
+        </RootErrorBoundary>
       </body>
     </html>
   );

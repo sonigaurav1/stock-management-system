@@ -1,0 +1,16 @@
+User
+↓
+Organization / Company
+↓
+Company Members
+↓
+Business Modules
+├── Inventory
+├── Sales
+├── Customers
+├── Suppliers
+├── Accounting
+├── Expenses
+├── Reports
+├── Teams
+└── Communication

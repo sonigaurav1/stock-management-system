@@ -40,19 +40,6 @@ export const settingsSchema = {
     updatedAt: v.number()
   }).index('by_user', ['userId']),
 
-  // API Keys
-  apiKeys: defineTable({
-    userId: v.string(),
-    name: v.string(),
-    key: v.string(), // Hashed
-    displayKey: v.string(), // Last 8 chars only
-    isActive: v.boolean(),
-    lastUsedAt: v.optional(v.number()),
-    rateLimit: v.optional(v.number()), // Requests per minute
-    createdAt: v.number(),
-    expiresAt: v.optional(v.number())
-  }).index('by_user', ['userId']),
-
   // Audit Log
   auditLog: defineTable({
     userId: v.string(),

@@ -28,7 +28,7 @@ import {
 
 export function EnterpriseDataExport() {
   const handleExport = (format: string) => {
-    console.debug(`Exporting data as ${format}`);
+    console.log(`Exporting data as ${format}`);
     // Implement actual export logic
   };
 

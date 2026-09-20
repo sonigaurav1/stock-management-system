@@ -1,0 +1,1 @@
+1) Solve issue of back (loader gets loading without anything)

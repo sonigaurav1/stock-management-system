@@ -129,7 +129,7 @@ export const updateCompanyDetails = mutation({
 });
 
 /**
- * Update verification status (owner only, super admin can also update)
+ * Update verification status (owner only, admin can also update)
  */
 export const updateVerificationStatus = mutation({
   args: { isVerified: v.boolean() },

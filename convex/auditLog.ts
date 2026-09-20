@@ -6,7 +6,7 @@ import {
   getDataScopeUserId
 } from './lib/authHelper';
 import { PERMISSIONS } from './lib/permissions';
-import { redactSecretLikeValues } from './lib/secretStorage';
+import { redactSecretLikeValues } from './lib/redact';
 
 /**
  * Audit Log API

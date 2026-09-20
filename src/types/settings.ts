@@ -38,64 +38,13 @@ export interface NotificationRule {
   userId: string;
   name: string;
   triggers: string[];
-  channels: ('email' | 'sms' | 'slack')[];
+  channels: ('email' | 'sms')[];
   recipients: string[];
   isActive: boolean;
   createdAt: number;
   updatedAt: number;
 }
 
-// Integration
-export interface Integration {
-  _id: string;
-  userId: string;
-  name: string;
-  category:
-    | 'accounting'
-    | 'ecommerce'
-    | 'shipping'
-    | 'marketing'
-    | 'communication'
-    | 'storage';
-  isConnected: boolean;
-  apiKey: string; // Encrypted
-  apiSecret?: string;
-  lastSyncAt?: number;
-  syncStatus?: 'success' | 'failed' | 'in_progress';
-  config?: Record<string, any>;
-  createdAt: number;
-  updatedAt: number;
-}
-
-// API Key
-export interface ApiKey {
-  _id: string;
-  userId: string;
-  name: string;
-  key: string; // Hashed
-  displayKey: string; // Last 8 chars
-  isActive: boolean;
-  lastUsedAt?: number;
-  rateLimit?: number;
-  createdAt: number;
-  expiresAt?: number;
-}
-
-// Webhook
-export interface Webhook {
-  _id: string;
-  userId: string;
-  url: string;
-  events: string[];
-  isActive: boolean;
-  secret: string;
-  lastTriggeredAt?: number;
-  failureCount: number;
-  createdAt: number;
-  updatedAt: number;
-}
-
-// Automation Rule
 export interface AutomationRule {
   _id: string;
   userId: string;

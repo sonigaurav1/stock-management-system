@@ -4,13 +4,7 @@ import {
   UNIT_VALUES,
   FREQUENCY_VALUES,
   COMPANY_TYPE_VALUES,
-  BUSINESS_TYPE_VALUES,
-  PAYMENT_STATUS_VALUES,
-  ACCOUNT_STATUS_VALUES,
-  ORGANIZATION_STATUS_VALUES,
-  EXPENSE_STATUS_VALUES,
-  TASK_STATUS_VALUES,
-  ROLE_VALUES
+  BUSINESS_TYPE_VALUES
 } from './lib/schemaConstants';
 
 export default defineSchema({
@@ -523,9 +517,9 @@ export default defineSchema({
       v.literal('nonprofit'),
       v.literal('other')
     ),
-    approvedBy: v.optional(v.string()), // Super admin user ID who approved
+    approvedBy: v.optional(v.string()), // admin user ID who approved
     approvedAt: v.optional(v.number()),
-    blockedBy: v.optional(v.string()), // Super admin user ID who blocked
+    blockedBy: v.optional(v.string()), // admin user ID who blocked
     blockedAt: v.optional(v.number()),
     blockedReason: v.optional(v.string()), // Reason for blocking
     createdAt: v.number(),
@@ -543,11 +537,7 @@ export default defineSchema({
     userId: v.optional(v.string()), // Staff member's Clerk ID (populated on acceptance)
     email: v.string(), // Member's email
     displayName: v.string(), // Member's display name
-    role: v.union(
-      v.literal('manager'),
-      v.literal('staff'),
-      v.literal('viewer')
-    ),
+    role: v.string(), // "owner", "manager", "staff", "viewer", or any custom role name
     status: v.union(
       v.literal('invited'),
       v.literal('accepted'),
@@ -615,34 +605,6 @@ export default defineSchema({
     updatedAt: v.number()
   }).index('by_user', ['userId']),
 
-  // Integrations
-  integrations: defineTable({
-    userId: v.string(),
-    name: v.string(),
-    category: v.string(),
-    enabled: v.boolean(), // Changed from isConnected
-    apiKey: v.string(),
-    apiSecret: v.optional(v.string()),
-    lastSyncAt: v.optional(v.number()),
-    syncStatus: v.optional(v.string()),
-    config: v.optional(v.any()),
-    createdAt: v.number(),
-    updatedAt: v.number()
-  }).index('by_user', ['userId']),
-
-  // API Keys
-  apiKeys: defineTable({
-    userId: v.string(),
-    name: v.string(),
-    key: v.string(),
-    displayKey: v.string(),
-    revoked: v.boolean(), // Changed from isActive
-    lastUsedAt: v.optional(v.number()),
-    rateLimit: v.optional(v.number()),
-    createdAt: v.number(),
-    expiresAt: v.optional(v.number())
-  }).index('by_user', ['userId']),
-
   // Audit Log
   auditLog: defineTable({
     userId: v.string(),
@@ -655,20 +617,6 @@ export default defineSchema({
     createdAt: v.number()
   }).index('by_user', ['userId']),
 
-  // Webhook Execution Log
-  webhookExecutionLog: defineTable({
-    userId: v.string(),
-    webhookId: v.string(),
-    url: v.string(),
-    event: v.string(),
-    payload: v.any(),
-    statusCode: v.optional(v.number()),
-    response: v.optional(v.string()),
-    error: v.optional(v.string()),
-    retryCount: v.number(),
-    executedAt: v.number()
-  }).index('by_webhook', ['webhookId']),
-
   // Feature Usage Analytics
   featureUsage: defineTable({
     userId: v.string(),
@@ -678,10 +626,10 @@ export default defineSchema({
   }).index('by_user', ['userId']),
 
   // System Event Log (Phase 2B: Consolidates webhookExecutionLog + duplicateDetectionLog)
-  // Tracks background jobs, webhooks, duplicate detection, and system-level events
+  // Tracks background jobs, duplicate detection, and system-level events
   systemLog: defineTable({
     userId: v.string(),
-    logType: v.string(), // "webhook" | "duplicate_detection" | "bulk_operation" | "report"
+    logType: v.string(), // "duplicate_detection" | "bulk_operation" | "report"
     status: v.string(), // "success" | "failure" | "pending" | "warning"
 
     // Webhook-specific fields
@@ -1502,7 +1450,6 @@ export default defineSchema({
     userId: v.string(), // Clerk userId
     emailEnabled: v.boolean(), // Receive email notifications
     smsEnabled: v.boolean(), // Receive SMS alerts
-    slackEnabled: v.boolean(), // Receive Slack messages
     inAppEnabled: v.boolean(), // Receive in-app notifications
     notificationTypes: v.object({
       taskAssigned: v.boolean(),
@@ -1521,8 +1468,6 @@ export default defineSchema({
         timezone: v.optional(v.string())
       })
     ),
-    slackWorkspaceId: v.optional(v.string()), // For Slack integration
-    slackUserId: v.optional(v.string()), // Slack user handle
     phoneNumber: v.optional(v.string()), // For SMS
     updatedAt: v.number(),
     createdAt: v.number()

@@ -1,100 +1,82 @@
-# Invento - Inventory Management System
+# Invento - Inventory & Business Management System
 
-Effortlessly manage your business inventory with our intuitive and powerful tools.
+Effortlessly manage your business inventory, multi-supplier sourcing, sales transactions, GST tax invoicing, financial ledgers, expenses, and procurement with Invento.
 
-## 📚 Documentation
+---
 
-👉 **[See Documentation/README.md](./Documentation/README.md)** for complete documentation guide.
+## 📚 Central Documentation Suite
 
-- **Quick Start**: [Getting Started](./Documentation/getting-started/QUICK_START.md)
-- **Full Index**: [Documentation Index](./Documentation/INDEX.md)
-- **Architecture**: [System Design](./Documentation/reference/ARCHITECTURE.md)
-- **Code Patterns**: [Common Patterns](./Documentation/reference/CODE-PATTERNS.md)
+👉 **[Master Documentation Index (Documentation/README.md)](file:///Users/gaurav/Desktop/Invento/Documentation/README.md)**
 
-## Features
+### Core System Documents
+- 📋 **[Project Requirement Document.md](file:///Users/gaurav/Desktop/Invento/Project%20Requirement%20Document.md)** - System specifications & functional requirements.
+- 🏛️ **[Architecture.md](file:///Users/gaurav/Desktop/Invento/Architecture.md)** - System architecture, subsystem data flows & tech stack matrix.
+- 🛡️ **[Rules.md](file:///Users/gaurav/Desktop/Invento/Rules.md)** - Mandatory AI directives, prohibitions, and guardrails.
+- 🎨 **[Design.md](file:///Users/gaurav/Desktop/Invento/Design.md)** - Design system tokens, OLED dark theme variables, and typography scale.
+- 🧠 **[Memory.md](file:///Users/gaurav/Desktop/Invento/Memory.md)** - Feature completion status and architectural decisions log.
+- 🤖 **[AI_INSTRUCTIONS.md](file:///Users/gaurav/Desktop/Invento/AI_INSTRUCTIONS.md)** - AI development guide and operating system.
 
-- **Product Management**: Add, update, and delete products with detailed information such as name, SKU, barcode, category, description, brand, purchase price, selling price, stock level, and more.
-- **Supplier Management**: Manage your suppliers with ease. Add, update, and delete supplier information including name, phone, email, address, and more.
-- **Category Management**: Organize your products into categories for better management and reporting.
-- **Stock Movements**: Track stock movements such as purchases, sales, damages, and returns.
-- **Sales Management**: Record and manage sales transactions with detailed information.
-- **Tax Invoice Bill**: Generate tax invoice bills to make your business go digital and keep records of sales transactions.
-- **Ledger Feature**: Maintain a record of financial transactions with suppliers and shopkeepers.
-- **Dashboard and Analytics**: Visual representations of sales data, inventory levels, and other key metrics.
-- **Toast Notifications**: Real-time feedback system for user actions.
-- **Responsive Design**: Fully responsive interface that works on desktop and mobile devices.
-- **Dark/Light Mode**: Switch between visual themes for comfortable viewing.
-- **Role-Based Access Control**: Different permission levels for administrators and staff.
-  - See [Documentation/rbac/](./Documentation/rbac/) for detailed RBAC documentation
+### Feature Technical Documentation (`Documentation/features/`)
+- 🔐 **[AUTH.md](file:///Users/gaurav/Desktop/Invento/Documentation/features/AUTH.md)** - Clerk authentication & `userId` data scoping.
+- 📦 **[PRODUCTS.md](file:///Users/gaurav/Desktop/Invento/Documentation/features/PRODUCTS.md)** - Product catalog, SKUs, barcodes, categories, and auto-reorder alerts.
+- 🚚 **[SUPPLIERS.md](file:///Users/gaurav/Desktop/Invento/Documentation/features/SUPPLIERS.md)** - Supplier directory, multi-supplier mapping (`productSuppliers`), and lead times.
+- 🛒 **[SALES.md](file:///Users/gaurav/Desktop/Invento/Documentation/features/SALES.md)** - Sales transactions, inventory decrementing, and stock movement logs.
+- 📄 **[BILLING.md](file:///Users/gaurav/Desktop/Invento/Documentation/features/BILLING.md)** - GST Tax Invoicing, downloadable PDF invoices, and recurring customer billing.
+- 📒 **[LEDGER.md](file:///Users/gaurav/Desktop/Invento/Documentation/features/LEDGER.md)** - Double-entry financial audit trail, customer receivables, and supplier payables.
+- 💵 **[EXPENSES.md](file:///Users/gaurav/Desktop/Invento/Documentation/features/EXPENSES.md)** - Expense tracking, EdgeStore receipts, and category budgets.
+- 📦 **[PROCUREMENT.md](file:///Users/gaurav/Desktop/Invento/Documentation/features/PROCUREMENT.md)** - Purchase Orders (POs), restock mutations, and vendor receiving.
+- 🔍 **[INVENTORY_AUDIT.md](file:///Users/gaurav/Desktop/Invento/Documentation/features/INVENTORY_AUDIT.md)** - Physical stock count audits and discrepancy reconciliation.
+- 🛡️ **[ADMIN_RBAC.md](file:///Users/gaurav/Desktop/Invento/Documentation/features/ADMIN_RBAC.md)** - System administration, role hierarchy (`admin` role top-level), and security audit logs.
 
-## Technologies Used
+### App Pages & Routes (`Documentation/pages/`)
+- 🗺️ **[APP_ROUTES.md](file:///Users/gaurav/Desktop/Invento/Documentation/pages/APP_ROUTES.md)** - Map of all 75+ Next.js 16 App Router pages and API endpoints.
+- ⚡ **[PAGE_CONTEXT.md](file:///Users/gaurav/Desktop/Invento/Documentation/pages/PAGE_CONTEXT.md)** - Component & Convex data hook dependencies per page route.
 
-This project leverages the following technologies:
+---
 
-- **Frontend**: React, Next.js 15, TypeScript
+## 🚀 Technologies Used
+
+- **Frontend**: Next.js 16 (App Router, Turbopack), React 19, TypeScript
 - **Styling**: Tailwind CSS, Radix UI, Shadcn UI
-- **State Management**: Zustand
-- **Backend**: Convex
-- **Database**: Convex Database
-- **Authentication**: Clerk
-- **Utilities**: Zod, React Hook Form, clsx, Tailwind Merge
-- **Charts**: Recharts
-- **PDF Generation**: jsPDF, jsPDF-AutoTable
+- **State Management**: Convex Real-Time React Hooks, Zustand
+- **Backend & Database**: Convex Server Functions & Reactive Database
+- **Authentication**: Clerk (User identity & `userId` database isolation)
+- **Asset Storage**: EdgeStore
+- **Notifications**: SendGrid (Email)
+- **Document Engine**: jsPDF, jsPDF-AutoTable
 - **Date Handling**: date-fns, Bikram Sambat JS
-- **UI Components**: Toast notifications, Tooltips, Dialog modals
-- **Icons**: Lucide React
-- **Other Tools**: ESLint, Prettier, Husky, Lint-Staged
 
-## Installation
+---
 
-1. Clone the repository:
-    ```sh
-    git clone https://github.com/sonigaurav1/inventory-management-system.git
-    cd inventory-management-system
-    ```
+## 🛠️ Installation & Setup
 
-2. Install dependencies:
-    ```sh
-    pnpm install
-    ```
+1. **Clone the repository**:
+   ```bash
+   git clone https://github.com/sonigaurav1/stock-management-system.git
+   cd Invento
+   ```
 
-3. Set up environment variables:
-    - Copy `.env.example` to `.env` and update the values as needed.
-    - Configure Clerk and Convex credentials.
+2. **Install dependencies**:
+   ```bash
+   pnpm install
+   ```
 
-4. Start the development server:
-    ```sh
-    pnpm run dev
-    ```
+3. **Set up environment variables**:
+   - Copy `.env.example` to `.env.local` and set your Clerk, Convex, and EdgeStore API keys.
 
-## Scripts
+4. **Start the Convex backend & Next.js development server**:
+   ```bash
+   pnpm run convex
+   pnpm run dev
+   ```
 
-- `pnpm run dev`: Start the development server.
-- `pnpm run build`: Build the project for production.
-- `pnpm run start`: Start the production server.
-- `pnpm run lint`: Run ESLint to check for linting errors.
-- `pnpm run lint:fix`: Fix linting errors.
-- `pnpm run format`: Format the code using Prettier.
-- `pnpm run format:check`: Check the code formatting using Prettier.
-- `pnpm run convex`: Start the Convex development server.
+---
 
-## Folder Structure
+## 📜 Available Scripts
 
-- `.next/`: Next.js build output.
-- `convex/`: Convex server functions and schema.
-- `public/`: Static assets.
-- `src/`: Source code.
-  - `app/`: Next.js App Router structure.
-    - `(main)/`: Main application routes.
-    - `(auth)/`: Authentication related routes.
-  - `components/`: Reusable UI components.
-    - `ui/`: Basic UI components built with Shadcn/Radix.
-    - `layout/`: Layout components like containers and wrappers.
-  - `lib/`: Utility functions and libraries.
-  - `features/`: Feature-specific code (e.g., products, suppliers).
-  - `styles/`: Global styles.
-  - `types/`: TypeScript type definitions.
-
-## Environment Setup
-
-The application requires the following environment variables:
+- `pnpm run dev` - Starts the Next.js local development server.
+- `pnpm run build` - Builds the application for production.
+- `pnpm run start` - Starts the production server.
+- `pnpm run lint` - Runs ESLint code checks.
+- `pnpm run format` - Formats code via Prettier.
+- `pnpm run convex` - Starts the Convex development environment.

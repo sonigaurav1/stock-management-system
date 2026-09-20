@@ -27,7 +27,8 @@ export function Breadcrumbs() {
             )}
             {index < items.length - 1 && (
               <BreadcrumbSeparator className='hidden md:block'>
-                <Slash />
+                {/* <Slash /> */}
+                <span>/</span>
               </BreadcrumbSeparator>
             )}
             {index === items.length - 1 && (

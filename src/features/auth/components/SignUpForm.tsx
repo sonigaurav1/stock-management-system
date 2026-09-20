@@ -55,351 +55,21 @@ import {
   countryToCurrencyCode,
   setPreferredCurrencyCode
 } from '@/lib/currency';
-
-// Password validation schema
-const passwordSchema = z
-  .string()
-  .min(8, { message: 'Password must be at least 8 characters' })
-  .refine((password) => /[a-z]/.test(password), {
-    message: 'Password must contain at least one lowercase letter'
-  })
-  .refine((password) => /[A-Z]/.test(password), {
-    message: 'Password must contain at least one uppercase letter'
-  })
-  .refine((password) => /[0-9]/.test(password), {
-    message: 'Password must contain at least one number'
-  })
-  .refine((password) => /[!@#$%^&*]/.test(password), {
-    message: 'Password must contain at least one special character (!@#$%^&*)'
-  });
-
-const personalInfoSchema = z
-  .object({
-    firstName: z
-      .string()
-      .min(2, { message: 'First name must be at least 2 characters' }),
-    lastName: z
-      .string()
-      .min(2, { message: 'Last name must be at least 2 characters' }),
-    username: z
-      .string()
-      .min(3, { message: 'Username must be at least 3 characters' })
-      .max(30, { message: 'Username must be at most 30 characters' })
-      .regex(/^[a-zA-Z0-9_-]+$/, {
-        message:
-          'Username can only contain letters, numbers, underscores, and hyphens'
-      })
-      .optional()
-      .or(z.literal('')),
-    email: z.string().email({ message: 'Please enter a valid email address' }),
-    password: passwordSchema,
-    confirmPassword: z.string()
-  })
-  .refine((data) => data.password === data.confirmPassword, {
-    message: 'Passwords do not match',
-    path: ['confirmPassword']
-  });
-
-const businessInfoSchema = z.object({
-  companyName: z
-    .string()
-    .min(2, { message: 'Company name must be at least 2 characters' }),
-  businessType: z.enum(
-    [
-      'retailer',
-      'wholesaler',
-      'manufacturer',
-      'distributor',
-      'service_provider',
-      'e_commerce',
-      'corporate',
-      'nonprofit',
-      'other'
-    ],
-    { message: 'Please select a business type' }
-  ),
-  phone: z.string().min(10, { message: 'Please enter a valid phone number' }),
-  address: z.string().min(5, { message: 'Please enter a valid address' }),
-  city: z.string().min(2, { message: 'Please enter a city' }),
-  state: z.string().min(2, { message: 'Please enter a state/province' }),
-  country: z.string().min(2, { message: 'Please select a country' }),
-  postalCode: z.string().min(2, { message: 'Please enter a postal code' }),
-  taxNumber: z.string().optional(),
-  website: z.string().url().optional().or(z.literal(''))
-});
-
-type PersonalFormData = z.infer<typeof personalInfoSchema>;
-type BusinessFormData = z.infer<typeof businessInfoSchema>;
-
-// Password strength checker
-interface PasswordStrength {
-  hasLength: boolean;
-  hasLowercase: boolean;
-  hasUppercase: boolean;
-  hasNumber: boolean;
-  hasSpecial: boolean;
-}
-
-interface InvitationData {
-  _id: string;
-  email: string;
-  displayName: string;
-  role: string;
-  invitedBy: string;
-  invitedAt: number;
-  expiresAt?: number;
-  // Business details from server (read-only on client)
-  companyName?: string;
-  companyGST?: string;
-  businessAddress?: string;
-  businessPhone?: string;
-  businessCity?: string;
-  businessState?: string;
-  businessCountry?: string;
-  businessPostalCode?: string;
-  businessType?: string;
-}
-
-// Helper to check if invitation has complete business data (all required fields filled)
-function hasInvitationBusinessData(
-  invitation: InvitationData | null | undefined
-): boolean {
-  if (!invitation) return false;
-  return !!(
-    invitation.companyName &&
-    invitation.businessType &&
-    invitation.businessPhone &&
-    invitation.businessAddress &&
-    invitation.businessCity &&
-    invitation.businessState &&
-    invitation.businessCountry &&
-    invitation.businessPostalCode
-  );
-}
-
-interface SignUpFormProps {
-  invitation?: InvitationData | null;
-  companyInvitationId?: string | null;
-}
-
-const checkPasswordStrength = (password: string): PasswordStrength => {
-  return {
-    hasLength: password.length >= 8,
-    hasLowercase: /[a-z]/.test(password),
-    hasUppercase: /[A-Z]/.test(password),
-    hasNumber: /[0-9]/.test(password),
-    hasSpecial: /[!@#$%^&*]/.test(password)
-  };
-};
-
-const getPasswordStrengthLevel = (
-  strength: PasswordStrength
-): { level: number; label: string; color: string } => {
-  const checkedItems = Object.values(strength).filter(Boolean).length;
-
-  if (checkedItems <= 2) {
-    return { level: 1, label: 'Weak', color: 'bg-red-500' };
-  } else if (checkedItems === 3) {
-    return { level: 2, label: 'Fair', color: 'bg-yellow-500' };
-  } else if (checkedItems === 4) {
-    return { level: 3, label: 'Good', color: 'bg-amber-500' };
-  } else {
-    return { level: 4, label: 'Strong', color: 'bg-green-500' };
-  }
-};
-
-const BUSINESS_TYPES = [
-  { value: 'retailer', label: 'Retailer' },
-  { value: 'wholesaler', label: 'Wholesaler' },
-  { value: 'distributor', label: 'Distributor' },
-  { value: 'manufacturer', label: 'Manufacturer' },
-  { value: 'service_provider', label: 'Service Provider' },
-  { value: 'e_commerce', label: 'E-Commerce' },
-  { value: 'corporate', label: 'Corporate' },
-  { value: 'nonprofit', label: 'Non-Profit' },
-  { value: 'other', label: 'Other' }
-];
-
-const COUNTRIES = [
-  { value: 'AF', label: 'Afghanistan' },
-  { value: 'AL', label: 'Albania' },
-  { value: 'DZ', label: 'Algeria' },
-  { value: 'AO', label: 'Angola' },
-  { value: 'AR', label: 'Argentina' },
-  { value: 'AM', label: 'Armenia' },
-  { value: 'AU', label: 'Australia' },
-  { value: 'AT', label: 'Austria' },
-  { value: 'AZ', label: 'Azerbaijan' },
-  { value: 'BS', label: 'Bahamas' },
-  { value: 'BH', label: 'Bahrain' },
-  { value: 'BD', label: 'Bangladesh' },
-  { value: 'BB', label: 'Barbados' },
-  { value: 'BY', label: 'Belarus' },
-  { value: 'BE', label: 'Belgium' },
-  { value: 'BZ', label: 'Belize' },
-  { value: 'BJ', label: 'Benin' },
-  { value: 'BT', label: 'Bhutan' },
-  { value: 'BO', label: 'Bolivia' },
-  { value: 'BA', label: 'Bosnia and Herzegovina' },
-  { value: 'BW', label: 'Botswana' },
-  { value: 'BR', label: 'Brazil' },
-  { value: 'BN', label: 'Brunei' },
-  { value: 'BG', label: 'Bulgaria' },
-  { value: 'BF', label: 'Burkina Faso' },
-  { value: 'BI', label: 'Burundi' },
-  { value: 'KH', label: 'Cambodia' },
-  { value: 'CM', label: 'Cameroon' },
-  { value: 'CA', label: 'Canada' },
-  { value: 'CV', label: 'Cape Verde' },
-  { value: 'CF', label: 'Central African Republic' },
-  { value: 'TD', label: 'Chad' },
-  { value: 'CL', label: 'Chile' },
-  { value: 'CN', label: 'China' },
-  { value: 'CO', label: 'Colombia' },
-  { value: 'KM', label: 'Comoros' },
-  { value: 'CG', label: 'Congo' },
-  { value: 'CD', label: 'Congo (Democratic Republic)' },
-  { value: 'CR', label: 'Costa Rica' },
-  { value: 'HR', label: 'Croatia' },
-  { value: 'CU', label: 'Cuba' },
-  { value: 'CY', label: 'Cyprus' },
-  { value: 'CZ', label: 'Czech Republic' },
-  { value: 'DK', label: 'Denmark' },
-  { value: 'DJ', label: 'Djibouti' },
-  { value: 'DM', label: 'Dominica' },
-  { value: 'DO', label: 'Dominican Republic' },
-  { value: 'EC', label: 'Ecuador' },
-  { value: 'EG', label: 'Egypt' },
-  { value: 'SV', label: 'El Salvador' },
-  { value: 'GQ', label: 'Equatorial Guinea' },
-  { value: 'ER', label: 'Eritrea' },
-  { value: 'EE', label: 'Estonia' },
-  { value: 'SZ', label: 'Eswatini' },
-  { value: 'ET', label: 'Ethiopia' },
-  { value: 'FJ', label: 'Fiji' },
-  { value: 'FI', label: 'Finland' },
-  { value: 'FR', label: 'France' },
-  { value: 'GA', label: 'Gabon' },
-  { value: 'GM', label: 'Gambia' },
-  { value: 'GE', label: 'Georgia' },
-  { value: 'DE', label: 'Germany' },
-  { value: 'GH', label: 'Ghana' },
-  { value: 'GR', label: 'Greece' },
-  { value: 'GT', label: 'Guatemala' },
-  { value: 'GN', label: 'Guinea' },
-  { value: 'GW', label: 'Guinea-Bissau' },
-  { value: 'GY', label: 'Guyana' },
-  { value: 'HT', label: 'Haiti' },
-  { value: 'HN', label: 'Honduras' },
-  { value: 'HU', label: 'Hungary' },
-  { value: 'IS', label: 'Iceland' },
-  { value: 'IN', label: 'India' },
-  { value: 'ID', label: 'Indonesia' },
-  { value: 'IR', label: 'Iran' },
-  { value: 'IQ', label: 'Iraq' },
-  { value: 'IE', label: 'Ireland' },
-  { value: 'IL', label: 'Israel' },
-  { value: 'IT', label: 'Italy' },
-  { value: 'JM', label: 'Jamaica' },
-  { value: 'JP', label: 'Japan' },
-  { value: 'JO', label: 'Jordan' },
-  { value: 'KZ', label: 'Kazakhstan' },
-  { value: 'KE', label: 'Kenya' },
-  { value: 'KW', label: 'Kuwait' },
-  { value: 'KG', label: 'Kyrgyzstan' },
-  { value: 'LA', label: 'Laos' },
-  { value: 'LV', label: 'Latvia' },
-  { value: 'LB', label: 'Lebanon' },
-  { value: 'LS', label: 'Lesotho' },
-  { value: 'LR', label: 'Liberia' },
-  { value: 'LY', label: 'Libya' },
-  { value: 'LT', label: 'Lithuania' },
-  { value: 'LU', label: 'Luxembourg' },
-  { value: 'MG', label: 'Madagascar' },
-  { value: 'MW', label: 'Malawi' },
-  { value: 'MY', label: 'Malaysia' },
-  { value: 'MV', label: 'Maldives' },
-  { value: 'ML', label: 'Mali' },
-  { value: 'MT', label: 'Malta' },
-  { value: 'MR', label: 'Mauritania' },
-  { value: 'MU', label: 'Mauritius' },
-  { value: 'MX', label: 'Mexico' },
-  { value: 'MD', label: 'Moldova' },
-  { value: 'MN', label: 'Mongolia' },
-  { value: 'ME', label: 'Montenegro' },
-  { value: 'MA', label: 'Morocco' },
-  { value: 'MZ', label: 'Mozambique' },
-  { value: 'MM', label: 'Myanmar' },
-  { value: 'NA', label: 'Namibia' },
-  { value: 'NP', label: 'Nepal' },
-  { value: 'NL', label: 'Netherlands' },
-  { value: 'NZ', label: 'New Zealand' },
-  { value: 'NI', label: 'Nicaragua' },
-  { value: 'NE', label: 'Niger' },
-  { value: 'NG', label: 'Nigeria' },
-  { value: 'KP', label: 'North Korea' },
-  { value: 'MK', label: 'North Macedonia' },
-  { value: 'NO', label: 'Norway' },
-  { value: 'OM', label: 'Oman' },
-  { value: 'PK', label: 'Pakistan' },
-  { value: 'PS', label: 'Palestine' },
-  { value: 'PA', label: 'Panama' },
-  { value: 'PG', label: 'Papua New Guinea' },
-  { value: 'PY', label: 'Paraguay' },
-  { value: 'PE', label: 'Peru' },
-  { value: 'PH', label: 'Philippines' },
-  { value: 'PL', label: 'Poland' },
-  { value: 'PT', label: 'Portugal' },
-  { value: 'QA', label: 'Qatar' },
-  { value: 'RO', label: 'Romania' },
-  { value: 'RU', label: 'Russia' },
-  { value: 'RW', label: 'Rwanda' },
-  { value: 'SA', label: 'Saudi Arabia' },
-  { value: 'SN', label: 'Senegal' },
-  { value: 'RS', label: 'Serbia' },
-  { value: 'SL', label: 'Sierra Leone' },
-  { value: 'SG', label: 'Singapore' },
-  { value: 'SK', label: 'Slovakia' },
-  { value: 'SI', label: 'Slovenia' },
-  { value: 'SO', label: 'Somalia' },
-  { value: 'ZA', label: 'South Africa' },
-  { value: 'KR', label: 'South Korea' },
-  { value: 'SS', label: 'South Sudan' },
-  { value: 'ES', label: 'Spain' },
-  { value: 'LK', label: 'Sri Lanka' },
-  { value: 'SD', label: 'Sudan' },
-  { value: 'SR', label: 'Suriname' },
-  { value: 'SE', label: 'Sweden' },
-  { value: 'CH', label: 'Switzerland' },
-  { value: 'SY', label: 'Syria' },
-  { value: 'TW', label: 'Taiwan' },
-  { value: 'TJ', label: 'Tajikistan' },
-  { value: 'TZ', label: 'Tanzania' },
-  { value: 'TH', label: 'Thailand' },
-  { value: 'TL', label: 'Timor-Leste' },
-  { value: 'TG', label: 'Togo' },
-  { value: 'TT', label: 'Trinidad and Tobago' },
-  { value: 'TN', label: 'Tunisia' },
-  { value: 'TR', label: 'Turkey' },
-  { value: 'TM', label: 'Turkmenistan' },
-  { value: 'UG', label: 'Uganda' },
-  { value: 'UA', label: 'Ukraine' },
-  { value: 'AE', label: 'United Arab Emirates' },
-  { value: 'GB', label: 'United Kingdom' },
-  { value: 'US', label: 'United States' },
-  { value: 'UY', label: 'Uruguay' },
-  { value: 'UZ', label: 'Uzbekistan' },
-  { value: 'VE', label: 'Venezuela' },
-  { value: 'VN', label: 'Vietnam' },
-  { value: 'YE', label: 'Yemen' },
-  { value: 'ZM', label: 'Zambia' },
-  { value: 'ZW', label: 'Zimbabwe' }
-];
-
-// Get user's country - dynamic detection
-function getDefaultCountry(): string {
-  return 'NP'; // Default to Nepal, user can change in form
-}
+import {
+  BusinessFormData,
+  businessInfoSchema,
+  PersonalFormData,
+  personalInfoSchema
+} from '../schema/auth.schema';
+import { PasswordStrength, SignUpFormProps } from '../interfaces/IAuth';
+import {
+  checkPasswordStrength,
+  getDefaultCountry,
+  getPasswordStrengthLevel,
+  isDevelopementEnvironment
+} from '../utils/auth';
+import { BUSINESS_TYPES, COUNTRIES } from '@/constants/data';
+import { createUserSubscription } from '@/convex/subscription';
 
 export default function SignUpForm({
   invitation,
@@ -458,6 +128,9 @@ export default function SignUpForm({
   const acceptCompanyInvitation = useMutation(
     api.companyAccess.acceptInvitation
   );
+  const createUserSubscription = useMutation(
+    api.subscription.createUserSubscription
+  );
 
   // Check username availability query
   const checkUsernameAvailability = useQuery(
@@ -476,26 +149,42 @@ export default function SignUpForm({
   const personalForm = useForm<PersonalFormData>({
     resolver: zodResolver(personalInfoSchema),
     defaultValues: {
-      firstName: '',
-      lastName: '',
-      username: '',
-      email: invitation?.email || '', // Pre-filled from invitation (owner assigned)
-      password: '',
-      confirmPassword: ''
+      firstName: `${isDevelopementEnvironment() ? 'Gaurav' : ''}`,
+      lastName: `${isDevelopementEnvironment() ? 'Soni' : ''}`,
+      username: `${isDevelopementEnvironment() ? 'gauravsoni' : ''}`,
+      email:
+        invitation?.email ||
+        `${isDevelopementEnvironment() ? 'g-invento@gmail.com' : ''}`, // Pre-filled from invitation (owner assigned)
+      password: `${isDevelopementEnvironment() ? 'Jhumka@123' : ''}`,
+      confirmPassword: `${isDevelopementEnvironment() ? 'Jhumka@123' : ''}`
     }
   });
 
   const businessForm = useForm<BusinessFormData>({
     resolver: zodResolver(businessInfoSchema),
     defaultValues: {
-      companyName: invitation?.companyName || '',
-      businessType: (invitation?.businessType as any) || undefined,
-      phone: invitation?.businessPhone || '',
-      address: invitation?.businessAddress || '',
-      city: invitation?.businessCity || '',
-      state: invitation?.businessState || '',
+      companyName:
+        invitation?.companyName ||
+        `${isDevelopementEnvironment() ? 'Invento' : ''}`,
+      businessType:
+        (invitation?.businessType as any) ||
+        `${isDevelopementEnvironment() ? 'retailer' : ''}`,
+      phone:
+        invitation?.businessPhone ||
+        `${isDevelopementEnvironment() ? '9812345678' : ''}`,
+      address:
+        invitation?.businessAddress ||
+        `${isDevelopementEnvironment() ? 'Jhumka Bazaar' : ''}`,
+      city:
+        invitation?.businessCity ||
+        `${isDevelopementEnvironment() ? 'Ramdhuni' : ''}`,
+      state:
+        invitation?.businessState ||
+        `${isDevelopementEnvironment() ? 'Koshi' : ''}`,
       country: invitation?.businessCountry || 'NP',
-      postalCode: invitation?.businessPostalCode || '',
+      postalCode:
+        invitation?.businessPostalCode ||
+        `${isDevelopementEnvironment() ? '56709' : ''}`,
       taxNumber: invitation?.companyGST || '',
       website: ''
     }
@@ -666,11 +355,32 @@ export default function SignUpForm({
 
       // Now save the business details for form-based signup
       try {
-        // 1. Create account status
-        await createAccountStatus({
-          userId,
-          businessType: data.businessType
-        });
+        // Wait for Convex to sync with Clerk's new session
+        let authenticated = false;
+        for (let i = 0; i < 15; i++) {
+          try {
+            // 1. Create account status
+            await createAccountStatus({
+              userId,
+              businessType: data.businessType
+            });
+            authenticated = true;
+            break;
+          } catch (e: any) {
+            if (e.message && e.message.includes('Not authenticated')) {
+              console.log('Convex not authenticated yet, waiting...');
+              await new Promise((resolve) => setTimeout(resolve, 1000));
+            } else {
+              throw e;
+            }
+          }
+        }
+
+        if (!authenticated) {
+          throw new Error(
+            'Timed out waiting for authentication sync. Please try logging in and completing your profile.'
+          );
+        }
 
         // 2. Create/update user profile
         await upsertUserProfile({
@@ -726,12 +436,12 @@ export default function SignUpForm({
           toast.success('Account created! Joining team...');
 
           if (typeof window !== 'undefined') {
-            sessionStorage.removeItem('userJustSignedSignedUp');
+            sessionStorage.removeItem('userJustSignedUp');
             sessionStorage.removeItem('isOAuthInProgress');
             sessionStorage.removeItem('currentSignUpAttempt');
           }
 
-          router.push('/dashboard');
+          router.push('/dashboard/overview');
         } else {
           // 3. Create company from registration (for new users signing up)
           await createCompanyFromRegistration({
@@ -759,6 +469,14 @@ export default function SignUpForm({
             theme: 'light',
             emailNotifications: true,
             lowStockAlerts: true
+          });
+
+          // Create user subscription with free plan
+          await createUserSubscription({
+            planType: 'free',
+            status: 'active',
+            startDate: Date.now(),
+            autoRenew: true
           });
 
           setPreferredCurrencyCode(currencyCode);

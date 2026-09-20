@@ -41,7 +41,7 @@ export const sendEmail = async (payload: EmailPayload) => {
 
     const response = await sgMail.send(msg);
 
-    console.debug(`Email sent to ${payload.to}`);
+    console.log(`Email sent to ${payload.to}`);
     return {
       success: true,
       messageId: response[0].headers['x-message-id']

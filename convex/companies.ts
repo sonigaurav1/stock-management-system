@@ -313,6 +313,12 @@ export const isBusinessProfileComplete = query({
 
     const userId = getDataScopeUserId(caller);
 
+    // Staff members do not manage the business profile, they inherit it.
+    // They should always pass this guard.
+    if (!caller.isOwner) {
+      return true;
+    }
+
     // First check if user has their own company
     const company = await ctx.db
       .query('companies')
@@ -331,8 +337,7 @@ export const isBusinessProfileComplete = query({
         company.state &&
         company.country &&
         company.phone?.length > 0 &&
-        company.email &&
-        company.taxNumber;
+        company.email;
 
       return !!isComplete;
     }

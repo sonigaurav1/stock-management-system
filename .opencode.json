@@ -7,6 +7,15 @@
       ],
       "type": "stdio",
       "env": []
+    },
+    "clerk": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "clerk",
+        "mcp",
+        "run"
+      ]
     }
   }
 }

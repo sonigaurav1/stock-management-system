@@ -175,6 +175,8 @@ function CompanyRegistrationContent() {
       </div>
     );
   }
+
+  return <NormalCompanyRegistration user={user} isLoaded={isLoaded} />;
 }
 
 // Normal registration flow component

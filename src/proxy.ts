@@ -51,15 +51,15 @@ export default clerkMiddleware(async (auth, request) => {
       //   );
       // }
 
-      // Require super admin access
-      // const superAdminIds =
-      //   process.env.NEXT_PUBLIC_SUPER_ADMIN_USER_IDS?.split(',').map((id) =>
+      // Require admin access
+      // const adminIds =
+      //   process.env.NEXT_PUBLIC_ADMIN_USER_IDS?.split(',').map((id) =>
       //     id.trim()
       //   ) || [];
       // const userIdFromClaims = sessionClaims?.sub;
 
-      // if (!superAdminIds.includes(userIdFromClaims || '')) {
-      //   return new NextResponse('Forbidden: Super Admin access required', {
+      // if (!adminIds.includes(userIdFromClaims || '')) {
+      //   return new NextResponse('Forbidden: admin access required', {
       //     status: 403
       //   });
       // }

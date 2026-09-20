@@ -33,6 +33,7 @@ import { Progress } from '@/components/ui/progress';
 import { cn } from '@/lib/utils';
 import { fadeInUp, staggerContainer } from '@/lib/animations';
 import { CardSkeleton } from '@/components/skeletons';
+import { useAuthenticatedQuery } from '@/features/auth/utils/auth';
 
 // Import existing components
 import { CashFlowForecast } from '../CashFlowForecast';
@@ -42,10 +43,13 @@ import { CashFlowDashboard } from '../CashFlowDashboard';
 import { ProfitAndLossReport } from '../ProfitAndLossReport';
 
 export default function FinancialTab() {
-  // Real data queries
-  const cashData = useQuery(api.ledger.getCashLedgerSummary, {});
-  const receivables = useQuery(api.ledger.getReceivablesAging, {});
-  const revenue = useQuery(api.analytics.getTotalRevenueWithComparison, {});
+  // Real data queries - only execute when user is authenticated
+  const cashData = useAuthenticatedQuery(api.ledger.getCashLedgerSummary, {});
+  const receivables = useAuthenticatedQuery(api.ledger.getReceivablesAging, {});
+  const revenue = useAuthenticatedQuery(
+    api.analytics.getTotalRevenueWithComparison,
+    {}
+  );
 
   const isLoading =
     cashData === undefined ||

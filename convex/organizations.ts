@@ -94,7 +94,8 @@ export const inviteUserToOrganization = mutation({
 // Get organizations a user belongs to
 export const getUserOrganizations = query({
   handler: async (ctx) => {
-    const caller = await resolveCallerContext(ctx);
+    const caller = await resolveCallerContext(ctx); // caller context contains callerId, isOwner, membershipId, ownerId, permissions, roles
+    // console.log('caller', caller.callerId)
     requirePermission(caller, PERMISSIONS.VIEW_ORGANIZATION);
     const userId = getDataScopeUserId(caller);
 

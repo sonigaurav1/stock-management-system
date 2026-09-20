@@ -48,7 +48,7 @@ export const generateOtp = mutation({
     // In a real-world application, you would send this OTP to the user's email
     // using an external service or an action function
     // eslint-disable-next-line no-console
-    // console.debug(`OTP for user ${userId}: ${otp}`);
+    // console.log(`OTP for user ${userId}: ${otp}`);
 
     // Here you would implement email sending logic
     // For example, using a third-party email service through an action

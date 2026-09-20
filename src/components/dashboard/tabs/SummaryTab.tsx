@@ -20,41 +20,58 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { KPIGlassCard } from '../KPIGlassCard';
 import { AnalyticsSection } from '../AnalyticsSection';
-import { SetupGuide } from '../SetupGuide';
+// import { SetupGuide } from '../SetupGuide';
 import { ActivityFeed } from '../ActivityFeed';
 import { CardSkeleton } from '@/components/skeletons';
+import { cn } from '@/lib/utils';
 import { fadeInUp, staggerContainer } from '@/lib/animations';
+import { useAuthenticatedQuery } from '@/features/auth/utils/auth';
 
 export default function SummaryTab() {
-  const { user } = useUser();
+  const { user, isLoaded: userLoaded } = useUser();
 
-  // Real data queries
-  const revenue = useQuery(api.analytics.getTotalRevenueWithComparison, {});
-  const sales = useQuery(api.analytics.getTotalSalesWithComparison, {});
-  const customers = useQuery(api.analytics.getTotalCustomersWithComparison, {});
-  const topProducts = useQuery(api.dashboard.getTopSellingProducts, {});
-  const lowStockProducts = useQuery(api.products.getLowStockProducts, {});
-  const salesTrend = useQuery(api.analytics.getRecentSalesAndMonthlyTotal, {});
-  const company = useQuery(api.companies.getCompany, {
+  // Real data queries - only execute when user is authenticated
+  const revenue = useAuthenticatedQuery(
+    api.analytics.getTotalRevenueWithComparison,
+    {}
+  );
+  const sales = useAuthenticatedQuery(
+    api.analytics.getTotalSalesWithComparison,
+    {}
+  );
+  const customers = useAuthenticatedQuery(
+    api.analytics.getTotalCustomersWithComparison,
+    {}
+  );
+  const topProducts = useAuthenticatedQuery(
+    api.dashboard.getTopSellingProducts,
+    {}
+  );
+  const lowStockProducts = useAuthenticatedQuery(
+    api.products.getLowStockProducts,
+    {}
+  );
+  const salesTrend = useAuthenticatedQuery(
+    api.analytics.getRecentSalesAndMonthlyTotal,
+    {}
+  );
+  const company = useAuthenticatedQuery(api.companies.getCompany, {
     userId: user?.id || ''
   });
+  const context = useAuthenticatedQuery(api.companyAccess.getCallerContext, {});
+  const permissions = context?.permissions || [];
+  const canViewFinancials = permissions.includes('view_ledger');
 
   const isLoading =
+    !userLoaded ||
     revenue === undefined ||
     sales === undefined ||
     customers === undefined ||
     topProducts === undefined ||
-    lowStockProducts === undefined;
+    lowStockProducts === undefined ||
+    context === undefined;
 
-  const kpiData = [
-    {
-      title: 'Total Revenue',
-      value: revenue?.currentMonthRevenue || 0,
-      change: revenue?.revenuePercentageChange || 0,
-      sparklineData: [45, 52, 48, 63, 58, 72, 68, 75, 82, 78, 85, 88],
-      icon: DollarSign,
-      isCurrency: true
-    },
+  const baseKpiData = [
     {
       title: 'Sales Count',
       value: sales?.currentMonthSalesCount || 0,
@@ -72,7 +89,7 @@ export default function SummaryTab() {
     {
       title: 'Products Sold',
       value: (topProducts || []).reduce(
-        (acc, p: any) => acc + (p.totalSold || 0),
+        (acc: number, p: any) => acc + (p.totalSold || 0),
         0
       ),
       change: 12.5,
@@ -80,6 +97,20 @@ export default function SummaryTab() {
       icon: Package
     }
   ];
+
+  const kpiData = canViewFinancials
+    ? [
+        {
+          title: 'Total Revenue',
+          value: revenue?.currentMonthRevenue || 0,
+          change: revenue?.revenuePercentageChange || 0,
+          sparklineData: [45, 52, 48, 63, 58, 72, 68, 75, 82, 78, 85, 88],
+          icon: DollarSign,
+          isCurrency: true
+        },
+        ...baseKpiData
+      ]
+    : baseKpiData;
 
   const totalProducts = (topProducts || []).length;
   const lowStockCount = (lowStockProducts || []).length;
@@ -122,6 +153,15 @@ export default function SummaryTab() {
       status: 'completed' as const,
       user: sale.createdBy || 'System'
     }));
+
+  // Show loading state while auth is being established
+  if (!userLoaded) {
+    return (
+      <div className='flex items-center justify-center py-12'>
+        <CardSkeleton className='h-40 w-full' />
+      </div>
+    );
+  }
 
   return (
     <motion.div
@@ -166,7 +206,12 @@ export default function SummaryTab() {
 
       {/* KPI Cards */}
       <motion.section variants={fadeInUp}>
-        <div className='grid gap-6 sm:grid-cols-2 lg:grid-cols-4'>
+        <div
+          className={cn(
+            'grid gap-6 sm:grid-cols-2',
+            kpiData.length === 3 ? 'lg:grid-cols-3' : 'lg:grid-cols-4'
+          )}
+        >
           {isLoading
             ? Array.from({ length: 4 }).map((_, i) => (
                 <CardSkeleton key={i} className='h-40' />
@@ -220,9 +265,9 @@ export default function SummaryTab() {
       {/* Bottom Grid */}
       <motion.section variants={fadeInUp}>
         <div className='grid gap-6 lg:grid-cols-5'>
-          <div className='lg:col-span-2'>
+          {/* <div className='lg:col-span-2'>
             <SetupGuide onComplete={() => console.log('Setup complete!')} />
-          </div>
+          </div> */}
           <div className='lg:col-span-3'>
             <ActivityFeed activities={recentActivities} />
           </div>

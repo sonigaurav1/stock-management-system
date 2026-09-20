@@ -62,6 +62,7 @@ export function InviteMemberDialog() {
   const [inviteResult, setInviteResult] = useState<InviteResult | null>(null);
   const [isEmailSending, setIsEmailSending] = useState(false);
 
+  const customRoles = useQuery(api.teamManagement.listCustomRoles) || [];
   const inviteMember = useMutation(api.companyAccess.inviteMember);
   const sendInviteEmail = useAction(api.companyAccessActions.sendInviteEmail);
 
@@ -192,6 +193,18 @@ export function InviteMemberDialog() {
                   <SelectItem value='manager'>Manager - Full Access</SelectItem>
                   <SelectItem value='staff'>Staff - Limited Access</SelectItem>
                   <SelectItem value='viewer'>Viewer - Read Only</SelectItem>
+                  {customRoles.length > 0 && (
+                    <>
+                      <div className='px-2 py-1.5 text-xs font-semibold text-muted-foreground'>
+                        Custom Roles
+                      </div>
+                      {customRoles.map((cr: any) => (
+                        <SelectItem key={cr._id} value={cr.name}>
+                          {cr.name}
+                        </SelectItem>
+                      ))}
+                    </>
+                  )}
                 </SelectContent>
               </Select>
               <p className='mt-2 text-xs text-muted-foreground'>
@@ -292,6 +305,7 @@ export function TeamMembersList() {
   const { can, isOwner, isLoading } = useUserRole();
   const members = useQuery(api.companyAccess.listOrganizationMembers);
   const pendingInvites = useQuery(api.companyAccess.getPendingInvitations);
+  const customRoles = useQuery(api.teamManagement.listCustomRoles) || [];
   const removeMember = useMutation(api.companyAccess.removeMember);
   const updateMemberRole = useMutation(api.companyAccess.updateMemberRole);
   const resendInvitation = useMutation(api.companyAccess.resendInvitation);
@@ -496,6 +510,18 @@ export function TeamMembersList() {
                         <SelectItem value='manager'>Manager</SelectItem>
                         <SelectItem value='staff'>Staff</SelectItem>
                         <SelectItem value='viewer'>Viewer</SelectItem>
+                        {customRoles.length > 0 && (
+                          <>
+                            <div className='px-2 py-1.5 text-xs font-semibold text-muted-foreground'>
+                              Custom Roles
+                            </div>
+                            {customRoles.map((cr: any) => (
+                              <SelectItem key={cr._id} value={cr.name}>
+                                {cr.name}
+                              </SelectItem>
+                            ))}
+                          </>
+                        )}
                       </SelectContent>
                     </Select>
                     <Button

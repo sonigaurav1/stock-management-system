@@ -199,31 +199,44 @@ export default function ProductForm({
             updates: productData
           });
 
-    toast.promise(promise, {
-      loading:
-        initialData === null
-          ? 'Uploading details...'
-          : 'Updating product details...',
-      success:
+    const toastId = toast.loading(
+      initialData === null
+        ? 'Uploading details...'
+        : 'Updating product details...'
+    );
+
+    try {
+      await promise;
+      toast.success(
         initialData === null
           ? 'Product created successfully!'
           : 'Updated product details!',
-      error:
-        initialData === null
-          ? 'Failed to upload details.'
-          : 'Failed to update product details.'
-    });
-
-    await promise.then(() => {
+        { id: toastId }
+      );
       if (onSuccess) {
         onSuccess();
       } else {
         router.push('/inventory/products');
       }
-    });
-
-    setProgress(0);
-    setIsLoading(false);
+    } catch (error: any) {
+      if (error?.data?.type === 'PermissionError') {
+        toast.warning('Access Denied', {
+          description: error.data.message,
+          id: toastId
+        });
+      } else {
+        toast.error(
+          initialData === null
+            ? 'Failed to upload details.'
+            : 'Failed to update product details.',
+          { id: toastId }
+        );
+        console.error('Form submission error:', error);
+      }
+    } finally {
+      setProgress(0);
+      setIsLoading(false);
+    }
   }
 
   const cardClassName = cn('w-full', !onSuccess && 'mx-auto mb-16');

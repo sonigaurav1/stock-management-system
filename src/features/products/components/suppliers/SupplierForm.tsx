@@ -130,31 +130,44 @@ export default function SupplierForm({
             updates: supplierData
           });
 
-    toast.promise(promise, {
-      loading:
-        initialData === null
-          ? 'Uploading details...'
-          : 'Updating supplier details...',
-      success:
+    const toastId = toast.loading(
+      initialData === null
+        ? 'Uploading details...'
+        : 'Updating supplier details...'
+    );
+
+    try {
+      await promise;
+      toast.success(
         initialData === null
           ? 'Supplier created successfully!'
           : 'Updated supplier details!',
-      error:
-        initialData === null
-          ? 'Failed to upload details.'
-          : 'Failed to update supplier details.'
-    });
-
-    await promise.then(() => {
+        { id: toastId }
+      );
       if (onSuccess) {
         onSuccess();
       } else {
         router.push('/procurement/suppliers');
       }
-    });
-
-    setProgress(0);
-    setIsLoading(false);
+    } catch (error: any) {
+      if (error?.data?.type === 'PermissionError') {
+        toast.warning('Access Denied', {
+          description: error.data.message,
+          id: toastId
+        });
+      } else {
+        toast.error(
+          initialData === null
+            ? 'Failed to upload details.'
+            : 'Failed to update supplier details.',
+          { id: toastId }
+        );
+        console.error('Form submission error:', error);
+      }
+    } finally {
+      setProgress(0);
+      setIsLoading(false);
+    }
   }
 
   const cardClassName = cn('w-full', !onSuccess && 'mx-auto');

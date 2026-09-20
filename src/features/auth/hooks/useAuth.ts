@@ -53,7 +53,7 @@ export const useAuth = () => {
       }
     } catch (error: any) {
       // Log as debug since wrong credentials are expected user behavior
-      console.debug('Sign-in attempt failed:', error?.message);
+      console.log('Sign-in attempt failed:', error?.message);
 
       // Extract the core error message from Clerk
       const errorMessage =
@@ -89,10 +89,11 @@ export const useAuth = () => {
         emailAddress: email,
         password,
         firstName,
-        lastName
+        lastName,
+        username
       });
 
-      console.log('Sign-up attempt created:', {
+      console.log('Sign-up attempt created(Clerk):', {
         id: signUpAttempt.id,
         status: signUpAttempt.status,
         userId: signUpAttempt.createdUserId,
@@ -133,8 +134,7 @@ export const useAuth = () => {
       //   }
       // }
 
-      // For this app, we skip email verification and go straight to company registration
-      // Store business details for company registration page - ONLY on success
+      // For this app, we skip email verification
       if (typeof window !== 'undefined') {
         sessionStorage.setItem('userJustSignedUp', 'true');
       }
@@ -148,60 +148,6 @@ export const useAuth = () => {
           console.error('Error activating session:', sessionErr);
           // Try again or fallback
         }
-      }
-
-      // Username is already stored in Convex via upsertUserProfile
-      // No need to store in Clerk metadata
-
-      if (signUpAttempt.status === 'complete') {
-        console.log('Sign-up completed successfully');
-
-        // Set default role in metadata if API URL is available
-        if (process.env.NEXT_PUBLIC_API_URL) {
-          try {
-            const roleResponse = await fetch(
-              `${process.env.NEXT_PUBLIC_API_URL}/api/roles`,
-              {
-                method: 'PATCH',
-                headers: {
-                  'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                  userId: signUpAttempt.createdUserId,
-                  role: defaultRole
-                })
-              }
-            );
-            if (!roleResponse.ok) {
-              console.warn('Failed to set user role');
-            }
-          } catch (roleErr) {
-            console.warn('Error setting user role:', roleErr);
-          }
-        }
-
-        toast.success('Account created successfully!');
-
-        // Set active session
-        if (setActive && signUpAttempt.createdSessionId) {
-          try {
-            await setActive({ session: signUpAttempt.createdSessionId });
-            console.log('Session activated');
-            // Wait a moment for Clerk to fully establish the session
-            await new Promise((resolve) => setTimeout(resolve, 500));
-          } catch (sessionErr) {
-            console.error('Error activating session:', sessionErr);
-            toast.error('Session setup failed. Please sign in manually.');
-            setLoading(false);
-            return { success: false };
-          }
-        }
-
-        // Return success with userId - let caller handle redirect
-        return {
-          success: true,
-          userId: signUpAttempt.createdUserId || undefined
-        };
       }
 
       // For any other status, still return success with userId
@@ -270,9 +216,7 @@ export const useAuth = () => {
 
       if (!isRealError) {
         // Empty error object - likely a race condition or cleanup issue
-        console.debug(
-          'Empty error object caught - operation may have completed'
-        );
+        console.log('Empty error object caught - operation may have completed');
         setLoading(false);
         return { success: false };
       }

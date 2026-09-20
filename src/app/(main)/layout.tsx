@@ -18,11 +18,13 @@ export default function DashboardLayout({
   return (
     <KBar>
       <SidebarProvider>
-        <div className='flex min-h-screen'>
+        <div className='flex h-screen w-full overflow-hidden bg-background'>
           <PremiumSidebar />
-          <div className='flex flex-1 flex-col pl-20 lg:pl-64'>
+          <div className='flex h-full min-w-0 flex-1 flex-col overflow-hidden'>
             <PremiumHeader />
-            <main className='flex-1 overflow-y-auto p-6'>{children}</main>
+            <main className='flex-1 overflow-y-auto bg-slate-50/50 p-4 dark:bg-slate-900/50 md:p-6'>
+              {children}
+            </main>
           </div>
         </div>
       </SidebarProvider>

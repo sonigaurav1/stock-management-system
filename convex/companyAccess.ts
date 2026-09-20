@@ -308,7 +308,7 @@ export const updateMemberRole = mutation({
     }
 
     await ctx.db.patch(args.membershipId, {
-      role: args.role as 'manager' | 'staff' | 'viewer',
+      role: args.role,
       updatedAt: Date.now()
     });
 
@@ -498,6 +498,8 @@ export const getCallerContext = query({
   args: {},
   handler: async (ctx) => {
     const caller = await resolveCallerContext(ctx);
+    console.log('[getCallerContext] Caller:', caller);
+
     return {
       callerId: caller.callerId,
       ownerId: caller.ownerId,

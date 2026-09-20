@@ -5,9 +5,11 @@
 
 'use client';
 
-import { useState, Suspense, lazy } from 'react';
+import { useState, Suspense, lazy, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useRouter, useSearchParams } from 'next/navigation';
+import { useQuery } from 'convex/react';
+import { api } from '@/../convex/_generated/api';
 import {
   LayoutDashboard,
   Wallet,
@@ -36,39 +38,45 @@ interface TabConfig {
   icon: React.ElementType;
   badge?: string;
   color: string;
+  permission?: string;
 }
 
-const tabs: TabConfig[] = [
+const allTabs: TabConfig[] = [
   {
     id: 'summary',
     label: 'Summary',
     icon: LayoutDashboard,
-    color: 'from-blue-500 to-indigo-600'
+    color: 'from-blue-500 to-indigo-600',
+    permission: 'view_inventory'
   },
   {
     id: 'financial',
     label: 'Financial',
     icon: Wallet,
     badge: 'New',
-    color: 'from-emerald-500 to-teal-600'
+    color: 'from-emerald-500 to-teal-600',
+    permission: 'view_ledger'
   },
   {
     id: 'inventory',
     label: 'Inventory',
     icon: Package,
-    color: 'from-amber-500 to-orange-600'
+    color: 'from-amber-500 to-orange-600',
+    permission: 'view_inventory'
   },
   {
     id: 'customers',
     label: 'Customers',
     icon: Users,
-    color: 'from-violet-500 to-purple-600'
+    color: 'from-violet-500 to-purple-600',
+    permission: 'view_inventory'
   },
   {
     id: 'operations',
     label: 'Operations',
     icon: Zap,
-    color: 'from-rose-500 to-pink-600'
+    color: 'from-rose-500 to-pink-600',
+    permission: 'manage_settings'
   }
 ];
 
@@ -118,13 +126,22 @@ export function TabbedDashboard({
 }: TabbedDashboardProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
+
+  const context = useQuery(api.companyAccess.getCallerContext);
+  const permissions = context?.permissions ?? [];
+  const isLoading = context === undefined;
+
+  const tabs = allTabs.filter(
+    (tab) => !tab.permission || permissions.includes(tab.permission)
+  );
+  const availableTabIds = tabs.map((t) => t.id);
+
   const [activeTab, setActiveTab] = useState(
     searchParams.get('tab') || defaultTab
   );
 
   const handleTabChange = (value: string) => {
     setActiveTab(value);
-    // Update URL without page reload
     const params = new URLSearchParams(searchParams);
     if (value === 'summary') {
       params.delete('tab');
@@ -133,6 +150,18 @@ export function TabbedDashboard({
     }
     router.replace(`?${params.toString()}`, { scroll: false });
   };
+
+  useEffect(() => {
+    // If the active tab is not in the list of available tabs (e.g. they don't have permission),
+    // switch to the first available tab.
+    if (
+      !isLoading &&
+      availableTabIds.length > 0 &&
+      !availableTabIds.includes(activeTab)
+    ) {
+      setActiveTab(availableTabIds[0]);
+    }
+  }, [availableTabIds, activeTab, isLoading]);
 
   return (
     <div className={cn('space-y-6', className)}>

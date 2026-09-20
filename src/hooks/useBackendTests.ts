@@ -26,67 +26,67 @@ export const useBackendTests = () => {
   return {
     // Individual test runners
     createSettings: async () => {
-      console.debug('🧪 Running: Create Settings...');
+      console.log('🧪 Running: Create Settings...');
       const result = await testSettingsCreate();
-      console.debug('✅ Result:', result);
+      console.log('✅ Result:', result);
       return result;
     },
 
     updateSettings: async () => {
-      console.debug('🧪 Running: Update Settings...');
+      console.log('🧪 Running: Update Settings...');
       const result = await testSettingsUpdate({
         companyName: 'Updated Test Company',
         businessType: 'E-commerce'
       });
-      console.debug('✅ Result:', result);
+      console.log('✅ Result:', result);
       return result;
     },
 
     createNotificationRule: async () => {
-      console.debug('🧪 Running: Create Notification Rule...');
+      console.log('🧪 Running: Create Notification Rule...');
       const result = await testNotificationRuleCreate();
-      console.debug('✅ Result:', result);
+      console.log('✅ Result:', result);
       return result;
     },
 
     triggerNotification: async () => {
-      console.debug('🧪 Running: Trigger Notification...');
+      console.log('🧪 Running: Trigger Notification...');
       const result = await testNotificationTrigger();
-      console.debug('✅ Result:', result);
+      console.log('✅ Result:', result);
       return result;
     },
 
     createAuditLog: async () => {
-      console.debug('🧪 Running: Create Audit Log...');
+      console.log('🧪 Running: Create Audit Log...');
       const result = await testAuditLogCreate();
-      console.debug('✅ Result:', result);
+      console.log('✅ Result:', result);
       return result;
     },
 
     trackFeatureUsage: async () => {
-      console.debug('🧪 Running: Track Feature Usage...');
+      console.log('🧪 Running: Track Feature Usage...');
       const result = await testFeatureUsageTrack();
-      console.debug('✅ Result:', result);
+      console.log('✅ Result:', result);
       return result;
     },
 
     getAllData: async () => {
-      console.debug('🧪 Running: Get All Test Data...');
+      console.log('🧪 Running: Get All Test Data...');
       const result = getAllTestDataQuery;
-      console.debug('✅ Result:', result);
+      console.log('✅ Result:', result);
       return result;
     },
 
     // Run all tests in sequence
     runAllTests: async () => {
-      console.debug('🧪 Running All Tests...\n');
+      console.log('🧪 Running All Tests...\n');
       const results = [];
 
       try {
-        console.debug('1️⃣  Creating Settings...');
+        console.log('1️⃣  Creating Settings...');
         results.push(await testSettingsCreate());
 
-        console.debug('2️⃣  Updating Settings...');
+        console.log('2️⃣  Updating Settings...');
         results.push(
           await testSettingsUpdate({
             companyName: 'Updated Test Company',
@@ -94,34 +94,34 @@ export const useBackendTests = () => {
           })
         );
 
-        console.debug('3️⃣  Creating Notification Rule...');
+        console.log('3️⃣  Creating Notification Rule...');
         results.push(await testNotificationRuleCreate());
 
-        console.debug('4️⃣  Triggering Notification...');
+        console.log('4️⃣  Triggering Notification...');
         results.push(await testNotificationTrigger());
 
-        console.debug('5️⃣  Creating Audit Log...');
+        console.log('5️⃣  Creating Audit Log...');
         results.push(await testAuditLogCreate());
 
-        console.debug('6️⃣  Tracking Feature Usage...');
+        console.log('6️⃣  Tracking Feature Usage...');
         results.push(await testFeatureUsageTrack());
 
-        console.debug('7️⃣  Getting All Test Data...');
+        console.log('7️⃣  Getting All Test Data...');
         results.push(getAllTestDataQuery);
 
         // Calculate summary
         const passed = results.filter((r: any) => r?.success).length;
         const failed = results.filter((r: any) => r?.success === false).length;
 
-        console.debug('\n' + '='.repeat(50));
-        console.debug('📊 TEST SUMMARY');
-        console.debug('='.repeat(50));
-        console.debug(`✅ Passed: ${passed}`);
-        console.debug(`❌ Failed: ${failed}`);
-        console.debug(
+        console.log('\n' + '='.repeat(50));
+        console.log('📊 TEST SUMMARY');
+        console.log('='.repeat(50));
+        console.log(`✅ Passed: ${passed}`);
+        console.log(`❌ Failed: ${failed}`);
+        console.log(
           `📈 Success Rate: ${Math.round((passed / results.length) * 100)}%`
         );
-        console.debug('='.repeat(50));
+        console.log('='.repeat(50));
 
         return {
           success: failed === 0,
@@ -153,7 +153,7 @@ export const initializeTestUtilities = (
 ) => {
   if (typeof window !== 'undefined') {
     (window as any).testBackendIntegration = testObject;
-    console.debug(
+    console.log(
       '✅ Test utilities loaded. Run: testBackendIntegration.runAllTests()'
     );
   }

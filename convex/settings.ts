@@ -84,7 +84,8 @@ export const getUserSettings = query({
   async handler(ctx) {
     const caller = await resolveCallerContext(ctx);
     requirePermission(caller, PERMISSIONS.VIEW_ORGANIZATION);
-    const userId = getDataScopeUserId(caller);
+    // User settings should be tied to the ACTUAL user (callerId), not the organization owner
+    const userId = caller.callerId;
 
     const settings = await ctx.db
       .query('userSettings')
@@ -108,9 +109,8 @@ export const upsertUserSettings = mutation({
   },
   async handler(ctx, args) {
     const caller = await resolveCallerContext(ctx);
-    requirePermission(caller, PERMISSIONS.MANAGE_ORGANIZATION);
-    const userId = getDataScopeUserId(caller);
-
+    // User settings should be tied to the ACTUAL user (callerId), not the organization owner
+    const userId = caller.callerId;
     const existing = await ctx.db
       .query('userSettings')
       .withIndex('by_user', (q) => q.eq('userId', userId))

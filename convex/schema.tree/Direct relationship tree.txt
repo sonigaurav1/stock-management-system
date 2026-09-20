@@ -1,0 +1,62 @@
+users
+│
+├── companies
+│   ├── companyMembers
+│   ├── products
+│   │   ├── productSuppliers
+│   │   │   └── suppliers
+│   │   ├── stockMovements
+│   │   ├── locationInventory
+│   │   ├── stockTransfers
+│   │   ├── purchaseOrders
+│   │   └── priceChangeRequests
+│   │
+│   ├── customers
+│   │   ├── sales
+│   │   │   └── payments
+│   │   └── invoices
+│   │       └── recurringInvoices
+│   │
+│   ├── expenses
+│   │   ├── expenseCategories
+│   │   ├── expenseApprovals
+│   │   ├── expenseReceipts
+│   │   └── recurringExpenses
+│   │
+│   ├── transactions
+│   ├── taxReports
+│   │   └── taxPayments
+│   ├── budgets
+│   └── reports
+│       ├── customReports
+│       ├── scheduledReports
+│       ├── reportExecutions
+│       └── reportExports
+│
+├── organizations
+│   └── organizationMembers
+│
+├── teams
+│   ├── teamMembers
+│   │   └── customRoles
+│   └── teamActivity
+│
+├── approvalWorkflows
+│   └── approvalRequests
+│
+├── messages
+│   └── messageAttachments
+│
+├── tasks
+│   └── taskComments
+│
+├── userSettings
+├── notificationPreferences
+├── userInsights
+├── dashboardWidgets
+├── auditLog
+├── systemLog
+├── featureUsage
+├── userSubscriptions
+│   └── subscriptionPayments
+└── accountStatus

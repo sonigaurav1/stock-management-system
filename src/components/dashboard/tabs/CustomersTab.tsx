@@ -31,6 +31,7 @@ import { Progress } from '@/components/ui/progress';
 import { cn } from '@/lib/utils';
 import { fadeInUp, staggerContainer } from '@/lib/animations';
 import { CardSkeleton } from '@/components/skeletons';
+import { useAuthenticatedQuery } from '@/features/auth/utils/auth';
 
 // Import existing components
 import { CustomerSegmentation } from '../CustomerSegmentation';
@@ -41,9 +42,15 @@ import { ChurnRiskScoring } from '../ChurnRiskScoring';
 import { UpsellOpportunities } from '../UpsellOpportunities';
 
 export default function CustomersTab() {
-  // Real data queries
-  const customers = useQuery(api.analytics.getTotalCustomersWithComparison, {});
-  const topProducts = useQuery(api.dashboard.getTopSellingProducts, {});
+  // Real data queries - only execute when user is authenticated
+  const customers = useAuthenticatedQuery(
+    api.analytics.getTotalCustomersWithComparison,
+    {}
+  );
+  const topProducts = useAuthenticatedQuery(
+    api.dashboard.getTopSellingProducts,
+    {}
+  );
 
   const isLoading = customers === undefined;
 

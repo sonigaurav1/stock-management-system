@@ -96,10 +96,9 @@ export default function OnboardingSetupPage() {
       return;
     }
 
-    // If setup is complete but verification is still pending, wait
-    if (hasCompletedSetup && !verificationStatus?.isComplete) {
-      // The verification query will update and trigger the redirect
-      return;
+    // Don't re-run if setup is already marked as complete but verification is pending
+    if (hasCompletedSetup) {
+      return; // Wait for verificationStatus to update
     }
 
     const initializeUser = async () => {

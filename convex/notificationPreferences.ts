@@ -58,7 +58,6 @@ export const createDefaultPreferences = mutation({
       userId,
       emailEnabled: true,
       smsEnabled: true,
-      slackEnabled: false,
       inAppEnabled: true,
       notificationTypes: {
         taskAssigned: true,
@@ -82,7 +81,6 @@ export const updateChannelPreferences = mutation({
   args: {
     emailEnabled: v.optional(v.boolean()),
     smsEnabled: v.optional(v.boolean()),
-    slackEnabled: v.optional(v.boolean()),
     inAppEnabled: v.optional(v.boolean())
   },
   async handler(ctx, args) {
@@ -104,7 +102,6 @@ export const updateChannelPreferences = mutation({
         userId,
         emailEnabled: args.emailEnabled ?? true,
         smsEnabled: args.smsEnabled ?? false,
-        slackEnabled: args.slackEnabled ?? false,
         inAppEnabled: args.inAppEnabled ?? true,
         notificationTypes: {
           taskAssigned: true,
@@ -125,8 +122,6 @@ export const updateChannelPreferences = mutation({
     if (args.emailEnabled !== undefined)
       updates.emailEnabled = args.emailEnabled;
     if (args.smsEnabled !== undefined) updates.smsEnabled = args.smsEnabled;
-    if (args.slackEnabled !== undefined)
-      updates.slackEnabled = args.slackEnabled;
     if (args.inAppEnabled !== undefined)
       updates.inAppEnabled = args.inAppEnabled;
     updates.updatedAt = Date.now();
@@ -262,73 +257,9 @@ export const addPhoneNumber = mutation({
   }
 });
 
-// Connect Slack workspace
-export const connectSlackWorkspace = mutation({
-  args: {
-    workspaceId: v.string(),
-    userId: v.string()
-  },
-  async handler(ctx, args) {
-    // RBAC: Use resolveCallerContext for proper owner/staff separation
-    const caller = await resolveCallerContext(ctx);
-    requirePermission(caller, PERMISSIONS.MANAGE_SETTINGS);
-
-    // Use getDataScopeUserId to get the correct userId (owner's userId for staff)
-    const userId = getDataScopeUserId(caller);
-
-    let prefs = await ctx.db
-      .query('notificationPreferences')
-      .withIndex('by_user', (q) => q.eq('userId', userId))
-      .unique();
-
-    if (!prefs) {
-      throw new Error('Notification preferences not found');
-    }
-
-    await ctx.db.patch(prefs._id, {
-      slackWorkspaceId: args.workspaceId,
-      slackUserId: args.userId,
-      updatedAt: Date.now()
-    });
-
-    return prefs._id;
-  }
-});
-
-// Disconnect Slack workspace
-export const disconnectSlack = mutation({
-  args: {},
-  async handler(ctx) {
-    // RBAC: Use resolveCallerContext for proper owner/staff separation
-    const caller = await resolveCallerContext(ctx);
-    requirePermission(caller, PERMISSIONS.MANAGE_SETTINGS);
-
-    // Use getDataScopeUserId to get the correct userId (owner's userId for staff)
-    const userId = getDataScopeUserId(caller);
-
-    let prefs = await ctx.db
-      .query('notificationPreferences')
-      .withIndex('by_user', (q) => q.eq('userId', userId))
-      .unique();
-
-    if (!prefs) {
-      throw new Error('Notification preferences not found');
-    }
-
-    await ctx.db.patch(prefs._id, {
-      slackWorkspaceId: undefined,
-      slackUserId: undefined,
-      slackEnabled: false,
-      updatedAt: Date.now()
-    });
-
-    return prefs._id;
-  }
-});
-
 // Test notification channel (send test message)
 export const testNotificationChannel = mutation({
-  args: { channel: v.string() }, // "email", "sms", "slack", "inApp"
+  args: { channel: v.string() }, // "email", "sms", "inApp"
   async handler(ctx, args) {
     // RBAC: Use resolveCallerContext for proper owner/staff separation
     const caller = await resolveCallerContext(ctx);
@@ -340,7 +271,6 @@ export const testNotificationChannel = mutation({
     // In production, this would:
     // - For email: Send test email to user's email
     // - For SMS: Send test SMS to user's phone
-    // - For Slack: Send test message to user's Slack
     // - For in-app: Create test message in inbox
 
     if (args.channel === 'inApp') {
@@ -361,7 +291,7 @@ export const testNotificationChannel = mutation({
     }
 
     // For other channels, you'd call your external services
-    // sendEmail(), sendSMS(), sendSlackMessage() etc.
+    // sendEmail(), sendSMS(), etc.
 
     return { channel: args.channel, status: 'sent' };
   }

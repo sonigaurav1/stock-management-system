@@ -5,19 +5,26 @@ import { ClerkProvider, useAuth } from '@clerk/nextjs';
 import { ConvexProviderWithClerk } from 'convex/react-clerk';
 import { ConvexReactClient } from 'convex/react';
 import { ReactNode } from 'react';
-import { EdgeStoreProvider } from '@/lib/edgestore';
 
 const convex = new ConvexReactClient(
   process.env.NEXT_PUBLIC_CONVEX_URL as string
+  // ,{
+  //   verbose: true
+  // }
 );
 
+/**
+ * Convex Client Provider
+ * Handles Clerk authentication + Convex database connection
+ * EdgeStoreProvider is now at root layout level (moved for proper hierarchy)
+ */
 export function ConvexClientProvider({ children }: { children: ReactNode }) {
   return (
     <ClerkProvider
       publishableKey={process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY as string}
     >
       <ConvexProviderWithClerk client={convex} useAuth={useAuth}>
-        <EdgeStoreProvider>{children}</EdgeStoreProvider>
+        {children}
       </ConvexProviderWithClerk>
     </ClerkProvider>
   );

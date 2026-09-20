@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { motion } from 'framer-motion';
 import {
   User,
   Building2,
@@ -12,8 +13,11 @@ import {
   Palette,
   Bell,
   Monitor,
-  Key
+  Key,
+  ArrowRight
 } from 'lucide-react';
+import { cn } from '@/lib/utils';
+import { fadeInUp, staggerContainer, easings } from '@/lib/animations';
 
 const settingsCategories = [
   // Personal Settings
@@ -22,72 +26,74 @@ const settingsCategories = [
     description: 'Profile, password, and personal details',
     href: '/settings/profile',
     icon: User,
-    section: 'personal'
+    section: 'personal',
+    color: 'from-blue-500 to-indigo-600'
   },
-  {
-    title: 'Appearance',
-    description: 'Theme, language, timezone, and display',
-    href: '/settings/appearance',
-    icon: Palette,
-    section: 'personal'
-  },
+  // {
+  //   title: 'Appearance',
+  //   description: 'Theme, language, timezone, and display',
+  //   href: '/settings/appearance',
+  //   icon: Palette,
+  //   section: 'personal',
+  //   color: 'from-purple-500 to-pink-600'
+  // },
   {
     title: 'Display',
     description: 'Dashboard layout, density, and UI options',
     href: '/settings/display',
     icon: Monitor,
-    section: 'personal'
+    section: 'personal',
+    color: 'from-cyan-500 to-blue-600'
   },
   {
     title: 'Notifications',
     description: 'Email alerts, SMS, and in-app notifications',
     href: '/settings/notifications',
     icon: Bell,
-    section: 'personal'
+    section: 'personal',
+    color: 'from-amber-500 to-orange-600'
   },
-  // Organization Settings
+  // Company Settings
   {
-    title: 'Organization',
+    title: 'Company Details',
     description: 'Company details, GST, business registration',
-    href: '/settings/organization',
+    href: '/settings/company',
     icon: Building2,
-    section: 'organization'
+    section: 'company',
+    color: 'from-emerald-500 to-teal-600'
   },
   {
     title: 'Users & Permissions',
     description: 'Team management, roles, and access levels',
     href: '/settings/users',
     icon: Users,
-    section: 'organization'
+    section: 'company',
+    color: 'from-violet-500 to-purple-600'
   },
   {
     title: 'Security & Compliance',
     description: '2FA, audit logs, SSO, and data security',
     href: '/settings/security',
     icon: Lock,
-    section: 'organization'
+    section: 'company',
+    color: 'from-rose-500 to-red-600'
   },
   {
     title: 'Billing & Subscription',
     description: 'Plans, invoices, payment methods',
     href: '/settings/billing',
     icon: CreditCard,
-    section: 'organization'
+    section: 'company',
+    color: 'from-green-500 to-emerald-600'
   },
   // Developer Settings
-  {
-    title: 'API',
-    description: 'API keys, rate limits',
-    href: '/settings/api',
-    icon: Key,
-    section: 'developer'
-  },
   {
     title: 'Import / Export',
     description: 'Backup, restore, and data management',
     href: '/settings/data',
     icon: Download,
-    section: 'developer'
+    section: 'developer',
+    color: 'from-slate-500 to-gray-600'
   }
 ];
 
@@ -96,86 +102,129 @@ export default function SettingsPage() {
   const personalCategories = settingsCategories.filter(
     (c) => c.section === 'personal'
   );
-  const organizationCategories = settingsCategories.filter(
-    (c) => c.section === 'organization'
+  const companyCategories = settingsCategories.filter(
+    (c) => c.section === 'company'
   );
   const developerCategories = settingsCategories.filter(
     (c) => c.section === 'developer'
   );
 
-  const renderCategoryCard = (category: (typeof settingsCategories)[0]) => (
-    <Link
+  const renderCategoryCard = (
+    category: (typeof settingsCategories)[0],
+    index: number
+  ) => (
+    <motion.div
       key={category.href}
-      href={category.href}
-      className='group flex flex-col rounded-lg border bg-card p-4 transition-all hover:border-primary/50 hover:shadow-sm'
+      variants={fadeInUp}
+      initial='initial'
+      animate='animate'
+      transition={{ delay: index * 0.05, duration: 0.3, ease: easings.easeOut }}
     >
-      <div className='mb-3 flex h-9 w-9 items-center justify-center rounded-md bg-primary/10'>
-        <category.icon className='h-4 w-4 text-primary' />
-      </div>
-      <h3 className='text-sm font-semibold group-hover:text-primary'>
-        {category.title}
-      </h3>
-      <p className='mt-0.5 text-xs text-muted-foreground'>
-        {category.description}
-      </p>
-    </Link>
+      <Link
+        href={category.href}
+        className='group relative block overflow-hidden rounded-xl border border-slate-200/50 bg-white/80 p-6 backdrop-blur-md transition-all duration-300 hover:border-primary/50 hover:shadow-lg hover:shadow-primary/10 dark:border-slate-700/50 dark:bg-slate-900/80'
+      >
+        {/* Gradient background on hover */}
+        <div
+          className={cn(
+            'absolute inset-0 bg-gradient-to-br opacity-0 transition-opacity duration-300 group-hover:opacity-5',
+            category.color
+          )}
+        />
+
+        <div className='relative'>
+          {/* Icon */}
+          <div
+            className={cn(
+              'mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br opacity-90',
+              category.color
+            )}
+          >
+            <category.icon className='h-6 w-6 text-white' />
+          </div>
+
+          {/* Content */}
+          <div className='mb-3 flex items-start justify-between'>
+            <h3 className='text-base font-semibold text-slate-900 transition-colors group-hover:text-primary dark:text-slate-100'>
+              {category.title}
+            </h3>
+            <ArrowRight className='h-4 w-4 translate-x-[-8px] transform text-slate-400 opacity-0 transition-all duration-300 group-hover:translate-x-0 group-hover:opacity-100' />
+          </div>
+
+          <p className='text-sm text-slate-600 dark:text-slate-400'>
+            {category.description}
+          </p>
+        </div>
+      </Link>
+    </motion.div>
   );
 
   return (
-    <div className='flex flex-col p-6'>
-      {/* Header */}
-      <div className='mb-6'>
-        <h1 className='text-2xl font-bold tracking-tight'>Settings</h1>
-        <p className='mt-1 text-sm text-muted-foreground'>
-          Configure your organization, team, and preferences
-        </p>
-      </div>
-
-      <div className='space-y-8'>
+    <motion.div
+      variants={staggerContainer}
+      initial='initial'
+      animate='animate'
+      className='flex flex-col p-6 md:p-8'
+    >
+      <div className='space-y-10'>
         {/* Personal Section */}
-        <section>
-          <h2 className='mb-3 text-sm font-medium text-muted-foreground'>
+        <motion.section variants={fadeInUp}>
+          <h2 className='mb-4 text-sm font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400'>
             Personal
           </h2>
-          <div className='grid gap-3 sm:grid-cols-2 lg:grid-cols-3'>
-            {personalCategories.map(renderCategoryCard)}
+          <div className='grid gap-4 sm:grid-cols-2 lg:grid-cols-3'>
+            {personalCategories.map((category, index) =>
+              renderCategoryCard(category, index)
+            )}
           </div>
-        </section>
+        </motion.section>
 
-        {/* Organization Section */}
-        <section>
-          <h2 className='mb-3 text-sm font-medium text-muted-foreground'>
-            Organization
+        {/* Company Section */}
+        <motion.section variants={fadeInUp}>
+          <h2 className='mb-4 text-sm font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400'>
+            Company
           </h2>
-          <div className='grid gap-3 sm:grid-cols-2 lg:grid-cols-3'>
-            {organizationCategories.map(renderCategoryCard)}
+          <div className='grid gap-4 sm:grid-cols-2 lg:grid-cols-3'>
+            {companyCategories.map((category, index) =>
+              renderCategoryCard(category, index + personalCategories.length)
+            )}
           </div>
-        </section>
+        </motion.section>
 
         {/* Developer Section */}
-        <section>
-          <h2 className='mb-3 text-sm font-medium text-muted-foreground'>
+        <motion.section variants={fadeInUp}>
+          <h2 className='mb-4 text-sm font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400'>
             Developer
           </h2>
-          <div className='grid gap-3 sm:grid-cols-2 lg:grid-cols-3'>
-            {developerCategories.map(renderCategoryCard)}
+          <div className='grid gap-4 sm:grid-cols-2 lg:grid-cols-3'>
+            {developerCategories.map((category, index) =>
+              renderCategoryCard(
+                category,
+                index + personalCategories.length + companyCategories.length
+              )
+            )}
           </div>
-        </section>
+        </motion.section>
       </div>
 
       {/* Quick Tip */}
-      <div className='mt-8 rounded-lg border bg-muted/30 p-3'>
-        <div className='flex items-center gap-2 text-xs text-muted-foreground'>
-          <Settings className='h-3.5 w-3.5' />
+      <motion.div
+        variants={fadeInUp}
+        className='mt-10 rounded-xl border border-slate-200/50 bg-slate-50/80 p-4 backdrop-blur-sm dark:border-slate-700/50 dark:bg-slate-900/50'
+      >
+        <div className='flex items-center gap-3 text-sm text-slate-600 dark:text-slate-400'>
+          <div className='flex h-8 w-8 items-center justify-center rounded-lg bg-cyan-100 dark:bg-cyan-900/30'>
+            <Settings className='h-4 w-4 text-cyan-600 dark:text-cyan-400' />
+          </div>
           <span>
             Tip: Use keyboard shortcut{' '}
-            <kbd className='rounded bg-muted px-1 py-0.5 font-mono text-xs'>
+            <kbd className='rounded bg-slate-200 px-2 py-1 font-mono text-xs dark:bg-slate-700 dark:text-slate-300'>
               S
             </kbd>{' '}
             to quickly open Settings
           </span>
         </div>
-      </div>
-    </div>
+      </motion.div>
+    </motion.div>
   );
 }

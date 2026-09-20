@@ -3,14 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useQuery, useMutation } from 'convex/react';
 import { api } from '@/convex/_generated/api';
-import {
-  Bell,
-  Mail,
-  MessageSquare,
-  Slack,
-  Send,
-  CheckCircle
-} from 'lucide-react';
+import { Bell, Mail, MessageSquare, Send, CheckCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
@@ -94,7 +87,7 @@ export default function NotificationSettings() {
   }
 
   const handleChannelToggle = async (
-    channel: 'emailEnabled' | 'smsEnabled' | 'slackEnabled' | 'inAppEnabled'
+    channel: 'emailEnabled' | 'smsEnabled' | 'inAppEnabled'
   ) => {
     setIsLoading(true);
     try {
@@ -281,24 +274,6 @@ export default function NotificationSettings() {
               </div>
             </div>
           )}
-
-          {/* Slack */}
-          <div className='flex items-center justify-between rounded-lg border p-3'>
-            <div className='flex items-center gap-3'>
-              <Slack className='h-5 w-5 text-purple-500' />
-              <div>
-                <p className='font-medium'>Slack Integration</p>
-                <p className='text-sm text-muted-foreground'>
-                  Receive messages in your Slack workspace
-                </p>
-              </div>
-            </div>
-            <Switch
-              checked={prefs.slackEnabled}
-              onCheckedChange={() => handleChannelToggle('slackEnabled')}
-              disabled={isLoading}
-            />
-          </div>
         </CardContent>
       </Card>
 

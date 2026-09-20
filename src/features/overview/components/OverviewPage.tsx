@@ -25,7 +25,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 
 // Widget component for Customer Count
 function CustomerCountWidget() {
-  const totalCustomers = useQuery(
+  const totalCustomers = useAuthenticatedQuery(
     api.analytics.getTotalCustomersWithComparison,
     {}
   );
@@ -58,7 +58,10 @@ function CustomerCountWidget() {
 
 // Widget component for Revenue Summary
 function RevenueSummaryWidget() {
-  const revenue = useQuery(api.analytics.getTotalRevenueWithComparison, {});
+  const revenue = useAuthenticatedQuery(
+    api.analytics.getTotalRevenueWithComparison,
+    {}
+  );
 
   if (revenue === undefined) return <Skeleton className='h-24 w-full' />;
 
@@ -90,7 +93,10 @@ function RevenueSummaryWidget() {
 
 // Widget component for Sales Count
 function SalesCountWidget() {
-  const sales = useQuery(api.analytics.getTotalSalesWithComparison, {});
+  const sales = useAuthenticatedQuery(
+    api.analytics.getTotalSalesWithComparison,
+    {}
+  );
 
   if (sales === undefined) return <Skeleton className='h-24 w-full' />;
 
@@ -119,7 +125,10 @@ function SalesCountWidget() {
 
 // Widget component for Top Products
 function TopProductsWidget() {
-  const topProducts = useQuery(api.dashboard.getTopSellingProducts, {});
+  const topProducts = useAuthenticatedQuery(
+    api.dashboard.getTopSellingProducts,
+    {}
+  );
 
   if (topProducts === undefined) return <Skeleton className='h-48 w-full' />;
 
@@ -169,7 +178,10 @@ function TopProductsWidget() {
 
 // Widget component for Inventory Health
 function InventoryHealthWidget() {
-  const lowStockProducts = useQuery(api.products.getLowStockProducts, {});
+  const lowStockProducts = useAuthenticatedQuery(
+    api.products.getLowStockProducts,
+    {}
+  );
 
   if (lowStockProducts === undefined)
     return <Skeleton className='h-24 w-full' />;
@@ -210,7 +222,7 @@ function InventoryHealthWidget() {
 
 // STEP 1.1: Cash Ledger Widget
 function CashLedgerWidget() {
-  const cashData = useQuery(api.ledger.getCashLedgerSummary, {});
+  const cashData = useAuthenticatedQuery(api.ledger.getCashLedgerSummary, {});
 
   if (cashData === undefined) return <Skeleton className='h-24 w-full' />;
 
@@ -241,7 +253,7 @@ function CashLedgerWidget() {
 
 // STEP 1.3: Receivables Aging Widget
 function ReceivablesAgingWidget() {
-  const receivables = useQuery(api.ledger.getReceivablesAging, {});
+  const receivables = useAuthenticatedQuery(api.ledger.getReceivablesAging, {});
 
   if (receivables === undefined) return <Skeleton className='h-24 w-full' />;
 
@@ -290,7 +302,7 @@ function ReceivablesAgingWidget() {
 
 // STEP 1.4: Top Vendors by Spend Widget
 function TopVendorsWidget() {
-  const topVendors = useQuery(api.ledger.getTopVendorsBySpend, {});
+  const topVendors = useAuthenticatedQuery(api.ledger.getTopVendorsBySpend, {});
 
   if (topVendors === undefined) return <Skeleton className='h-48 w-full' />;
 
@@ -349,7 +361,10 @@ function TopVendorsWidget() {
 
 // Widget component for Sales Trend
 function SalesTrendWidget() {
-  const salesData = useQuery(api.analytics.getRecentSalesAndMonthlyTotal, {});
+  const salesData = useAuthenticatedQuery(
+    api.analytics.getRecentSalesAndMonthlyTotal,
+    {}
+  );
 
   if (salesData === undefined) return <Skeleton className='h-48 w-full' />;
 
@@ -433,7 +448,10 @@ export default function OverviewPage({
   );
 
   // Fetch dashboard configuration
-  const dashboardConfig = useQuery(api.dashboardConfig.getDashboardConfig, {});
+  const dashboardConfig = useAuthenticatedQuery(
+    api.dashboardConfig.getDashboardConfig,
+    {}
+  );
 
   // Get company for business type
   const company = useAuthenticatedQuery(api.companies.getCompany, {

@@ -15,7 +15,7 @@
     --card-foreground: 253 31% 99%;
     --border: 253 13% 20%;
     --input: 253 13% 20%;
-    --primary: 20 48% 12%;
+    --primary: 272.09, 71.67%, 47.06%;
     --primary-foreground: 253 43% 3%;
     --secondary: 253 7% 9%;
     --secondary-foreground: 253 7% 69%;
@@ -56,7 +56,7 @@
     --card-foreground: 20 51% 3%;
     --border: 20 15% 94%;
     --input: 20 15% 94%;
-    --primary: 20 48% 12%;
+    --primary: 272.09, 71.67%, 47.06%;
     --primary-foreground: 20 66% 98%;
     --secondary: 20 12% 92%;
     --secondary-foreground: 20 12% 32%;
@@ -233,6 +233,25 @@
 
   .animate-pulse-glow {
     animation: pulseGlow 2s ease-in-out infinite;
+  }
+
+  /* AI Assistant button gradient border shimmer */
+  @keyframes ai-border-shimmer {
+    0% {
+      background-position: 0% 50%;
+    }
+    50% {
+      background-position: 100% 50%;
+    }
+    100% {
+      background-position: 0% 50%;
+    }
+  }
+
+  .ai-button-shimmer {
+    background: linear-gradient(270deg, #7c3aed, #4f46e5, #7c3aed);
+    background-size: 400% 400%;
+    animation: ai-border-shimmer 3s ease infinite;
   }
 
   /* Glass morphism utility */

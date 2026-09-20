@@ -1,54 +1,30 @@
 'use client';
 
-import { useUser } from '@clerk/nextjs';
-import { useQuery } from 'convex/react';
-import { api } from '@/convex/_generated/api';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { Lock, Loader2 } from 'lucide-react';
-
-// Check if user has permission to access billing
-function useBillingAccess() {
-  const { user } = useUser();
-  const userOrg = useQuery(api.organizations.getUserOrganizations);
-
-  if (!user || !userOrg) return 'loading';
-
-  const org = userOrg[0];
-  if (!org) return 'loading';
-
-  // Owner has full access
-  if (org.ownerId === user.id) return 'allowed';
-
-  // Check team member permissions
-  const perms = useQuery(api.teamManagement.getUserPermissions, {
-    actorKey: user.id
-  });
-  if (
-    perms?.permissions?.has('create_transaction') ||
-    perms?.permissions?.has('manage_settings')
-  ) {
-    return 'allowed';
-  }
-
-  return 'denied';
-}
+import { usePermission } from '@/features/teams/providers/PermissionProvider';
 
 export default function BillingAccessGuard({
   children
 }: {
   children: React.ReactNode;
 }) {
-  const access = useBillingAccess();
+  const { isLoading, isOwner, hasPermission } = usePermission();
 
-  if (access === 'loading') {
+  if (isLoading) {
     return (
       <div className='flex min-h-[400px] items-center justify-center'>
         <Loader2 className='h-8 w-8 animate-spin' />
       </div>
     );
   }
+
+  // Check if user has permission to access billing
+  // Owner has full access, otherwise check specific permissions
+  const access =
+    isOwner || hasPermission('manage_settings') ? 'allowed' : 'denied';
 
   if (access === 'denied') {
     return (

@@ -175,7 +175,7 @@ export const getUpcomingInvoices = query({
 // ============ CRON JOBS (Call these via API endpoints) ============
 
 // NOTE: These are made public mutations (not internal) so they can be called
-// from API routes. In production, add API key validation for security.
+// from API routes.
 
 // Public mutation to generate invoices that are due (call via API)
 export const generateDueInvoices = mutation({

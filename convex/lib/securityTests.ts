@@ -15,7 +15,7 @@ import { PERMISSIONS } from './permissions';
 
 /**
  * Test cross-tenant data access prevention
- * This function should only be accessible to super admins for security testing
+ * This function should only be accessible to admins for security testing
  */
 export const testCrossTenantAccess = query({
   args: {
@@ -24,7 +24,7 @@ export const testCrossTenantAccess = query({
   handler: async (ctx, args) => {
     const caller = await resolveCallerContext(ctx);
 
-    // Only super admins should be able to run this test
+    // Only admins should be able to run this test
     if (!caller.isOwner) {
       throw new Error('This test can only be run by organization owners');
     }

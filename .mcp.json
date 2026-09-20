@@ -2,7 +2,12 @@
   "mcpServers": {
     "next-devtools": {
       "command": "npx",
-      "args": ["-y", "next-devtools-mcp@latest"]
+      "args": ["-y", "next-devtools-mcp@latest"],
+      "disabled": true
+    },
+    "clerk": {
+      "command": "npx",
+      "args": ["-y", "clerk", "mcp", "run"]
     }
   }
 }

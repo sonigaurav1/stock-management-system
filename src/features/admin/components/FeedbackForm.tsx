@@ -4,14 +4,6 @@ import { useState, useRef } from 'react';
 import { useMutation } from 'convex/react';
 import { api } from '@/../convex/_generated/api';
 import { useUser } from '@clerk/nextjs';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger
-} from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -30,24 +22,164 @@ import {
   CardHeader,
   CardTitle
 } from '@/components/ui/card';
-import { MessageSquare, Upload, X, Image as ImageIcon } from 'lucide-react';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger
+} from '@/components/ui/dialog';
+import {
+  MessageSquare,
+  Upload,
+  X,
+  Image as ImageIcon,
+  Star,
+  Send,
+  Sparkles,
+  Bug,
+  TrendingUp,
+  CheckCircle2,
+  HelpCircle,
+  AlertCircle
+} from 'lucide-react';
 import { toast } from 'sonner';
 import { useEdgeStore } from '@/lib/edgestore';
 
-interface FeedbackFormProps {
-  onSubmitSuccess?: () => void;
+interface CategoryConfig {
+  icon: React.ElementType;
+  color: string;
+  bgColor: string;
+  borderColor: string;
+  titlePlaceholder: string;
+  mainLabel: string;
+  mainDescription: string;
+  mainPlaceholder: string;
+  subLabel: string;
+  subDescription: string;
+  subPlaceholder: string;
+  mainPrefix: string;
+  subPrefix: string;
 }
 
-export function FeedbackForm({ onSubmitSuccess }: FeedbackFormProps) {
+const CATEGORY_CONFIGS: Record<string, CategoryConfig> = {
+  bug: {
+    icon: Bug,
+    color: 'text-red-500 dark:text-red-400',
+    bgColor: 'bg-red-500/5 dark:bg-red-950/20',
+    borderColor: 'border-red-500/20',
+    titlePlaceholder: 'e.g., CSV export button throws error on Safari',
+    mainLabel: 'Bug Description & Steps to Reproduce *',
+    mainDescription:
+      'Describe what went wrong and step-by-step instructions to reproduce the issue.',
+    mainPlaceholder:
+      '1. Navigate to billing page\n2. Click Export CSV\n3. Error "Uncaught TypeError" appears in console...',
+    subLabel: 'Expected Behavior (Optional)',
+    subDescription: 'What did you expect to happen instead?',
+    subPlaceholder: 'The CSV file should download immediately without errors.',
+    mainPrefix: '🐛 Bug Details & Reproduction:',
+    subPrefix: '📝 Expected Behavior:'
+  },
+  feature: {
+    icon: Sparkles,
+    color: 'text-indigo-500 dark:text-indigo-400',
+    bgColor: 'bg-indigo-500/5 dark:bg-indigo-950/20',
+    borderColor: 'border-indigo-500/20',
+    titlePlaceholder: 'e.g., Add automated low-stock SMS alert to suppliers',
+    mainLabel: 'Feature Request Details *',
+    mainDescription:
+      'Describe the feature you would like to see in Invento and how it should work.',
+    mainPlaceholder:
+      'We would love to have automated SMS notifications sent to suppliers when stock falls below reorder level...',
+    subLabel: 'Business Impact (Optional)',
+    subDescription:
+      'How would this feature help your daily business operations?',
+    subPlaceholder:
+      'It would prevent stock-outs and save 3 hours of manual email orders every week.',
+    mainPrefix: '✨ Feature Description:',
+    subPrefix: '💡 Business Impact:'
+  },
+  improvement: {
+    icon: TrendingUp,
+    color: 'text-emerald-500 dark:text-emerald-400',
+    bgColor: 'bg-emerald-500/5 dark:bg-emerald-950/20',
+    borderColor: 'border-emerald-500/20',
+    titlePlaceholder:
+      'e.g., Speed up barcode scanning and search auto-complete',
+    mainLabel: 'Improvement Suggestion *',
+    mainDescription:
+      'Share your idea for improving performance, UI layout, or system responsiveness.',
+    mainPlaceholder:
+      "The barcode scanner modal could auto-focus the input field so users don't need to click it first...",
+    subLabel: 'Current Limitations (Optional)',
+    subDescription: 'What part of the current system feels slow or clunky?',
+    subPlaceholder:
+      'Having to manually click into the barcode text box slows down warehouse scanning.',
+    mainPrefix: '📈 Improvement Idea:',
+    subPrefix: '⚠️ Current Limitation:'
+  },
+  feedback: {
+    icon: CheckCircle2,
+    color: 'text-green-500 dark:text-green-400',
+    bgColor: 'bg-green-500/5 dark:bg-green-950/20',
+    borderColor: 'border-green-500/20',
+    titlePlaceholder: 'e.g., Love the new analytics overview dashboard',
+    mainLabel: 'What is working well? *',
+    mainDescription:
+      'Tell us about features or workflows that you enjoy using in Invento.',
+    mainPlaceholder:
+      'The new dashboard overview charts are super clean and help us track monthly revenue effortlessly...',
+    subLabel: 'Additional Thoughts or Suggestions (Optional)',
+    subDescription: 'Any other comments or feedback for our team?',
+    subPlaceholder:
+      'Keep up the great work! Looking forward to future updates.',
+    mainPrefix: "✅ What's Working Well:",
+    subPrefix: '💬 Additional Thoughts:'
+  },
+  other: {
+    icon: HelpCircle,
+    color: 'text-amber-500 dark:text-amber-400',
+    bgColor: 'bg-amber-500/5 dark:bg-amber-950/20',
+    borderColor: 'border-amber-500/20',
+    titlePlaceholder:
+      'e.g., Question about API limits or custom role permissions',
+    mainLabel: 'Question or Inquiry Details *',
+    mainDescription:
+      'Ask your question or describe what you need assistance with.',
+    mainPlaceholder:
+      'We have a question regarding custom roles and whether staff members can view reports...',
+    subLabel: 'Additional Context (Optional)',
+    subDescription: 'Provide any account, organization, or technical context.',
+    subPlaceholder:
+      'We are currently on the Professional plan with 5 team members.',
+    mainPrefix: '❓ Inquiry Details:',
+    subPrefix: '📝 Additional Context:'
+  }
+};
+
+interface FeedbackFormProps {
+  onSubmitSuccess?: () => void;
+  inline?: boolean;
+}
+
+export function FeedbackForm({
+  onSubmitSuccess,
+  inline = false
+}: FeedbackFormProps) {
   const { user } = useUser();
   const { edgestore } = useEdgeStore();
-  const [open, setOpen] = useState(false);
+  const [dialogOpen, setDialogOpen] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [title, setTitle] = useState('');
-  const [whatIsGood, setWhatIsGood] = useState('');
-  const [whatNeedsImprovement, setWhatNeedsImprovement] = useState('');
   const [category, setCategory] = useState('feedback');
+  const [title, setTitle] = useState('');
+  const [emailInput, setEmailInput] = useState(
+    user?.emailAddresses[0]?.emailAddress || ''
+  );
+  const [mainContent, setMainContent] = useState('');
+  const [subContent, setSubContent] = useState('');
   const [rating, setRating] = useState(5);
+  const [hoverRating, setHoverRating] = useState(0);
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string>('');
   const [uploadingImage, setUploadingImage] = useState(false);
@@ -55,17 +187,18 @@ export function FeedbackForm({ onSubmitSuccess }: FeedbackFormProps) {
 
   const createFeedback = useMutation(api.feedback.createFeedback);
 
+  const activeConfig = CATEGORY_CONFIGS[category] || CATEGORY_CONFIGS.feedback;
+  const CategoryIcon = activeConfig.icon;
+
   const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // Validate file size (5MB max)
     if (file.size > 5 * 1024 * 1024) {
       toast.error('Image must be less than 5MB');
       return;
     }
 
-    // Validate file type
     if (!file.type.startsWith('image/')) {
       toast.error('Please select a valid image file');
       return;
@@ -87,13 +220,15 @@ export function FeedbackForm({ onSubmitSuccess }: FeedbackFormProps) {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!user?.id) {
-      toast.error('You must be logged in to submit feedback');
+    if (!title.trim()) {
+      toast.error('Please enter a feedback title');
       return;
     }
 
-    if (!title.trim() || (!whatIsGood.trim() && !whatNeedsImprovement.trim())) {
-      toast.error('Please fill in the title and at least one feedback section');
+    if (!mainContent.trim()) {
+      toast.error(
+        `Please fill in the ${activeConfig.mainLabel.replace('*', '').trim()}`
+      );
       return;
     }
 
@@ -102,8 +237,7 @@ export function FeedbackForm({ onSubmitSuccess }: FeedbackFormProps) {
     try {
       let imageUrl: string | undefined;
 
-      // Upload image if selected
-      if (imageFile) {
+      if (imageFile && edgestore) {
         setUploadingImage(true);
         try {
           const response = await edgestore.publicFiles.upload({
@@ -112,41 +246,47 @@ export function FeedbackForm({ onSubmitSuccess }: FeedbackFormProps) {
           imageUrl = response.url;
         } catch (error) {
           console.error('Error uploading image:', error);
-          toast.error('Failed to upload image');
-          setLoading(false);
+          toast.error(
+            'Failed to upload attachment, submitting feedback text...'
+          );
+        } finally {
           setUploadingImage(false);
-          return;
         }
-        setUploadingImage(false);
       }
 
-      // Combine feedback messages
-      const message = [
-        whatIsGood ? `✅ What's Good:\n${whatIsGood}` : '',
-        whatNeedsImprovement
-          ? `📝 What Needs Improvement:\n${whatNeedsImprovement}`
-          : ''
-      ]
-        .filter(Boolean)
-        .join('\n\n');
+      // Format message with dynamic category prefixes
+      const messageParts = [
+        `${activeConfig.mainPrefix}\n${mainContent.trim()}`
+      ];
+      if (subContent.trim()) {
+        messageParts.push(`${activeConfig.subPrefix}\n${subContent.trim()}`);
+      }
+
+      const userEmail =
+        emailInput.trim() ||
+        user?.emailAddresses[0]?.emailAddress ||
+        'user@example.com';
 
       await createFeedback({
         title: title.trim(),
-        message: message,
+        message: messageParts.join('\n\n'),
         category,
         rating,
-        email: user.emailAddresses[0]?.emailAddress,
+        email: userEmail,
         attachmentUrl: imageUrl
       });
 
-      toast.success('Thank you! Your feedback has been submitted.');
-      setOpen(false);
+      toast.success('Thank you! Your feedback has been submitted to the team.');
+
+      // Reset Form State
       setTitle('');
-      setWhatIsGood('');
-      setWhatNeedsImprovement('');
+      setMainContent('');
+      setSubContent('');
       setCategory('feedback');
       setRating(5);
       removeImage();
+
+      setDialogOpen(false);
       onSubmitSuccess?.();
     } catch (error) {
       console.error('Error submitting feedback:', error);
@@ -156,215 +296,242 @@ export function FeedbackForm({ onSubmitSuccess }: FeedbackFormProps) {
     }
   };
 
+  const formContent = (
+    <form onSubmit={handleSubmit} className='space-y-6'>
+      {/* Category and Rating Header Bar */}
+      <div className='grid gap-4 md:grid-cols-2'>
+        <div className='space-y-2'>
+          <label className='text-xs font-semibold uppercase tracking-wider text-muted-foreground'>
+            Feedback Category
+          </label>
+          <Select
+            value={category}
+            onValueChange={(val) => {
+              setCategory(val);
+            }}
+            disabled={loading || uploadingImage}
+          >
+            <SelectTrigger className='w-full border-border bg-background text-foreground'>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value='bug'>🐛 Bug Report</SelectItem>
+              <SelectItem value='feature'>✨ Feature Request</SelectItem>
+              <SelectItem value='improvement'>📈 System Improvement</SelectItem>
+              <SelectItem value='feedback'>💬 General Feedback</SelectItem>
+              <SelectItem value='other'>❓ Other Question</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div className='space-y-2'>
+          <label className='text-xs font-semibold uppercase tracking-wider text-muted-foreground'>
+            Your Rating
+          </label>
+          <div className='flex items-center gap-1.5 pt-1'>
+            {[1, 2, 3, 4, 5].map((star) => (
+              <button
+                key={star}
+                type='button'
+                onClick={() => setRating(star)}
+                onMouseEnter={() => setHoverRating(star)}
+                onMouseLeave={() => setHoverRating(0)}
+                className='p-1 transition-transform hover:scale-110 focus:outline-none'
+              >
+                <Star
+                  className={`h-6 w-6 transition-colors ${
+                    star <= (hoverRating || rating)
+                      ? 'fill-amber-400 text-amber-400'
+                      : 'text-muted-foreground/30'
+                  }`}
+                />
+              </button>
+            ))}
+            <span className='ml-2 font-mono text-xs font-semibold text-muted-foreground'>
+              {rating} / 5
+            </span>
+          </div>
+        </div>
+      </div>
+
+      {/* Dynamic Title & Email */}
+      <div className='grid gap-4 md:grid-cols-2'>
+        <div className='space-y-2 md:col-span-1'>
+          <label className='text-xs font-semibold uppercase tracking-wider text-muted-foreground'>
+            Title *
+          </label>
+          <Input
+            placeholder={activeConfig.titlePlaceholder}
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            disabled={loading || uploadingImage}
+            className='border-border bg-background'
+            required
+          />
+        </div>
+
+        <div className='space-y-2 md:col-span-1'>
+          <label className='text-xs font-semibold uppercase tracking-wider text-muted-foreground'>
+            Your Email Address
+          </label>
+          <Input
+            type='email'
+            placeholder='your.email@company.com'
+            value={emailInput}
+            onChange={(e) => setEmailInput(e.target.value)}
+            disabled={loading || uploadingImage}
+            className='border-border bg-background font-mono text-xs'
+          />
+        </div>
+      </div>
+
+      {/* DYNAMIC CARD 1: Main Category Field */}
+      <Card
+        className={`border ${activeConfig.borderColor} ${activeConfig.bgColor} shadow-none transition-all`}
+      >
+        <CardHeader className='px-4 pb-2 pt-4'>
+          <CardTitle
+            className={`flex items-center gap-2 text-sm font-semibold ${activeConfig.color}`}
+          >
+            <CategoryIcon className='h-4 w-4' />
+            {activeConfig.mainLabel}
+          </CardTitle>
+          <CardDescription className='text-xs text-muted-foreground'>
+            {activeConfig.mainDescription}
+          </CardDescription>
+        </CardHeader>
+        <CardContent className='px-4 pb-4'>
+          <Textarea
+            placeholder={activeConfig.mainPlaceholder}
+            value={mainContent}
+            onChange={(e) => setMainContent(e.target.value)}
+            disabled={loading || uploadingImage}
+            rows={3}
+            className='resize-none border-border bg-background/90 text-sm'
+            required
+          />
+        </CardContent>
+      </Card>
+
+      {/* DYNAMIC CARD 2: Secondary Category Field */}
+      <Card className='border border-border/80 bg-muted/20 shadow-none transition-all'>
+        <CardHeader className='px-4 pb-2 pt-4'>
+          <CardTitle className='flex items-center gap-2 text-sm font-semibold text-foreground'>
+            {activeConfig.subLabel}
+          </CardTitle>
+          <CardDescription className='text-xs text-muted-foreground'>
+            {activeConfig.subDescription}
+          </CardDescription>
+        </CardHeader>
+        <CardContent className='px-4 pb-4'>
+          <Textarea
+            placeholder={activeConfig.subPlaceholder}
+            value={subContent}
+            onChange={(e) => setSubContent(e.target.value)}
+            disabled={loading || uploadingImage}
+            rows={3}
+            className='resize-none border-border bg-background/90 text-sm'
+          />
+        </CardContent>
+      </Card>
+
+      {/* File Attachment Dropzone */}
+      <div className='space-y-2'>
+        <label className='text-xs font-semibold uppercase tracking-wider text-muted-foreground'>
+          Attach Screenshot (Optional)
+        </label>
+        {imagePreview ? (
+          <div className='relative overflow-hidden rounded-lg border border-border bg-card p-2'>
+            <img
+              src={imagePreview}
+              alt='Screenshot preview'
+              className='max-h-48 w-full rounded-md object-contain'
+            />
+            <Button
+              type='button'
+              variant='destructive'
+              size='sm'
+              onClick={removeImage}
+              disabled={loading || uploadingImage}
+              className='mt-2 w-full text-xs'
+            >
+              <X className='mr-1.5 h-3.5 w-3.5' />
+              Remove Image
+            </Button>
+          </div>
+        ) : (
+          <div
+            className='flex cursor-pointer flex-col items-center justify-center rounded-lg border border-dashed border-border bg-muted/20 p-6 text-center transition hover:bg-muted/40'
+            onClick={() => fileInputRef.current?.click()}
+          >
+            <ImageIcon className='h-8 w-8 text-muted-foreground/60' />
+            <p className='mt-2 text-xs font-medium text-foreground'>
+              Click to browse or drop screenshot
+            </p>
+            <p className='text-[11px] text-muted-foreground'>
+              PNG, JPG up to 5MB
+            </p>
+          </div>
+        )}
+        <input
+          ref={fileInputRef}
+          type='file'
+          accept='image/*'
+          onChange={handleImageSelect}
+          disabled={loading || uploadingImage}
+          className='hidden'
+        />
+      </div>
+
+      {/* Submit Button */}
+      <div className='flex justify-end gap-3 pt-2'>
+        <Button
+          type='submit'
+          disabled={loading || uploadingImage}
+          className='w-full gap-2 bg-primary text-primary-foreground hover:bg-primary/90 sm:w-auto'
+        >
+          {uploadingImage ? (
+            <>
+              <Upload className='h-4 w-4 animate-spin' />
+              Uploading...
+            </>
+          ) : loading ? (
+            <>Submitting Feedback...</>
+          ) : (
+            <>
+              <Send className='h-4 w-4' />
+              Submit Feedback
+            </>
+          )}
+        </Button>
+      </div>
+    </form>
+  );
+
+  if (inline) {
+    return formContent;
+  }
+
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
       <DialogTrigger asChild>
-        <Button variant='outline' className='gap-2'>
+        <Button className='gap-2 bg-primary text-primary-foreground shadow-glow hover:bg-primary/90'>
           <MessageSquare className='h-4 w-4' />
           Send Feedback
         </Button>
       </DialogTrigger>
-      <DialogContent className='max-h-[90vh] max-w-3xl overflow-y-auto'>
+      <DialogContent className='max-h-[90vh] max-w-2xl overflow-y-auto border-border bg-card text-card-foreground'>
         <DialogHeader>
-          <DialogTitle>Share Your Feedback</DialogTitle>
-          <DialogDescription>
-            Help us improve! Tell us what's working well and what needs
-            improvement in the system.
+          <DialogTitle className='flex items-center gap-2 text-lg font-bold'>
+            <Sparkles className='h-5 w-5 text-primary' />
+            Share Your Feedback
+          </DialogTitle>
+          <DialogDescription className='text-sm text-muted-foreground'>
+            Select your feedback category below. Form fields will adapt
+            dynamically to your selection.
           </DialogDescription>
         </DialogHeader>
-
-        <form onSubmit={handleSubmit} className='space-y-6'>
-          {/* Title */}
-          <div className='space-y-2'>
-            <label className='text-sm font-medium'>Feedback Title *</label>
-            <Input
-              placeholder='e.g., "Dashboard loading is too slow" or "Love the new export feature!"'
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              disabled={loading || uploadingImage}
-            />
-          </div>
-
-          {/* Category and Rating Row */}
-          <div className='grid grid-cols-2 gap-4'>
-            <div className='space-y-2'>
-              <label className='text-sm font-medium'>Category</label>
-              <Select
-                value={category}
-                onValueChange={setCategory}
-                disabled={loading || uploadingImage}
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value='feature'>✨ Feature Request</SelectItem>
-                  <SelectItem value='bug'>🐛 Bug Report</SelectItem>
-                  <SelectItem value='improvement'>📈 Improvement</SelectItem>
-                  <SelectItem value='feedback'>💬 General Feedback</SelectItem>
-                  <SelectItem value='other'>❓ Other</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className='space-y-2'>
-              <label className='text-sm font-medium'>Overall Experience</label>
-              <Select
-                value={rating.toString()}
-                onValueChange={(v) => setRating(parseInt(v))}
-                disabled={loading || uploadingImage}
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value='1'>⭐ Poor</SelectItem>
-                  <SelectItem value='2'>⭐⭐ Fair</SelectItem>
-                  <SelectItem value='3'>⭐⭐⭐ Good</SelectItem>
-                  <SelectItem value='4'>⭐⭐⭐⭐ Very Good</SelectItem>
-                  <SelectItem value='5'>⭐⭐⭐⭐⭐ Excellent</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-
-          {/* What's Good Section */}
-          <Card className='border-green-200 bg-green-50/50 dark:border-green-900 dark:bg-green-950/30'>
-            <CardHeader className='pb-3'>
-              <CardTitle className='text-base text-green-700 dark:text-green-300'>
-                ✅ What's Going Well?
-              </CardTitle>
-              <CardDescription className='text-xs'>
-                Tell us about features or aspects you love
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Textarea
-                placeholder='e.g., "The inventory management is very intuitive..." or "The search functionality is super fast..."'
-                value={whatIsGood}
-                onChange={(e) => setWhatIsGood(e.target.value)}
-                disabled={loading || uploadingImage}
-                rows={3}
-                className='resize-none'
-              />
-            </CardContent>
-          </Card>
-
-          {/* What Needs Improvement Section */}
-          <Card className='border-amber-200 bg-amber-50/50 dark:border-amber-900 dark:bg-amber-950/30'>
-            <CardHeader className='pb-3'>
-              <CardTitle className='text-base text-amber-700 dark:text-amber-300'>
-                📝 What Needs Improvement?
-              </CardTitle>
-              <CardDescription className='text-xs'>
-                Share any pain points or features you'd like to see
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Textarea
-                placeholder='e.g., "The report export takes too long..." or "It would be nice to have bulk import..."'
-                value={whatNeedsImprovement}
-                onChange={(e) => setWhatNeedsImprovement(e.target.value)}
-                disabled={loading || uploadingImage}
-                rows={3}
-                className='resize-none'
-              />
-            </CardContent>
-          </Card>
-
-          {/* Image Upload Section */}
-          <Card>
-            <CardHeader className='pb-3'>
-              <CardTitle className='text-base'>
-                📎 Attach Screenshot or Image
-              </CardTitle>
-              <CardDescription className='text-xs'>
-                Optional: Add a screenshot to help explain your feedback (max
-                5MB)
-              </CardDescription>
-            </CardHeader>
-            <CardContent className='space-y-4'>
-              {imagePreview ? (
-                <div className='relative space-y-2'>
-                  <img
-                    src={imagePreview}
-                    alt='Preview'
-                    className='max-h-48 w-full rounded-lg border object-cover'
-                  />
-                  <Button
-                    type='button'
-                    variant='destructive'
-                    size='sm'
-                    onClick={removeImage}
-                    disabled={loading || uploadingImage}
-                    className='w-full'
-                  >
-                    <X className='mr-2 h-4 w-4' />
-                    Remove Image
-                  </Button>
-                </div>
-              ) : (
-                <div
-                  className='cursor-pointer rounded-lg border-2 border-dashed border-muted-foreground/25 p-6 text-center transition hover:border-primary'
-                  onClick={() => fileInputRef.current?.click()}
-                >
-                  <ImageIcon className='mx-auto h-8 w-8 text-muted-foreground/50' />
-                  <p className='mt-2 text-sm font-medium'>
-                    Click to upload or drag image
-                  </p>
-                  <p className='text-xs text-muted-foreground'>
-                    PNG, JPG, GIF up to 5MB
-                  </p>
-                </div>
-              )}
-              <input
-                ref={fileInputRef}
-                type='file'
-                accept='image/*'
-                onChange={handleImageSelect}
-                disabled={loading || uploadingImage}
-                className='hidden'
-              />
-            </CardContent>
-          </Card>
-
-          {/* Info */}
-          <div className='rounded-lg bg-blue-50 p-3 text-xs text-blue-800 dark:bg-blue-950 dark:text-blue-300'>
-            💡 <strong>Tip:</strong> The more detail you provide, the better we
-            can help improve the system!
-          </div>
-
-          {/* Buttons */}
-          <div className='flex justify-end gap-2 pt-4'>
-            <Button
-              type='button'
-              variant='outline'
-              onClick={() => setOpen(false)}
-              disabled={loading || uploadingImage}
-            >
-              Cancel
-            </Button>
-            <Button
-              type='submit'
-              disabled={loading || uploadingImage}
-              className='gap-2'
-            >
-              {uploadingImage ? (
-                <>
-                  <Upload className='h-4 w-4 animate-spin' />
-                  Uploading Image...
-                </>
-              ) : loading ? (
-                <>Submitting...</>
-              ) : (
-                <>
-                  <MessageSquare className='h-4 w-4' />
-                  Submit Feedback
-                </>
-              )}
-            </Button>
-          </div>
-        </form>
+        {formContent}
       </DialogContent>
     </Dialog>
   );

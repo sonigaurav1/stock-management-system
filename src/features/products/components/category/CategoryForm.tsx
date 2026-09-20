@@ -144,21 +144,30 @@ export default function CategoryForm({
         ? 'Failed to upload details.'
         : 'Failed to update category details.';
 
-    toast.promise(promise, {
-      loading: action,
-      success: successMessage,
-      error: errorMessage
-    });
+    const toastId = toast.loading(action);
 
-    await promise.then(() => {
+    try {
+      await promise;
+      toast.success(successMessage, { id: toastId });
       if (onSuccess) {
         onSuccess();
       } else {
         router.push('/inventory/categories');
       }
-    });
-    setProgress(0);
-    setIsLoading(false);
+    } catch (error: any) {
+      if (error?.data?.type === 'PermissionError') {
+        toast.warning('Access Denied', {
+          description: error.data.message,
+          id: toastId
+        });
+      } else {
+        toast.error(errorMessage, { id: toastId });
+        console.error('Form submission error:', error);
+      }
+    } finally {
+      setProgress(0);
+      setIsLoading(false);
+    }
   }
 
   const cardClassName = cn('w-full', !onSuccess && 'mx-auto');

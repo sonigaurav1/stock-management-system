@@ -6,7 +6,7 @@ import {
   getDataScopeUserId
 } from './lib/authHelper';
 import { PERMISSIONS } from './lib/permissions';
-import { redactSecretLikeValues } from './lib/secretStorage';
+import { redactSecretLikeValues } from './lib/redact';
 
 /**
  * Unified System Logging Module (Phase 2B)

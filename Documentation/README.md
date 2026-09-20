@@ -1,165 +1,71 @@
-# 📚 Invento Documentation
+# Invento Central Documentation Suite
 
-**Complete enterprise-grade documentation for the inventory management system**
-
----
-
-## 🚀 Quick Start
-
-Choose your path based on what you need:
-
-### 👤 I'm a Developer
-1. **[getting-started/QUICK_START.md](./getting-started/QUICK_START.md)** (5 min) - Set up dev environment
-2. **[getting-started/START_HERE.md](./getting-started/START_HERE.md)** (10 min) - Understand the project
-3. **[_navigation/INDEX.md](./_navigation/INDEX.md)** (bookmark!) - Find anything
-
-### 🤖 I'm an AI Agent
-1. **[CLAUDE.md](./CLAUDE.md)** - AI conventions & context
-2. **[reference/PROJECT_CONTEXT.md](./reference/PROJECT_CONTEXT.md)** - Stack & patterns
-3. **[reference/ARCHITECTURE.md](./reference/ARCHITECTURE.md)** - System design
-
-### 🔍 I'm Looking For Something Specific
-- **[_navigation/INDEX.md](./_navigation/INDEX.md)** - Master documentation index
-- **[_navigation/DOCUMENTATION_GUIDE.md](./_navigation/DOCUMENTATION_GUIDE.md)** - Complete catalog
+Welcome to the **Invento Central Documentation Suite**. This directory is the single source of truth for technical architecture, feature guides, page routes, database schema references, and developer guidelines.
 
 ---
 
-## 📖 Documentation Sections
-
-| Section | Purpose | Key Files |
-|---------|---------|-----------|
-| **[Getting Started](./getting-started/)** | Onboarding & setup | QUICK_START.md, START_HERE.md |
-| **[Reference](./reference/)** | Technical reference | ARCHITECTURE.md, CODE-PATTERNS.md |
-| **[Modules](./modules/)** | Domain guides | AUTH.md, PRODUCTS.md, etc. |
-| **[RBAC](./rbac/)** | Permissions system | PERMISSION_CATALOG.md |
-| **[Enterprise](./enterprise/)** | Enterprise features | ENTERPRISE_FEATURES.md |
-| **[Setup](./setup/)** | Configuration & deployment | ENV-VARS.md, DEPLOYMENT.md |
-| **[Tools](./tools/)** | Developer tools | AI_WORKFLOW.md, TROUBLESHOOTING.md |
-
----
-
-## 📚 Root MD Files - Organized by Topic
-
-Root-level documentation has been organized into 4 topic-based folders:
-
-### 📍 [_navigation/](./._navigation/) - Navigation & Guides
-**6 files** - Complete navigation system
-- `INDEX.md` - Master cross-reference index
-- `DOCUMENTATION_GUIDE.md` - Complete catalog with role-based entry points
-- `FOLDER_STRUCTURE.md` - Visual folder tree & organization map  
-- `FILE_INVENTORY.md` - Comprehensive inventory of all 180+ files
-- `README_DOCUMENTATION.md` - Legacy documentation guide
-- `README.md` - Navigation hub
-
-### 📋 [_guides/](./._guides/) - Documentation Guides & Status
-**4 files** - Administrative guides for documentation
-- `DOCUMENTATION_STRUCTURE.md` - Audit of all documentation files
-- `DOCUMENTATION_READY.md` - Completion status & verification
-- `ENTERPRISE_DOCUMENTATION_COMPLETE.md` - Full completion summary
-- `README.md` - Guides hub
-
-### 📝 [_planning/](./._planning/) - Planning & Tasks
-**2 files** - Active work items
-- `TODO.md` - Current project tasks
-- `TODO_FIX_IMPLICIT_ANY.md` - TypeScript fixes
-- `README.md` - Planning hub
-
-### 🔒 [_security/](./._security/) - Security & RBAC
-**11 files** - RBAC audits, fixes, and planning
-- Security audit reports (3 files)
-- Phase audit reports (2 files)
-- RBAC implementation planning (4 files)
-- Reference files (2 files)
-- `README.md` - Security hub
-
----
-
-## 🎯 Navigation by Task
-
-### Setup & Development
-- **Getting started?** → [getting-started/QUICK_START.md](./getting-started/QUICK_START.md)
-- **Environment setup?** → [setup/ENV-VARS.md](./setup/ENV-VARS.md)
-
-### Building Features
-- **Code patterns?** → [reference/CODE-PATTERNS.md](./reference/CODE-PATTERNS.md)
-- **Coding standards?** → [reference/CONVENTIONS.md](./reference/CONVENTIONS.md)
-- **Architecture?** → [reference/ARCHITECTURE.md](./reference/ARCHITECTURE.md)
-
-### Permissions & Security
-- **Permissions?** → [rbac/PERMISSION_CATALOG.md](./rbac/PERMISSION_CATALOG.md)
-
-### Deployment
-- **Deploy to production?** → [setup/DEPLOYMENT.md](./setup/DEPLOYMENT.md)
-
-### Problem Solving
-- **Stuck or debugging?** → [tools/TROUBLESHOOTING.md](./tools/TROUBLESHOOTING.md) or [reference/TROUBLESHOOTING.md](./reference/TROUBLESHOOTING.md)
-
-### Finding Documentation
-- **Where are root files?** → [_navigation/](./_navigation/) (organized by topic)
-
----
-
-## 📋 Structure
+## 📁 Documentation Folder Structure (6 Core Folders)
 
 ```
 Documentation/
-├── README.md                    ← YOU ARE HERE (main hub)
-├── CLAUDE.md                    ← AI conventions
+├── README.md                  # Master Documentation Sitemap & Index (This File)
+├── INDEX.md                   # Task-and-Domain Quick Lookup Table
+├── RULES.md                   # Documentation Governance & Maintenance Rules
 │
-├── _navigation/                 ← 📍 Navigation guides (6 files)
-│   ├── INDEX.md                     (master index)
-│   ├── DOCUMENTATION_GUIDE.md       (complete catalog)
-│   ├── FOLDER_STRUCTURE.md          (visual map)
-│   ├── FILE_INVENTORY.md            (file listing)
-│   └── README.md
-│
-├── _guides/                     ← 📋 Documentation guides (4 files)
-│   ├── DOCUMENTATION_STRUCTURE.md
-│   ├── DOCUMENTATION_READY.md
-│   ├── ENTERPRISE_DOCUMENTATION_COMPLETE.md
-│   └── README.md
-│
-├── _planning/                   ← 📝 Tasks & planning (2 files)
-│   ├── TODO.md
-│   ├── TODO_FIX_IMPLICIT_ANY.md
-│   └── README.md
-│
-├── _security/                   ← 🔒 Security & RBAC (11 files)
-│   ├── RBAC_*.md
-│   ├── rbac-audit-report.md
-│   ├── README_RBAC.md
-│   └── README.md
-│
-├── getting-started/            ← Onboarding
-├── reference/                  ← Technical reference
-├── modules/                    ← Domain guides
-├── rbac/                       ← Permissions
-├── enterprise/                 ← Enterprise features
-├── setup/                      ← Configuration
-├── tools/                      ← Tools
-└── [other folders]
+├── features/                  # 12 Technical Feature & Troubleshooting Guides
+├── pages/                     # App Router Page Maps & Route Matrices
+├── reference/                 # System Architecture, Database Schema & Conventions
+├── setup/                     # Local Quick Start & Environment Variables
+├── templates/                 # Architecture & Feature Templates
+└── _archive/                  # Preserved Historical & Obsolete Documentation
 ```
 
 ---
 
-## 🚀 Entry Points
-
-**New Developer?** 
-→ [getting-started/START_HERE.md](./getting-started/START_HERE.md)
-
-**AI Agent?** 
-→ [CLAUDE.md](./CLAUDE.md)
-
-**Quick Setup?** 
-→ [getting-started/QUICK_START.md](./getting-started/QUICK_START.md)
-
-**Full Index?** 
-→ [INDEX.md](./INDEX.md)
+## 📜 Documentation Governance Rules
+- ⚖️ **[Documentation Rules (RULES.md)](file:///Users/gaurav/Desktop/Invento/Documentation/RULES.md)** — Mandatory directives for AI agents and developers to maintain, structure, update, and archive documentation in the future.
 
 ---
 
-**Last Updated**: 2026-05-10  
-**Version**: 1.0  
-**Status**: ✅ Complete & Organized
+## 🧭 Master Sitemap & Navigation Index
 
-For complete navigation, see **[INDEX.md](./INDEX.md)**
+### 📦 1. Feature Technical Guides (`Documentation/features/`)
+Deep dives into business logic, database collections, and backend functions:
+- 🔐 **[AUTH.md](file:///Users/gaurav/Desktop/Invento/Documentation/features/AUTH.md)** — User authentication, JWT session tokens, and `userId` database data isolation.
+- 📦 **[PRODUCTS.md](file:///Users/gaurav/Desktop/Invento/Documentation/features/PRODUCTS.md)** — Product catalog, SKUs, barcodes, HSN/SAC codes, stock level status, auto-reorder alerts, and soft deletes.
+- 🚚 **[SUPPLIERS.md](file:///Users/gaurav/Desktop/Invento/Documentation/features/SUPPLIERS.md)** — Supplier directory, multi-supplier mapping (`productSuppliers`), lead times, and vendor metrics.
+- 🛒 **[SALES.md](file:///Users/gaurav/Desktop/Invento/Documentation/features/SALES.md)** — Sales order processing, inventory decrementing, and `stockMovements` audit log.
+- 📄 **[BILLING.md](file:///Users/gaurav/Desktop/Invento/Documentation/features/BILLING.md)** — GST Tax Invoice generation (`jsPDF`), downloadable PDF invoices, and recurring customer billing schedules.
+- 📒 **[LEDGER.md](file:///Users/gaurav/Desktop/Invento/Documentation/features/LEDGER.md)** — Double-entry financial audit trail, customer receivables, supplier payables, and account balance sheets.
+- 💵 **[EXPENSES.md](file:///Users/gaurav/Desktop/Invento/Documentation/features/EXPENSES.md)** — Expense tracking, receipt image uploads via EdgeStore, and category budget approvals.
+- 📦 **[PROCUREMENT.md](file:///Users/gaurav/Desktop/Invento/Documentation/features/PROCUREMENT.md)** — Purchase orders (POs), restock mutations, supplier receiving, and inventory reconciliations.
+- 🔍 **[INVENTORY_AUDIT.md](file:///Users/gaurav/Desktop/Invento/Documentation/features/INVENTORY_AUDIT.md)** — Physical stock count audits and discrepancy logging.
+- 🛡️ **[ADMIN_RBAC.md](file:///Users/gaurav/Desktop/Invento/Documentation/features/ADMIN_RBAC.md)** — System administration, role hierarchy (`admin` role top-level), and security audit logs.
+- 🛠️ **[TROUBLESHOOTING.md](file:///Users/gaurav/Desktop/Invento/Documentation/features/TROUBLESHOOTING.md)** — Step-by-step solutions for development, Convex type generation, and auth issues.
+
+### 🌐 2. App Routes & Page Mapping (`Documentation/pages/`)
+- 🗺️ **[APP_ROUTES.md](file:///Users/gaurav/Desktop/Invento/Documentation/pages/APP_ROUTES.md)** — Route index map of all 75+ Next.js 16 App Router pages and API endpoints.
+- ⚡ **[PAGE_CONTEXT.md](file:///Users/gaurav/Desktop/Invento/Documentation/pages/PAGE_CONTEXT.md)** — Page context map linking routes to UI components and Convex hooks.
+
+### 🏛️ 3. Core System References (`Documentation/reference/`)
+- 📐 **[ARCHITECTURE.md](file:///Users/gaurav/Desktop/Invento/Documentation/reference/ARCHITECTURE.md)** — High-level system design, subsystem flow diagrams, and tech stack matrix.
+- 🗄️ **[DATABASE_SCHEMA.md](file:///Users/gaurav/Desktop/Invento/Documentation/reference/DATABASE_SCHEMA.md)** — Convex database schema definitions, collection structures, and index rules.
+- 🧩 **[CODE-PATTERNS.md](file:///Users/gaurav/Desktop/Invento/Documentation/reference/CODE-PATTERNS.md)** — Reusable code patterns for React UI forms, Shadcn UI data tables, and Convex mutations.
+- 📏 **[CONVENTIONS.md](file:///Users/gaurav/Desktop/Invento/Documentation/reference/CONVENTIONS.md)** — File naming rules, TypeScript standards, and Tailwind CSS design tokens.
+- ⚡ **[API-GUIDE.md](file:///Users/gaurav/Desktop/Invento/Documentation/reference/API-GUIDE.md)** — Convex API query/mutation patterns, backend argument validation, and auth guards.
+- 📦 **[MODULES.md](file:///Users/gaurav/Desktop/Invento/Documentation/reference/MODULES.md)** — Technical module descriptions and responsibilities overview.
+- 🛡️ **[RBAC.md](file:///Users/gaurav/Desktop/Invento/Documentation/reference/RBAC.md)** — System role hierarchy, permission catalog, and code permission guards.
+
+### ⚙️ 4. Setup & Environment (`Documentation/setup/`)
+- 🚀 **[QUICK_START.md](file:///Users/gaurav/Desktop/Invento/Documentation/setup/QUICK_START.md)** — Local environment installation and development setup instructions.
+- 🔑 **[ENV-VARS.md](file:///Users/gaurav/Desktop/Invento/Documentation/setup/ENV-VARS.md)** — Environment variable configuration for Clerk, Convex, EdgeStore, and SendGrid.
+
+---
+
+## 📌 Root Governance Documents
+- 📋 **[Project Requirement Document.md](file:///Users/gaurav/Desktop/Invento/Project%20Requirement%20Document.md)** — Product specifications.
+- 🏗️ **[Architecture.md](file:///Users/gaurav/Desktop/Invento/Architecture.md)** — App flow & high-level design specification.
+- 🛡️ **[Rules.md](file:///Users/gaurav/Desktop/Invento/Rules.md)** — Mandatory AI directives, prohibitions, and guardrails.
+- 🎨 **[Design.md](file:///Users/gaurav/Desktop/Invento/Design.md)** — Design system tokens, OLED theme variables, and typography scale.
+- 🧠 **[Memory.md](file:///Users/gaurav/Desktop/Invento/Memory.md)** — Feature completion status and architectural decisions log.
+- 🤖 **[AI_INSTRUCTIONS.md](file:///Users/gaurav/Desktop/Invento/AI_INSTRUCTIONS.md)** — AI assistant workflow guide.

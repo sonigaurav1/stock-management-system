@@ -1,175 +1,119 @@
-# Invento Architecture
+# Invento System Architecture
 
-System design, data flow, and component interactions.
+System design, data flow, component interactions, and security specifications for Invento.
 
-## System Overview
+---
+
+## 1. High-Level System Diagram
 
 ```
-┌─────────────────────────────────────────────────────────┐
-│                  Next.js Frontend                        │
-│  (React 19 + TypeScript + Tailwind CSS + shadcn/ui)     │
-└─────────────┬───────────────────────────────────────────┘
-              │
-              │ REST/WebSocket
-              │
-┌─────────────▼───────────────────────────────────────────┐
-│              Convex Backend                              │
-│   (Real-time Database + API Layer)                       │
-│  ├─ Queries (read operations)                            │
-│  ├─ Mutations (write operations)                         │
-│  └─ Real-time Subscriptions                              │
-└─────────────┬───────────────────────────────────────────┘
-              │
-    ┌─────────┼──────────┬──────────┬────────────┐
-    │         │          │          │            │
-    ▼         ▼          ▼          ▼            ▼
-┌────────┐ ┌─────────┐ ┌───────┐ ┌──────────┐ ┌──────────┐
-│ Clerk  │ │Razorpay │ │EdgeSt │ │SendGrid/ │ │Analytics │
-│ Auth   │ │Payments │ │ ore   │ │ Slack    │ │          │
-└────────┘ └─────────┘ └───────┘ └──────────┘ └──────────┘
+┌──────────────────────────────────────────────────────────────────────────┐
+│                             Next.js 16 Client                            │
+│                 (React 19, TypeScript, Tailwind CSS, Shadcn)             │
+└────────────────────────────────────┬─────────────────────────────────────┘
+                                     │
+                                     │ Real-time WebSocket / HTTPS
+                                     ▼
+┌──────────────────────────────────────────────────────────────────────────┐
+│                             Convex Backend Layer                         │
+│                    (Real-Time Database + Server Functions)               │
+│                                                                          │
+│    ┌─────────────────┐      ┌─────────────────┐     ┌────────────────┐   │
+│    │  Convex Queries │      │Convex Mutations │     │ Real-time Subs │   │
+│    │  (Read Data)    │      │ (Write & State) │     │ (Live Pushes)  │   │
+│    └────────┬────────┘      └────────┬────────┘     └───────┬────────┘   │
+└─────────────┼────────────────────────┼──────────────────────┼────────────┘
+              │                        │                      │
+              ▼                        ▼                      ▼
+┌──────────────────────────────────────────────────────────────────────────┐
+│                            Integrated Services                           │
+│                                                                          │
+│  ┌────────────────┐    ┌─────────────────┐    ┌───────────────────────┐  │
+│  │ Clerk Auth     │    │ EdgeStore       │    │ SendGrid Email        │  │
+│  │ (User Identity)│    │ (Image/PDF Storage)   │ (Transaction Alerts) │  │
+│  └────────────────┘    └─────────────────┘    └───────────────────────┘  │
+└──────────────────────────────────────────────────────────────────────────┘
 ```
 
-## Core Modules
+---
 
-### 1. Authentication (Clerk)
-- **Responsibility**: User identity, organizations, roles
-- **Key Files**: `src/features/auth/`, convex/admin.ts
-- **Provider**: `ConvexProvider` wraps app with auth context
-- **Flow**: Clerk sign-in → Organization creation → Convex session
+## 2. Core Subsystems & Responsibilities
 
-### 2. Products Module
-- **Responsibility**: Product catalog, inventory tracking
-- **Key Files**: `convex/products.ts`, `src/app/.../dashboard/product/`
-- **Operations**: Create, read, update, delete, search
-- **Related**: Suppliers (source), Sales (consumption), Ledger (audit)
+### 1. Authentication & Data Scoping (`AUTH`)
+- **Responsibility**: User identity verification and strict `userId` data scoping across all database queries.
+- **Key Files**: `src/features/auth/`, `convex/admin.ts`, `convex/schema.ts`
+- **Scoping Rule**: Every Convex query and mutation MUST filter using `q.eq("userId", userId)`. Clerk Organizations are NOT used.
+- **Role Hierarchy**: `admin` (highest system & business admin role), `inventory_manager`, `billing_staff`, `accountant`. (Note: `super-admin` is replaced by `admin`).
 
-### 3. Suppliers Module
-- **Responsibility**: Vendor/supplier management
-- **Key Files**: `convex/suppliers.ts`, `src/app/.../dashboard/product/supplier/`
-- **Operations**: Supplier profiles, stock management
-- **Related**: Products (supplied items), Purchase orders
+### 2. Products Module (`PRODUCTS`)
+- **Responsibility**: Item catalog, SKUs, barcodes, HSN/SAC codes, stock levels, stock status (`in_stock`, `low_stock`, `out_of_stock`), auto-reorder alerts, and soft deletions (`isDeleted: true`).
+- **Key Files**: `convex/products.ts`, `convex/category.ts`, `src/app/(main)/dashboard/product/`
 
-### 4. Sales Module
-- **Responsibility**: Sales orders, customer transactions
-- **Key Files**: `convex/sales.ts`, `src/app/.../restock/` (confusing name, actually sales)
-- **Operations**: Create orders, track sales, generate invoices
-- **Related**: Products (items sold), Ledger (financial record)
+### 3. Suppliers Module (`SUPPLIERS`)
+- **Responsibility**: Vendor directory, multi-supplier mapping (`productSuppliers`), MOQ, vendor SKUs, lead times, and vendor delivery ratings.
+- **Key Files**: `convex/suppliers.ts`, `src/app/(main)/dashboard/product/supplier/`
 
-### 5. Ledger Module
-- **Responsibility**: Financial record-keeping, audit trail
-- **Key Files**: `convex/ledger.ts`, `src/app/.../ledger/`
-- **Operations**: Record transactions, balance tracking
-- **Related**: Products (adds/removes), Sales (revenue), Billing (payments)
+### 4. Sales Module (`SALES`)
+- **Responsibility**: Sales order checkout, real-time stock decrementing, revenue tracking, and `stockMovements` audit logging.
+- **Key Files**: `convex/sales.ts`, `src/app/(main)/billing/`
 
-### 6. Billing Module
-- **Responsibility**: Payment processing, subscription management
-- **Key Files**: `convex/billing.ts`, `src/app/.../billing/`
-- **Operations**: Invoice generation, Razorpay payments, subscription plans
-- **Related**: Sales (order payments), Ledger (financial tracking)
+### 5. Billing & Invoicing Module (`BILLING`)
+- **Responsibility**: GST Tax Invoice generation (`jsPDF`), downloadable PDF invoices, recurring customer billing, and balance tracking.
+- **Key Files**: `convex/invoices.ts`, `src/app/(main)/billing/`, `src/app/api/generate-pdf/`
 
-### 7. Organizations Module
-- **Responsibility**: Multi-tenant support, company settings
-- **Key Files**: `convex/organizations.ts`, company-details setup
-- **Operations**: Create org, manage settings, user invitations
-- **Related**: Auth (user roles), all modules (org isolation)
+### 6. Financial Ledger Module (`LEDGER`)
+- **Responsibility**: Double-entry financial audit trail, customer receivables, supplier payables, and account balance reconciliation.
+- **Key Files**: `convex/ledger.ts`, `src/app/(main)/ledger/`
 
-### 8. Admin Module
-- **Responsibility**: System administration, developer controls
-- **Key Files**: `convex/admin.ts`, `src/app/(developer-admin-page)/admin/`
-- **Operations**: User management, system monitoring, data inspection
-- **Access**: Restricted to admin role
+### 7. Expenses Module (`EXPENSES`)
+- **Responsibility**: Categorized expense tracking, EdgeStore receipt image attachments, category budget allocations, and expense approvals.
+- **Key Files**: `convex/expenses.ts`, `src/app/(main)/expenses/`
 
-## Data Flow Patterns
+### 8. Procurement Module (`PROCUREMENT`)
+- **Responsibility**: Purchase order (PO) generation, supplier fulfillment tracking, vendor receiving, and inventory restock entries.
+- **Key Files**: `convex/purchaseOrders.ts`, `src/app/(main)/procurement/`
 
-### Create Product Flow
+### 9. Administration & RBAC Module (`ADMIN_RBAC`)
+- **Responsibility**: User role management, RBAC permission setup, system monitoring, and immutable security audit logs (`auditLog`).
+- **Key Files**: `convex/admin.ts`, `src/app/(developer-admin-page)/admin/`, `src/app/(main)/company-admin/`
+
+---
+
+## 3. Data Flow Patterns
+
+### 3.1 Create Product Flow
 ```
-1. User fills form → Product Page
-2. Form submission → products.ts mutation
-3. Mutation validates + creates in Convex
-4. Real-time subscription updates inventory
-5. Ledger auto-records inventory change
-6. UI updates with new product
+1. User submits Product Form → `/dashboard/product`
+2. Form triggers mutation `convex/products.ts:createProduct`
+3. Backend validates authentication identity (`ctx.auth.getUserIdentity()`)
+4. Mutation inserts record into `products` table with `userId` and `createdAt`
+5. Convex real-time subscription pushes updated catalog to subscriber client components
 ```
 
-### Record Sale Flow
+### 3.2 Sales Order & Stock Movement Flow
 ```
-1. User creates order → Sales Page
-2. Sales mutation in sales.ts
+1. Order submitted via Sales/Billing UI
+2. Trigger `convex/sales.ts:createSale` mutation
 3. Mutation updates:
-   - Products (decrease stock)
-   - Sales table (record)
-   - Ledger (financial entry)
-4. Subscriptions notify dashboard
-5. Billing checks if invoice needed
+   - `products`: Decrements `stockLevel` and recalculates `stockStatus`
+   - `sales`: Inserts transaction order record
+   - `stockMovements`: Inserts movement audit record (`quantityDelta: -N`, `type: 'sale'`)
+   - `ledger`: Appends receivable financial record
+4. Real-time Convex subscriptions update UI dashboard charts dynamically
 ```
 
-### Query Optimization
-- Use Convex indexes on frequently searched fields
-- Paginate large lists (products, sales history)
-- Cache user organization data in provider context
-- Use real-time subscriptions for dashboard updates
+---
 
-## File Organization
+## 4. Security & Data Isolation Architecture
 
-```
-convex/
-├── schema.ts               # Database schema definitions
-├── products.ts             # Product queries & mutations
-├── suppliers.ts            # Supplier management
-├── sales.ts                # Sales operations
-├── ledger.ts               # Financial tracking
-├── billing.ts              # Payment & subscription
-├── organizations.ts        # Multi-tenant setup
-├── admin.ts                # Admin functions
-├── verification.ts         # Email verification, etc
-└── _generated/api.d.ts     # Auto-generated types
+- **Authentication**: Clerk handles identity verification and session tokens passed to Convex (`ctx.auth`).
+- **User-Level Scoping**: Every database table includes a `userId` index. No unscoped queries are allowed.
+- **Soft Deletion**: Records use `isDeleted: true` flags instead of hard database deletions to preserve accounting and tax audit histories.
+- **Admin Access**: Restricted to `admin` role users.
 
-src/
-├── app/
-│   ├── (auth)/             # Auth flow (sign-up, verify)
-│   ├── (main)/             # Main authenticated app
-│   │   └── (authenticated)/
-│   │       ├── dashboard/  # Main dashboard
-│   │       ├── ledger/     # Financial ledger
-│   │       ├── restock/    # Sales (confusing name)
-│   │       ├── billing/    # Billing UI
-│   │       └── settings/   # Account settings
-│   ├── (developer-admin-page)/ # Admin panel
-│   ├── (marketing)/        # Public pages
-│   └── api/                # External APIs (edgestore)
-│
-├── components/
-│   ├── ui/                 # shadcn/ui components
-│   ├── layout/             # Header, sidebar, providers
-│   └── ...                 # Feature components
-│
-├── features/
-│   └── auth/               # Auth logic, hooks
-│
-└── lib/
-    └── utils.ts            # Helper functions
-```
+---
 
-## Database Design Considerations
-
-- **Convex Documents**: Each module manages its own collection
-- **Relationships**: Tracked via document IDs (like foreign keys)
-- **Timestamps**: Use Date objects for tracking
-- **Organization Isolation**: Every query filters by org context
-- **Audit Trail**: Ledger records all significant changes
-
-## Performance Considerations
-
-1. **Real-time Subscriptions**: Use sparingly, only for dashboards
-2. **Pagination**: Essential for lists > 100 items
-3. **Indexing**: Create indexes on frequently queried fields
-4. **Caching**: Use React Context for org/user data
-5. **Batch Operations**: Group mutations when possible
-
-## Security Model
-
-- **Authentication**: Clerk handles user identity
-- **Authorization**: Organization context validates access
-- **Data Isolation**: All queries filtered by organization
-- **Admin Access**: Special admin role for system operations
-- **API Keys**: Stored in env variables, never exposed to frontend
+## 5. Related Documentation Links
+- **Master Sitemap**: [Documentation/README.md](file:///Users/gaurav/Desktop/Invento/Documentation/README.md)
+- **Database Schema**: [Documentation/reference/DATABASE_SCHEMA.md](file:///Users/gaurav/Desktop/Invento/Documentation/reference/DATABASE_SCHEMA.md)
+- **Features Guides**: [Documentation/features/README.md](file:///Users/gaurav/Desktop/Invento/Documentation/features/README.md)

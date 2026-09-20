@@ -1,0 +1,148 @@
+Business Management System
+│
+├── User
+│   ├── users
+│   ├── userSettings
+│   ├── accountStatus
+│   ├── userSubscriptions
+│   │   └── subscriptionPayments
+│   ├── otpVerification
+│   ├── notificationPreferences
+│   ├── feedback
+│   └── invitations
+│
+├── Company / Organization
+│   ├── companies
+│   ├── firms
+│   ├── companyDetails
+│   ├── organizationSettings
+│   ├── organizations
+│   │   ├── organizationMembers
+│   │   └── organizationSettings
+│   └── companyMembers
+│
+├── Product & Inventory
+│   ├── products
+│   │   ├── category
+│   │   ├── suppliers
+│   │   └── productSuppliers
+│   │
+│   ├── stockMovements
+│   ├── locations
+│   │   ├── locationInventory
+│   │   └── stockTransfers
+│   ├── inventoryReconciliations
+│   ├── purchaseOrders
+│   ├── bulkOperationJobs
+│   ├── priceChangeRequests
+│   └── discountAudit
+│
+├── Sales & Customers
+│   ├── sales
+│   │   ├── products
+│   │   ├── customers
+│   │   └── locations
+│   ├── customers
+│   ├── payments
+│   │   ├── sales
+│   │   ├── customers
+│   │   └── suppliers
+│   ├── invoices
+│   │   └── recurringInvoices
+│   └── reconciliationMatches
+│       ├── transactions
+│       ├── invoices
+│       └── payments
+│
+├── Suppliers
+│   ├── suppliers
+│   ├── productSuppliers
+│   │   ├── products
+│   │   └── suppliers
+│   ├── purchaseOrders
+│   └── payments
+│
+├── Accounting & Transactions
+│   ├── transactions
+│   │   └── firms
+│   ├── payments
+│   ├── invoices
+│   ├── taxReports
+│   │   └── taxPayments
+│   └── reconciliationMatches
+│
+├── Expense Management
+│   ├── expenseCategories
+│   │   ├── expenses
+│   │   └── budgets
+│   ├── expenses
+│   │   ├── expenseCategories
+│   │   ├── expenseApprovals
+│   │   ├── expenseReceipts
+│   │   └── recurringExpenses
+│   ├── budgets
+│   ├── recurringExpenses
+│   ├── expenseApprovals
+│   │   └── expenses
+│   ├── expenseReceipts
+│   │   └── expenses
+│   └── expenseReports
+│
+├── Reporting & Analytics
+│   ├── customReports
+│   │   ├── reportExecutions
+│   │   ├── reportExports
+│   │   └── scheduledReports
+│   ├── scheduledReports
+│   ├── reportExecutions
+│   ├── reportExports
+│   ├── expenseReports
+│   ├── taxReports
+│   ├── dashboardExports
+│   ├── featureUsage
+│   └── reconciliationMatches
+│
+├── Dashboard
+│   ├── dashboardWidgets
+│   ├── insightSettings
+│   ├── userInsights
+│   └── dashboardExports
+│
+├── Automation & System Processing
+│   ├── systemLog
+│   ├── duplicateDetectionLog
+│   ├── transactionCategoryMappings
+│   ├── bulkOperationJobs
+│   ├── reconciliationMatches
+│   └── auditLog
+│
+├── Teams & Access Control
+│   ├── customRoles
+│   ├── teams
+│   │   ├── teamMembers
+│   │   └── teamActivity
+│   ├── companyMembers
+│   ├── organizationMembers
+│   ├── approvalWorkflows
+│   │   └── approvalRequests
+│   └── expenseApprovals
+│
+├── Communication
+│   ├── messages
+│   │   ├── messageAttachments
+│   │   └── messages
+│   ├── messageAttachments
+│   ├── tasks
+│   │   ├── taskComments
+│   │   └── messageAttachments
+│   ├── taskComments
+│   └── notificationPreferences
+│
+└── Configuration & Logs
+    ├── userSettings
+    ├── organizationSettings
+    ├── notificationRules
+    ├── notificationPreferences
+    ├── auditLog
+    ├── systemLog
+    └── featureUsage

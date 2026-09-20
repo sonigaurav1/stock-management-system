@@ -32,18 +32,7 @@ import {
   countryToCurrencyCode,
   setPreferredCurrencyCode
 } from '@/lib/currency';
-
-const BUSINESS_TYPES = [
-  { value: 'retailer', label: 'Retailer' },
-  { value: 'wholesaler', label: 'Wholesaler' },
-  { value: 'distributor', label: 'Distributor' },
-  { value: 'manufacturer', label: 'Manufacturer' },
-  { value: 'service_provider', label: 'Service Provider' },
-  { value: 'e_commerce', label: 'E-Commerce' },
-  { value: 'corporate', label: 'Corporate' },
-  { value: 'nonprofit', label: 'Non-Profit' },
-  { value: 'other', label: 'Other' }
-];
+import { BUSINESS_TYPES } from '@/constants/data';
 
 const businessFormSchema = z.object({
   companyName: z

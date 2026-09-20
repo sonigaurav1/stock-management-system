@@ -135,7 +135,7 @@ export function useAuditLog() {
   const exportLogs = useCallback(async (options: ExportOptions) => {
     try {
       // TODO: Implement export logic
-      console.debug('Exporting logs with options:', options);
+      console.log('Exporting logs with options:', options);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to export logs');
     }
@@ -193,7 +193,7 @@ export function useComplianceReport() {
 
   const generateReport = useCallback((standard: string) => {
     // TODO: Implement report generation
-    console.debug('Generating report for standard:', standard);
+    console.log('Generating report for standard:', standard);
   }, []);
 
   const getAverageCompliance = useCallback(() => {

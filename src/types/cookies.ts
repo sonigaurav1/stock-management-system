@@ -1,4 +1,4 @@
-import { projectName } from '@/constants/data';
+import { PROJECT_NAME } from '@/constants/data';
 
 /**
  * Cookie consent preferences
@@ -23,5 +23,5 @@ export interface CookieConsentBannerProps {
   onCustomize?: () => void;
 }
 
-export const COOKIE_PREFERENCES_KEY = `${projectName}_cookie_preferences`;
+export const COOKIE_PREFERENCES_KEY = `${PROJECT_NAME}_cookie_preferences`;
 export const COOKIE_CONSENT_VERSION = 'v1';

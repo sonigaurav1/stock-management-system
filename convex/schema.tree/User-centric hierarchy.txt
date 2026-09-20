@@ -1,0 +1,64 @@
+User
+│
+├── Company
+│   ├── Products
+│   │   ├── Categories
+│   │   ├── Suppliers
+│   │   ├── Stock
+│   │   ├── Locations
+│   │   └── Purchase Orders
+│   │
+│   ├── Customers
+│   │   ├── Sales
+│   │   ├── Payments
+│   │   └── Invoices
+│   │
+│   ├── Accounting
+│   │   ├── Transactions
+│   │   ├── Payments
+│   │   ├── Tax Reports
+│   │   └── Tax Payments
+│   │
+│   ├── Expenses
+│   │   ├── Expense Categories
+│   │   ├── Budgets
+│   │   ├── Expense Approvals
+│   │   ├── Receipts
+│   │   ├── Recurring Expenses
+│   │   └── Expense Reports
+│   │
+│   ├── Employees & Teams
+│   │   ├── Company Members
+│   │   ├── Teams
+│   │   ├── Team Members
+│   │   ├── Custom Roles
+│   │   └── Approval Workflows
+│   │
+│   ├── Dashboard
+│   │   ├── Widgets
+│   │   ├── Insights
+│   │   ├── Insight Settings
+│   │   └── Exports
+│   │
+│   ├── Reports
+│   │   ├── Custom Reports
+│   │   ├── Scheduled Reports
+│   │   ├── Report Executions
+│   │   └── Report Exports
+│   │
+│   ├── Communication
+│   │   ├── Messages
+│   │   ├── Attachments
+│   │   ├── Tasks
+│   │   └── Task Comments
+│   │
+│   └── System
+│       ├── Audit Logs
+│       ├── System Logs
+│       ├── Duplicate Detection
+│       ├── Feature Usage
+│       └── Notification Rules
+│
+└── Subscription
+    ├── User Subscription
+    └── Subscription Payments
